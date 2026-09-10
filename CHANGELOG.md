@@ -37,5 +37,5 @@ First public release.
   inherits its base's renderer.
 - Ships inline type hints (`py.typed`). Python 3.11+.
 
-[Unreleased]: https://github.com/jeanmidevacc/folio/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/jeanmidevacc/folio/releases/tag/v0.1.0
+[Unreleased]: https://github.com/jeanmidevacc/briefing/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/jeanmidevacc/briefing/releases/tag/v0.1.0

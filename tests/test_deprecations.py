@@ -1,4 +1,4 @@
-"""Deprecated aliases kept for one release after the folio -> briefing rename."""
+"""Deprecated aliases kept for one release after the folio -> bulletin -> briefing rename."""
 from __future__ import annotations
 
 import warnings

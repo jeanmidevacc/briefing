@@ -8,7 +8,7 @@ name: Publish
 #   Account → Publishing → Add a pending publisher
 #     PyPI project name:  briefing
 #     Owner:              jeanmidevacc
-#     Repository name:     folio
+#     Repository name:     briefing
 #     Workflow filename:   publish.yml
 #     Environment name:    pypi        (testpypi for the TestPyPI publisher)
 # And in this repo: Settings → Environments → create "pypi" and "testpypi".

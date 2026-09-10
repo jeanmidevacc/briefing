@@ -57,10 +57,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/jeanmidevacc/folio"
-Repository = "https://github.com/jeanmidevacc/folio"
-Issues = "https://github.com/jeanmidevacc/folio/issues"
-Changelog = "https://github.com/jeanmidevacc/folio/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/jeanmidevacc/briefing"
+Repository = "https://github.com/jeanmidevacc/briefing"
+Issues = "https://github.com/jeanmidevacc/briefing/issues"
+Changelog = "https://github.com/jeanmidevacc/briefing/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 # pip install briefing[pandas] — internal engine for Table / DataTable
