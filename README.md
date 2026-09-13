@@ -1,23 +1,22 @@
 # briefing
 
-Build beautiful, self-contained HTML reports from Python analysis.
+Build beautiful, self-contained reports from Python, authored by a person, a coding agent, or both.
 
 ## Why briefing exists
 
-Two libraries shaped how I thought about sharing data science work:
+Three things led me here:
 
-- **[datapane](https://github.com/datapane/datapane)** — the cleanest Python-native report builder I had ever used. Block-based, self-contained HTML output, dead-simple API. It was decommissioned in 2023 and the SaaS shut down shortly after.
-- **[Facets](https://github.com/PAIR-code/facets)** (PAIR / Google) — specifically *Facets Dive*, a brilliant interactive dot explorer that let you slice any dataset visually with zero configuration. The project went largely unmaintained and quietly disappeared from most data science workflows.
+- **Coding agents are good at making something to show you, not at making it consistently.** A few months of building with coding agents surfaced the same gap every time: they're happy to produce an artifact, but each one comes out with its own structure, and nothing tracks how a piece of content evolved across a project. There was no shared grammar a person and an agent could both build reports from as the report generation was opaque.
+- **[datapane](https://github.com/datapane/datapane) was the cleanest report builder I'd used.** Block-based, self-contained HTML output, a dead-simple API. I relied on it constantly to turn Python analysis into reports for stakeholders and to monitor pipelines. It was decommissioned in 2023 when the SaaS behind it shut down, and nothing since has replaced it.
+- **No visualization tool covers everything, and the ones that push furthest often don't stick around.** Years of building visualizations taught me that every tool, however good, eventually falls short of the next thing you want to show. The niche packages that *do* push past that, like [Facets](https://github.com/PAIR-code/facets) (PAIR / Google) and its Facets Dive explorer, bring real value but rarely stay maintained. I wanted a place of my own to keep building and sharing that kind of custom, interactive visualization, without depending on someone else's side project staying alive.
 
-I never found a substitute that matched either of them, let alone both at once. briefing is my attempt to fill that gap: a datapane-style block and layout system with a Facets Dive-class explorer built in, fully offline, no cloud account required.
-
-Building briefing also serves a second purpose: it is a real-world, non-trivial Python project used to benchmark coding agents such as [Claude Code](https://github.com/anthropics/claude-code). Designing a library from original source code — with concept ofblock hierarchy, rendering pipeline, theming, interactive components — gives a coding agent enough surface area to show where it genuinely helps and where it still struggles.
+briefing is built to close all three gaps at once: a block grammar solid enough for me *and* my coding agents to build reports from consistently, with datapane's simplicity and a home for the custom, interactive visualization that inspired it. All of it self-contained, offline, with no cloud account required.
 
 ```python
 import briefing as bf
 
 report = bf.Briefing(
-    bf.Text("# Sales Analysis — Q1 2024"),
+    bf.Text("# Sales Analysis, Q1 2024"),
     bf.Group(
         bf.BigNumber("Revenue", "$4.2M", change="-12%", is_upward_change=False),
         bf.BigNumber("Active Users", "142K", change="+3%", is_upward_change=True),
@@ -36,15 +35,16 @@ bf.save(report, "q1_analysis.html")
 
 ## Features
 
-- **Self-contained HTML** — zero CDN, works offline forever
-- **Zero visualisation dependencies in the core** — the report grammar renders
+- **One block vocabulary, for you or your agent**: `bf.Text`, `bf.Table`, `bf.Plot`, `bf.Group`, … the same small set of blocks composes every report, so output stays consistent whether you write the Python yourself or a coding agent does.
+- **Self-contained HTML**: zero CDN, works offline forever
+- **Zero visualisation dependencies in the core**: the report grammar renders
   with only Jinja2 + markdown-it-py. Charts are opt-in (see below).
-- **Bring-your-own-figure `Plot`** — hand it a Plotly, Altair, Matplotlib or
+- **Bring-your-own-figure `Plot`**: hand it a Plotly, Altair, Matplotlib or
   Bokeh figure; briefing imports that library only when you pass its figure.
-- **Interactive tables** — sortable, searchable DataTable with client-side pagination
-- **`briefing.lab`** — richer custom visualisations (`DataProfile` column stats,
+- **Interactive tables**: sortable, searchable DataTable with client-side pagination
+- **`briefing.lab`**: richer custom visualisations (`DataProfile` column stats,
   `DataDive` Facets-style dot explorer), all hand-rolled SVG + vanilla JS, no CDN
-- **Themes** — five built-in presets plus full CSS token control
+- **Themes**: five built-in presets plus full CSS token control
 - **Pandas 2.x** first-class support; PySpark via `.toPandas()`
 
 ## Installation
@@ -92,6 +92,8 @@ from IPython.display import HTML, display
 display(HTML(bf.stringify(bf.Briefing(bf.Text("# Hello")))))
 ```
 
+That same `display(HTML(bf.stringify(block)))` call works on a single block too, which is the natural way to build a report cell by cell in a notebook: create one block, preview it in place, keep going, then combine everything you built into one `Briefing` at the end. See [`examples/notebook_walkthrough.ipynb`](examples/notebook_walkthrough.ipynb) for the full walkthrough, or open the [finished report](examples/sales_report.html) it produces.
+
 ---
 
 ## API
@@ -101,11 +103,11 @@ display(HTML(bf.stringify(bf.Briefing(bf.Text("# Hello")))))
 ```python
 bf.save(
     blocks,                  # Briefing, list, or a single block
-    path,                    # destination file — e.g. "report.html"
+    path,                    # destination file, e.g. "report.html"
     *,
     open=False,              # open in default browser after saving
     name="Report",           # browser tab title and report header
-    formatting=None,         # Formatting instance — controls theme
+    formatting=None,         # Formatting instance, controls theme
 )
 ```
 
@@ -126,7 +128,7 @@ html: str = bf.stringify(
 
 ### Text blocks
 
-#### `bf.Text` — Markdown
+#### `bf.Text`: Markdown
 
 ```python
 bf.Text("# Heading\n\nSome **bold** and *italic* text.")
@@ -145,7 +147,7 @@ Supports headings, bold, italics, inline code, blockquotes, tables, and lists.
 
 ---
 
-#### `bf.Code` — Syntax-highlighted code
+#### `bf.Code`: Syntax-highlighted code
 
 ```python
 bf.Code("SELECT * FROM orders LIMIT 10", language="sql")
@@ -158,38 +160,38 @@ bf.Code(
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `code` | `str` | — | Source code string |
+| `code` | `str` | required | Source code string |
 | `language` | `str` | `"python"` | Syntax highlighting language |
 | `caption` | `str` | `None` | Optional caption shown below the block |
 
 ---
 
-#### `bf.Formula` — LaTeX equation
+#### `bf.Formula`: LaTeX equation
 
 ```python
 bf.Formula(r"\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i", caption="Sample mean")
 ```
 
-Rendered via MathJax (inlined in the report — no CDN needed).
+Rendered via MathJax (inlined in the report, no CDN needed).
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `formula` | `str` | — | LaTeX expression (without `$$` delimiters) |
+| `formula` | `str` | required | LaTeX expression (without `$$` delimiters) |
 | `caption` | `str` | `None` | Optional caption |
 
 ---
 
-#### `bf.HTML` — Raw HTML fragment
+#### `bf.HTML`: Raw HTML fragment
 
 ```python
 bf.HTML("<p style='color:#4F46E5'>Custom <strong>HTML</strong>.</p>")
 ```
 
-Rendered inside a sandboxed container — inline styles work, scripts are stripped.
+Rendered inside a sandboxed container: inline styles work, scripts are stripped.
 
 ---
 
-#### `bf.BigNumber` — KPI metric
+#### `bf.BigNumber`: KPI metric
 
 ```python
 bf.BigNumber("Revenue", "$4.2M", change="-12%", is_upward_change=False)
@@ -198,8 +200,8 @@ bf.BigNumber("Accuracy", 0.924)   # no change indicator
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `heading` | `str` | — | Metric label |
-| `value` | `str \| int \| float` | — | Headline value |
+| `heading` | `str` | required | Metric label |
+| `value` | `str \| int \| float` | required | Headline value |
 | `change` | `str` | `None` | Delta string, e.g. `"+3.1%"` |
 | `is_upward_change` | `bool` | `None` | `True` = green arrow, `False` = red arrow. Required if `change` is set. |
 
@@ -207,7 +209,7 @@ bf.BigNumber("Accuracy", 0.924)   # no change indicator
 
 ---
 
-#### `bf.Alert` — Callout box
+#### `bf.Alert`: Callout box
 
 ```python
 bf.Alert("Pipeline completed successfully.", level=bf.AlertLevel.SUCCESS)
@@ -217,7 +219,7 @@ bf.Alert("Legacy source decommissioned.", level=bf.AlertLevel.ERROR, title="Brea
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `message` | `str` | — | Alert body text |
+| `message` | `str` | required | Alert body text |
 | `level` | `AlertLevel \| str` | `"info"` | One of `info`, `success`, `warning`, `error` |
 | `title` | `str` | `None` | Optional bold title above the message |
 
@@ -227,7 +229,7 @@ bf.Alert("Legacy source decommissioned.", level=bf.AlertLevel.ERROR, title="Brea
 
 ### Layout blocks
 
-#### `bf.Group` — Grid layout
+#### `bf.Group`: Grid layout
 
 Arranges child blocks in a responsive column grid.
 
@@ -238,15 +240,15 @@ bf.Group(a, b, c, columns=3, widths=[2, 1, 1])   # relative column widths
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `*blocks` | `Block` | — | Child blocks (positional) |
+| `*blocks` | `Block` | required | Child blocks (positional) |
 | `columns` | `int` | `1` | Number of columns |
-| `widths` | `list[int \| float]` | `None` | Relative column widths — must match `columns` |
+| `widths` | `list[int \| float]` | `None` | Relative column widths, must match `columns` |
 | `valign` | `VAlign \| str` | `"top"` | Vertical alignment: `top`, `center`, `bottom` |
 | `label` | `str` | `None` | Tab label when used inside `Select` |
 
 ---
 
-#### `bf.Select` — Tabbed or dropdown panel switcher
+#### `bf.Select`: Tabbed or dropdown panel switcher
 
 Shows one child block at a time. Each child's `label` becomes the tab title.
 
@@ -261,20 +263,20 @@ bf.Select(
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `*blocks` | `Block` | — | Child blocks — each should have a `label` |
+| `*blocks` | `Block` | required | Child blocks, each should have a `label` |
 | `type` | `SelectType \| str` | `"tabs"` | `"tabs"` or `"dropdown"` |
 
 > Warns if fewer than 2 children are provided.
 
 ---
 
-#### `bf.Toggle` — Collapsible section
+#### `bf.Toggle`: Collapsible section
 
 Collapsed by default; click the label to expand.
 
 ```python
 bf.Toggle(
-    bf.Text("Methodology notes — hidden by default."),
+    bf.Text("Methodology notes (hidden by default)."),
     bf.Code("SELECT * FROM sales\n", language="sql"),
     label="Query details",
 )
@@ -282,12 +284,12 @@ bf.Toggle(
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `*blocks` | `Block` | — | Content blocks (multiple are auto-wrapped in a `Group`) |
+| `*blocks` | `Block` | required | Content blocks (multiple are auto-wrapped in a `Group`) |
 | `label` | `str` | `None` | Clickable toggle label |
 
 ---
 
-#### `bf.Page` — Top-level page tab
+#### `bf.Page`: Top-level page tab
 
 Use at the root of `Briefing` to create multi-page reports. Pages are converted to a top-level tab bar during rendering.
 
@@ -300,14 +302,14 @@ bf.Briefing(
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `*blocks` | `Block` | — | Page content |
+| `*blocks` | `Block` | required | Page content |
 | `title` | `str` | `None` | Tab title |
 
-> Nested `Page` blocks are not supported — use `Select` and `Group` instead.
+> Nested `Page` blocks are not supported. Use `Select` and `Group` instead.
 
 ---
 
-#### `bf.Briefing` — Root document container
+#### `bf.Briefing`: Root document container
 
 Top-level wrapper passed to `save`. Accepts any combination of blocks.
 
@@ -324,7 +326,7 @@ bf.save(report, "report.html")
 
 ### Asset blocks
 
-#### `bf.Plot` — Chart / figure
+#### `bf.Plot`: Chart / figure
 
 Library-agnostic chart block. Auto-detects the figure type at render time:
 
@@ -343,14 +345,14 @@ bf.Plot(mpl_fig, scale=1.5)
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `figure` | any | — | Figure object from Plotly, Altair, Matplotlib, or Bokeh |
+| `figure` | any | required | Figure object from Plotly, Altair, Matplotlib, or Bokeh |
 | `caption` | `str` | `None` | Caption shown below the chart |
 | `responsive` | `bool` | `True` | Scale chart to fill container width |
 | `scale` | `float` | `1.0` | Scale multiplier (Matplotlib/static figures) |
 
 ---
 
-#### `bf.Table` — Static table (pandas Styler)
+#### `bf.Table`: Static table (pandas Styler)
 
 Best for formatted DataFrames where you want to preserve Styler rules.
 
@@ -366,12 +368,12 @@ bf.Table(
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `data` | `DataFrame \| Styler` | — | DataFrame or styled DataFrame |
+| `data` | `DataFrame \| Styler` | required | DataFrame or styled DataFrame |
 | `caption` | `str` | `None` | Optional caption |
 
 ---
 
-#### `bf.DataTable` — Interactive table
+#### `bf.DataTable`: Interactive table
 
 Sortable, searchable, paginated table. Handles large datasets gracefully.
 
@@ -382,23 +384,23 @@ bf.DataTable(df, max_rows=500)   # cap at 500 rows
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `df` | `DataFrame` | — | Source data |
+| `df` | `DataFrame` | required | Source data |
 | `caption` | `str` | `None` | Optional caption |
 | `max_rows` | `int` | `10 000` | Rows beyond this are truncated with a warning |
 
 ---
 
-### Lab blocks — `briefing.lab`
+### Lab blocks (`briefing.lab`)
 
-#### `bf.lab.DataProfile` — Column statistics
+#### `bf.lab.DataProfile`: Column statistics
 
 Renders one card per column with dtype, missing %, and a mini-chart.
 
-- **Numeric** — mean, std, min/quartiles/max + inline histogram
-- **Categorical** — n_unique, top values + inline bar chart
-- **Datetime** — date range + gap detection
+- **Numeric**: mean, std, min/quartiles/max + inline histogram
+- **Categorical**: n_unique, top values + inline bar chart
+- **Datetime**: date range + gap detection
 
-No extra dependencies — mini-charts are pure SVG.
+No extra dependencies: mini-charts are pure SVG.
 
 ```python
 bf.lab.DataProfile(df)
@@ -408,15 +410,15 @@ bf.lab.DataProfile(df, max_categories=10)        # cap top-N bars for categorica
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `df` | `DataFrame` | — | Source data |
+| `df` | `DataFrame` | required | Source data |
 | `missing_threshold` | `float` | `0.20` | Missing % above which the cell is highlighted red |
 | `max_categories` | `int` | `20` | Max top-value bars for categorical columns |
 
 ---
 
-#### `bf.lab.DataDive` — Interactive dot explorer
+#### `bf.lab.DataDive`: Interactive dot explorer
 
-Each DataFrame row becomes a dot. Dropdowns let the viewer dynamically change which columns drive X, Y, colour, and facets — similar to Google Facets Dive.
+Each DataFrame row becomes a dot. Dropdowns let the viewer dynamically change which columns drive X, Y, colour, and facets, similar to Google Facets Dive.
 
 ```python
 bf.lab.DataDive(df)                                              # auto-selects axes
@@ -426,7 +428,7 @@ bf.lab.DataDive(df, x="region", y="channel", color="product", layout="tile")
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `df` | `DataFrame` | — | Source data |
+| `df` | `DataFrame` | required | Source data |
 | `x` | `str` | `None` | Initial X-axis column |
 | `y` | `str` | `None` | Initial Y-axis column |
 | `color` | `str` | `None` | Initial colour column |
@@ -453,11 +455,11 @@ bf.save(blocks, "out.html", formatting=bf.Formatting.warm())
 
 | Preset | Description |
 |--------|-------------|
-| `dark()` | Slate dark — easy on the eyes, great for dashboards |
-| `corporate()` | Clean blue corporate — neutral tones, sharp corners |
-| `minimal()` | Ultra-clean — white space, black text, hairline borders |
-| `ocean()` | Deep teal — rich mid-dark, emerald accent |
-| `warm()` | Cream backgrounds — amber accent, serif font |
+| `dark()` | Slate dark, easy on the eyes, great for dashboards |
+| `corporate()` | Clean blue corporate, neutral tones, sharp corners |
+| `minimal()` | Ultra-clean, white space, black text, hairline borders |
+| `ocean()` | Deep teal, rich mid-dark, emerald accent |
+| `warm()` | Cream backgrounds, amber accent, serif font |
 
 ### Fine-tuning a preset
 
@@ -511,7 +513,7 @@ import briefing as bf
 
 bf.save(
     bf.Briefing(
-        bf.Text("# Sales Analysis — 2023"),
+        bf.Text("# Sales Analysis, 2023"),
 
         bf.Group(
             bf.BigNumber("Total Revenue", "€ 1 260 000", change="+12.4%", is_upward_change=True),
@@ -543,7 +545,7 @@ bf.save(
         ),
     ),
     path="sales_2023.html",
-    name="Sales Analysis — 2023",
+    name="Sales Analysis, 2023",
     formatting=bf.Formatting(accent_color="#0f766e"),
 )
 ```
