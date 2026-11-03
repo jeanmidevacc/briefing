@@ -35,21 +35,21 @@ class Formatting:
 
     Quick start — built-in presets::
 
-        fl.save(blocks, "dark.html",      formatting=fl.Formatting.dark())
-        fl.save(blocks, "corp.html",      formatting=fl.Formatting.corporate())
-        fl.save(blocks, "minimal.html",   formatting=fl.Formatting.minimal())
-        fl.save(blocks, "ocean.html",     formatting=fl.Formatting.ocean())
+        bf.save(blocks, "dark.html",      formatting=bf.Formatting.dark())
+        bf.save(blocks, "corp.html",      formatting=bf.Formatting.corporate())
+        bf.save(blocks, "minimal.html",   formatting=bf.Formatting.minimal())
+        bf.save(blocks, "ocean.html",     formatting=bf.Formatting.ocean())
 
     Fine-tuning a preset::
 
-        fmt = fl.Formatting.dark(accent_color="#f43f5e")
-        fl.save(blocks, "out.html", formatting=fmt)
+        fmt = bf.Formatting.dark(accent_color="#f43f5e")
+        bf.save(blocks, "out.html", formatting=fmt)
 
     Building from scratch::
 
-        fl.save(
+        bf.save(
             blocks, "out.html",
-            formatting=fl.Formatting(
+            formatting=bf.Formatting(
                 accent_color="#0369a1",
                 bg_color="#f8fafc",
                 surface_color="#e2e8f0",
@@ -57,7 +57,7 @@ class Formatting:
                 text_color="#0f172a",
                 muted_color="#64748b",
                 radius="0.25rem",
-                width=fl.Width.NARROW,
+                width=bf.Width.NARROW,
             ),
         )
 
