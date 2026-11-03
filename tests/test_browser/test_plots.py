@@ -62,7 +62,6 @@ def test_plotly_chart_fills_its_width_in_second_tab(viewer: Viewer) -> None:
     assert chart_fill(page) > 0.97
 
 
-@pytest.mark.xfail(reason="#8: Altair loads Vega from a CDN", strict=True)
 def test_altair_chart_draws_offline(viewer: Viewer) -> None:
     alt = pytest.importorskip("altair")
     chart = alt.Chart(pd.DataFrame({"x": [1, 2, 3], "y": [3, 1, 2]})).mark_point().encode(x="x", y="y")
@@ -72,3 +71,15 @@ def test_altair_chart_draws_offline(viewer: Viewer) -> None:
     # Vega draws into an SVG or a canvas, in the page or in a nested frame.
     drawn = [f for f in page.frames if f.locator("svg.marks, canvas.marks").count() > 0]
     assert drawn, "the Altair chart was not drawn"
+
+
+def test_altair_chart_fills_its_width_when_toggle_opens(viewer: Viewer) -> None:
+    alt = pytest.importorskip("altair")
+    chart = alt.Chart(pd.DataFrame({"x": [1, 2, 3], "y": [3, 1, 2]})).mark_line().encode(x="x", y="y")
+    page = viewer.open(bf.Briefing(bf.Toggle(bf.Plot(chart), label="Chart")))
+    page.get_by_role("button", name="Chart").click()
+    page.wait_for_timeout(500)
+    drawn = page.locator(".bf-altair svg").first.bounding_box()
+    figure = page.locator("figure.bf-plot").first.bounding_box()
+    assert drawn is not None and figure is not None
+    assert drawn["width"] > 0.9 * figure["width"]

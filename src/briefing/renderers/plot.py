@@ -15,18 +15,19 @@ Library support summary
 | Plotnine   | SVG      | ✓ always       | Via underlying Matplotlib figure   |
 | Plotly     | HTML+JS  | ✓ if installed | plotlyjs embedded once per report  |
 | Bokeh      | iframe   | ✓ always       | INLINE resources, base64 srcdoc    |
-| Altair     | iframe   | ⚠ CDN needed  | Vega runtime from CDN (Phase 6     |
-|            |          |                | will bundle it for full offline)   |
+| Altair     | HTML+JS  | ✓ with         | Vega runtime embedded once per     |
+|            |          | vl-convert     | report (briefing[altair])          |
 """
 from __future__ import annotations
 
 import base64
 import contextlib
+import functools
 import html as _html
 import io
+import json
 import re
 import typing as t
-import warnings
 
 from briefing._error import BriefingError
 from briefing.renderers.registry import IdGen
@@ -90,15 +91,55 @@ def scan_for_plots(root: Block) -> set[str]:
 def get_runtime_scripts(libraries: set[str]) -> str:
     """Return ``<script>`` tags to embed in ``<head>`` for *libraries*.
 
-    Currently only Plotly requires a bundled runtime; other libraries either
+    Plotly and Altair (Vega) need a bundled runtime; other libraries either
     need no JS (Matplotlib/SVG) or embed their runtime per-figure (Bokeh/iframe).
     """
     parts: list[str] = []
 
     if "plotly" in libraries:
         parts.append(_plotlyjs_script())
+    if "altair" in libraries:
+        vega = _vega_bundle()
+        if vega is not None:  # without it, each Altair chart renders an install hint
+            parts.append(f"<script>{vega}</script>")
 
     return "\n".join(parts)
+
+
+_ALTAIR_INSTALL_HINT = (
+    "Altair charts need vl-convert-python to embed the Vega runtime offline. "
+    "Install it with: pip install briefing[altair]"
+)
+
+
+@functools.cache
+def _vega_bundle() -> str | None:
+    """Vega, Vega-Lite and vega-embed as one script (it sets ``window.vegaEmbed``), or ``None``.
+
+    The bundle comes from vl-convert-python, the package Altair's own inline
+    HTML export uses, matched to the installed Altair's Vega-Lite version.
+    """
+    try:
+        import vl_convert
+    except ImportError:
+        return None
+    try:
+        from altair.utils._importers import vl_version_for_vl_convert
+
+        version: str | None = vl_version_for_vl_convert()
+    except Exception:  # private helper; fall back to vl-convert's default Vega-Lite
+        version = None
+    return vl_convert.javascript_bundle(_VEGA_GLOBALS, vl_version=version)
+
+
+#: Bundled after the libraries: exposes them to report.js as globals.
+_VEGA_GLOBALS = "window.vegaEmbed = vegaEmbed; window.vegaLite = vegaLite; window.vega = vega;"
+
+
+def _script_json(value: t.Any) -> str:
+    """JSON that is safe inside ``<script type="application/json">``: no ``<``, ``>`` or ``&``."""
+    text = json.dumps(value, separators=(",", ":"))
+    return text.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
 
 
 def _plotlyjs_script() -> str:
@@ -159,30 +200,22 @@ def _render_plotly(fig: t.Any, responsive: bool, div_id: str) -> str:
     )
 
 
-def _render_altair(fig: t.Any, responsive: bool) -> str:
+def _render_altair(fig: t.Any, responsive: bool, div_id: str) -> str:
     try:
         import altair as alt  # noqa: F401
     except ImportError as exc:
         raise BriefingError("altair is not installed. Run: pip install altair") from exc
-
-    warnings.warn(
-        "Altair charts load Vega+VegaLite from cdn.jsdelivr.net. "
-        "They will not display in offline environments. "
-        "Full self-contained Altair support is planned for Phase 6 (DataDive).",
-        UserWarning,
-        stacklevel=4,
-    )
+    if _vega_bundle() is None:
+        raise BriefingError(_ALTAIR_INSTALL_HINT)
 
     if responsive:
         with contextlib.suppress(Exception):
             fig = fig.properties(width="container")
 
-    chart_html = fig.to_html()
-    b64 = base64.b64encode(chart_html.encode("utf-8")).decode("ascii")
+    # Drawn in the page by report.js with the Vega runtime embedded in <head>.
     return (
-        f'<iframe src="data:text/html;base64,{b64}" '
-        f'width="100%" height="500" style="border:none;" title="Altair chart" '
-        f'loading="lazy"></iframe>'
+        f'<div class="bf-altair" id="{div_id}"></div>'
+        f'<script type="application/json" class="bf-altair__spec">{_script_json(fig.to_dict())}</script>'
     )
 
 
@@ -233,7 +266,7 @@ def render_figure(block: Plot, idgen: IdGen | None = None) -> str:
         elif lib == "plotly":
             inner = _render_plotly(fig, block.responsive, div_id=idgen.next("plotly"))
         elif lib == "altair":
-            inner = _render_altair(fig, block.responsive)
+            inner = _render_altair(fig, block.responsive, div_id=idgen.next("altair"))
         elif lib == "bokeh":
             inner = _render_bokeh(fig)
         else:

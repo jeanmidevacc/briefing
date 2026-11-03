@@ -139,7 +139,6 @@ SCENARIOS: dict[str, Build] = {
 #: Cases expected to fail today, as {(rule, scenario): reason}. Remove an entry
 #: when its issue is fixed; strict xfail makes a stale entry fail.
 KNOWN_FAILURES: dict[tuple[str, str], str] = {
-    ("no_external_urls", "plot-altair"): "#8: Altair loads Vega from a CDN",
     ("unique_ids", "two-matplotlib-plots"): "#56: Matplotlib SVGs reuse ids such as figure_1",
     ("user_text_escaped", "report-name"): "#54: report name is not escaped",
     ("user_text_escaped", "datadive"): "#55: DataDive JSON can be closed by </script>",

@@ -5,10 +5,24 @@
   // Plotly sizes a chart when it draws it; one drawn while hidden keeps the 700 px
   // default. Redraw the charts inside a panel once that panel is shown.
   function resizePlots(root) {
+    if (!root) return;
     var plotly = window.Plotly;
-    if (!root || !plotly || !plotly.Plots) return;
-    root.querySelectorAll('.js-plotly-plot').forEach(function (el) { plotly.Plots.resize(el); });
+    if (plotly && plotly.Plots) {
+      root.querySelectorAll('.js-plotly-plot').forEach(function (el) { plotly.Plots.resize(el); });
+    }
+    // Vega sizes width="container" charts on window resize.
+    if (root.querySelector('.bf-altair')) window.dispatchEvent(new Event('resize'));
   }
+
+  // ── Altair (Vega-Lite) ───────────────────────────────────────────────────────
+
+  document.querySelectorAll('.bf-altair').forEach(function (el) {
+    var specEl = el.nextElementSibling;
+    if (!window.vegaEmbed || !specEl) return;
+    // No actions menu: it links to the online Vega editor.
+    window.vegaEmbed(el, JSON.parse(specEl.textContent), { actions: false, renderer: 'svg' })
+      .catch(function (err) { el.textContent = 'This chart could not be drawn: ' + err; });
+  });
 
   // ── Select / tabs ───────────────────────────────────────────────────────────
 
