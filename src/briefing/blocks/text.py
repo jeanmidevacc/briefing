@@ -138,10 +138,20 @@ class Formula(EmbeddedTextBlock):
 class BigNumber(Block):
     """KPI display block — shows a headline metric with optional change indicator.
 
+    Args:
+        heading: The metric's name.
+        value: The headline value.
+        change: Optional change to show under the value, e.g. ``"+3%"``.
+        is_upward_change: The arrow: ``True`` shows ▲, ``False`` shows ▼.
+        is_positive_intent: The colour, when it shouldn't follow the arrow:
+            ``True`` is green (good news), ``False`` is red (bad news). Leave it
+            ``None`` and the colour follows the arrow (▲ green, ▼ red).
+
     Example::
 
-        fl.BigNumber("Revenue", "$4.2M", change="-12%", is_upward_change=False)
-        fl.BigNumber("Accuracy", 0.924)
+        bf.BigNumber("Revenue", "$4.2M", change="-12%", is_upward_change=False)
+        bf.BigNumber("Return Rate", "8.0 %", change="+0.2%", is_upward_change=True, is_positive_intent=False)
+        bf.BigNumber("Accuracy", 0.924)
     """
 
     def __init__(
@@ -150,6 +160,7 @@ class BigNumber(Block):
         value: str | int | float,
         change: str | None = None,
         is_upward_change: bool | None = None,
+        is_positive_intent: bool | None = None,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
@@ -164,6 +175,7 @@ class BigNumber(Block):
         self.value = value
         self.change = change
         self.is_upward_change = is_upward_change
+        self.is_positive_intent = is_positive_intent
 
 
 class AlertLevel(StrEnum):

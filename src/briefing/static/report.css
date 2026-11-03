@@ -190,20 +190,29 @@ body {
 
 /* ── Code block ───────────────────────────────────────────────────────────── */
 .bf-code {
-  background: #1e1e2e;
+  background: var(--bf-surface);
+  border: 1px solid var(--bf-border);
   border-radius: var(--bf-radius);
   overflow: hidden;
+  /* Token colours: a fixed hue mixed with the theme's text colour, so they turn
+     dark on light themes and light on dark ones. */
+  --bf-code-keyword:  color-mix(in oklab, #7c3aed 55%, var(--bf-text));
+  --bf-code-string:   color-mix(in oklab, #15803d 55%, var(--bf-text));
+  --bf-code-number:   color-mix(in oklab, #c2410c 55%, var(--bf-text));
+  --bf-code-builtin:  color-mix(in oklab, #0e7490 55%, var(--bf-text));
+  --bf-code-function: color-mix(in oklab, var(--bf-accent) 70%, var(--bf-text));
+  --bf-code-comment:  color-mix(in oklab, var(--bf-muted) 80%, var(--bf-text));
 }
 .bf-code__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0.4rem 1rem;
-  background: rgba(255 255 255 / 0.05);
+  background: color-mix(in oklab, var(--bf-border) 35%, transparent);
   font-size: 0.75rem;
-  color: #7f849c;
+  color: var(--bf-muted);
   font-family: ui-monospace, monospace;
-  border-bottom: 1px solid rgba(255 255 255 / 0.07);
+  border-bottom: 1px solid var(--bf-border);
 }
 .bf-code pre {
   margin: 0;
@@ -214,15 +223,32 @@ body {
   font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
   font-size: 0.875rem;
   line-height: 1.65;
-  color: #cdd6f4;
+  color: var(--bf-text);
 }
+/* Pygments token classes (short names). */
+.bf-code .k, .bf-code .kc, .bf-code .kd, .bf-code .kn, .bf-code .kp, .bf-code .kr,
+.bf-code .ow { color: var(--bf-code-keyword); font-weight: 600; }
+.bf-code .s, .bf-code .s1, .bf-code .s2, .bf-code .sa, .bf-code .sb, .bf-code .sc,
+.bf-code .sd, .bf-code .se, .bf-code .sh, .bf-code .si, .bf-code .sx, .bf-code .sr,
+.bf-code .ss, .bf-code .dl { color: var(--bf-code-string); }
+.bf-code .m, .bf-code .mb, .bf-code .mf, .bf-code .mh, .bf-code .mi, .bf-code .mil,
+.bf-code .mo { color: var(--bf-code-number); }
+.bf-code .nb, .bf-code .bp, .bf-code .nd, .bf-code .kt { color: var(--bf-code-builtin); }
+.bf-code .nf, .bf-code .fm, .bf-code .nc, .bf-code .nn, .bf-code .ne { color: var(--bf-code-function); }
+.bf-code .c, .bf-code .c1, .bf-code .cm, .bf-code .cp, .bf-code .cpf, .bf-code .ch,
+.bf-code .cs { color: var(--bf-code-comment); font-style: italic; }
+.bf-code .gi { color: var(--bf-code-string); }
+.bf-code .gd { color: var(--bf-code-number); }
 .bf-code__caption {
   padding: 0.4rem 1rem;
   font-size: 0.8rem;
-  color: #7f849c;
+  color: var(--bf-muted);
   text-align: center;
-  border-top: 1px solid rgba(255 255 255 / 0.07);
+  border-top: 1px solid var(--bf-border);
 }
+
+/* ── Altair (drawn in the page by vega-embed) ─────────────────────────────── */
+.bf-altair { width: 100%; display: flex; }
 
 /* ── Formula ──────────────────────────────────────────────────────────────── */
 .bf-formula {
@@ -287,6 +313,9 @@ body {
 }
 .bf-bignumber__change--up   { color: #16a34a; }
 .bf-bignumber__change--down { color: #dc2626; }
+/* is_positive_intent sets the colour apart from the arrow; declared later, so it wins. */
+.bf-bignumber__change--good { color: #16a34a; }
+.bf-bignumber__change--bad  { color: #dc2626; }
 
 /* ── Alert ────────────────────────────────────────────────────────────────── */
 .bf-alert {

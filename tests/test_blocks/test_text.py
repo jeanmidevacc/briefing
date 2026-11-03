@@ -205,3 +205,8 @@ class TestAlert:
     def test_message_stored(self):
         b = Alert("Data drift detected.")
         assert b.message == "Data drift detected."
+
+
+def test_bignumber_positive_intent_defaults_to_none() -> None:
+    assert BigNumber("A", 1).is_positive_intent is None
+    assert BigNumber("A", 1, change="+1%", is_upward_change=True, is_positive_intent=False).is_positive_intent is False

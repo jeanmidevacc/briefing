@@ -54,6 +54,8 @@ classifiers = [
 dependencies = [
     "jinja2>=3.1",
     "markdown-it-py>=3.0",
+    # Code: syntax highlighting at render time, coloured by the theme
+    "pygments>=2.15",
     # Formula: LaTeX → MathML at render time (pure Python, MIT, no dependencies)
     "latex2mathml>=3.77",
 ]
@@ -74,11 +76,12 @@ lab = ["pandas>=2.0"]
 # The `Plot` block is a bring-your-own-figure escape hatch. Install the plotting
 # library you actually use; briefing never imports one unless you pass its figure.
 plotly = ["plotly>=5.0"]
-altair = ["altair>=5.0"]
+# vl-convert-python supplies the Vega runtime that briefing embeds, so charts work offline
+altair = ["altair>=5.0", "vl-convert-python>=1.0"]
 bokeh = ["bokeh>=3.0"]
 matplotlib = ["matplotlib>=3.7"]
 # pip install briefing[charts] — every supported Plot backend at once
-charts = ["plotly>=5.0", "altair>=5.0", "bokeh>=3.0", "matplotlib>=3.7"]
+charts = ["plotly>=5.0", "altair>=5.0", "vl-convert-python>=1.0", "bokeh>=3.0", "matplotlib>=3.7"]
 # pip install briefing[email]
 email = [
     "premailer>=3.10",
@@ -101,6 +104,7 @@ dev = [
     "plotly>=5.0",
     "matplotlib>=3.7",
     "altair>=5.0",
+    "vl-convert-python>=1.0",
     # browser tests (pytest -m browser); run `playwright install chromium` once
     "pytest-playwright>=0.5",
 ]
@@ -140,7 +144,7 @@ warn_unused_configs = true
 [[tool.mypy.overrides]]
 module = [
     "plotly.*", "altair.*", "bokeh.*", "matplotlib.*", "seaborn.*", "plotnine.*",
-    "markdown_it.*",
+    "markdown_it.*", "pygments.*",
 ]
 ignore_missing_imports = true
 

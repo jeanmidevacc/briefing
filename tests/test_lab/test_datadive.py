@@ -200,3 +200,34 @@ class TestDataDiveInReport:
             assert not str(tag.get("src", "")).startswith("http")
         for tag in soup.find_all("link", href=True):
             assert not str(tag.get("href", "")).startswith("http")
+
+
+# ── facets are not drawn yet (#6) ─────────────────────────────────────────────
+
+
+class TestFacetParameters:
+    @pytest.mark.parametrize("param", ["facet_row", "facet_col"])
+    def test_passing_a_facet_warns_and_points_to_v2(self, simple_df, param):
+        with pytest.warns(UserWarning, match=rf"{param}.*not drawn.*DataDive v2.*issues/16"):
+            if param == "facet_row":
+                DataDive(simple_df, facet_row="cat")
+            else:
+                DataDive(simple_df, facet_col="cat")
+
+    def test_both_facets_warn_once(self, simple_df):
+        with pytest.warns(UserWarning, match="facet_row and facet_col") as record:
+            DataDive(simple_df, facet_row="cat", facet_col="cat")
+        assert len([w for w in record if "facet" in str(w.message)]) == 1
+
+    def test_no_warning_without_facets(self, simple_df):
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            DataDive(simple_df)
+
+    def test_unknown_facet_column_still_raises(self, simple_df):
+        from briefing import BriefingError
+
+        with pytest.raises(BriefingError, match="facet_row"):
+            DataDive(simple_df, facet_row="nope")

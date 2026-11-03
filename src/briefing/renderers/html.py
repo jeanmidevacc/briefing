@@ -82,10 +82,24 @@ def _render_html(block: HTML, _: _IdGen) -> str:
     return f'<div class="bf-block bf-html">{block.content}</div>'
 
 
+def _highlight(code: str, language: str) -> str:
+    """Return *code* as Pygments token ``<span>``s (escaped); plain escaped text for an unknown language."""
+    from pygments import highlight
+    from pygments.formatters import HtmlFormatter
+    from pygments.lexers import get_lexer_by_name
+    from pygments.util import ClassNotFound
+
+    try:
+        lexer = get_lexer_by_name(language, stripnl=False)
+    except ClassNotFound:
+        return _html.escape(code)
+    return str(highlight(code, lexer, HtmlFormatter(nowrap=True))).removesuffix("\n")
+
+
 @renderer_for(Code)
 def _render_code(block: Code, _: _IdGen) -> str:
     lang = _html.escape(block.language)
-    code = _html.escape(block.content)
+    code = _highlight(block.content, block.language)
     header = f'<div class="bf-code__header"><span>{lang}</span></div>'
     caption = (
         f'<div class="bf-code__caption">{_html.escape(block.caption)}</div>'
@@ -136,8 +150,12 @@ def _render_bignumber(block: BigNumber, _: _IdGen) -> str:
     if block.change is not None:
         direction = "up" if block.is_upward_change else "down"
         arrow = "▲" if block.is_upward_change else "▼"
+        # Without is_positive_intent the colour follows the arrow (the --up/--down class).
+        tone = ""
+        if block.is_positive_intent is not None:
+            tone = " bf-bignumber__change--good" if block.is_positive_intent else " bf-bignumber__change--bad"
         change_html = (
-            f'<div class="bf-bignumber__change bf-bignumber__change--{direction}">'
+            f'<div class="bf-bignumber__change bf-bignumber__change--{direction}{tone}">'
             f"{arrow} {_html.escape(block.change)}"
             f"</div>"
         )

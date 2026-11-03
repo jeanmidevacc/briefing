@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `BigNumber(is_positive_intent=...)` sets the change colour apart from the arrow, so
+  "went up, and that's bad" shows ▲ in red. Calls without it render as before (#14).
+
+### Deprecated
+
+- `Plot(scale=...)` never had an effect. It now emits a `DeprecationWarning` and will be
+  removed after 0.2: size the figure in its plotting library instead, for example
+  Matplotlib's `figsize` (#7).
+
 ### Fixed
 
 - `mypy src/briefing tests` passes again with beautifulsoup4's own type hints;
@@ -28,6 +39,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Text` renders markdown pipe tables, styled like `Table` blocks (#4).
 - `HTML` blocks get the same paragraph, list, heading, link, code, blockquote and
   table spacing as `Text`, instead of none at all; inline styles still win (#47).
+- `Code` blocks are syntax-highlighted with Pygments (new core dependency). Token
+  colours and the block itself follow the theme, light or dark, instead of a fixed
+  dark palette; an unknown language shows plain text (#5).
+- A Plotly chart inside a `Toggle` fills its width when the toggle opens, instead of
+  staying at Plotly's 700 px default. Charts are also resized when a tab or dropdown
+  panel is shown (#9).
+- Altair charts work offline: the Vega runtime is embedded once per report (about
+  880 KB) and charts are drawn in the page instead of a CDN-loading iframe. The
+  `altair` and `charts` extras now include `vl-convert-python`, which supplies the
+  runtime; without it an Altair chart shows an install hint. The offline warning is
+  gone (#8).
+- `DataDive` warns when `facet_row` or `facet_col` is passed: they were validated, then
+  silently ignored. Faceting is planned for DataDive v2; the README no longer lists them (#6).
 - `Formula` now displays typeset math: LaTeX is converted to MathML when the report is
   rendered, with no JavaScript. Before, readers saw the raw `\(...\)` source.
   LaTeX that can't be converted shows its source with a visible note and a

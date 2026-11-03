@@ -210,7 +210,8 @@ bf.BigNumber("Accuracy", 0.924)   # no change indicator
 | `heading` | `str` | required | Metric label |
 | `value` | `str \| int \| float` | required | Headline value |
 | `change` | `str` | `None` | Delta string, e.g. `"+3.1%"` |
-| `is_upward_change` | `bool` | `None` | `True` = green arrow, `False` = red arrow. Required if `change` is set. |
+| `is_upward_change` | `bool` | `None` | The arrow: `True` = ▲, `False` = ▼. Required if `change` is set. |
+| `is_positive_intent` | `bool` | `None` | The colour, when it shouldn't follow the arrow: `True` = green, `False` = red. `None`: ▲ green, ▼ red. |
 
 > If `change` is provided without `is_upward_change` a warning is issued and no arrow is shown.
 
@@ -347,7 +348,7 @@ Library-agnostic chart block. Auto-detects the figure type at render time:
 ```python
 bf.Plot(plotly_fig, caption="Revenue over time")
 bf.Plot(altair_chart, label="Chart", responsive=True)
-bf.Plot(mpl_fig, scale=1.5)
+bf.Plot(mpl_fig)  # size it in Matplotlib: plt.subplots(figsize=(8, 4))
 ```
 
 | Parameter | Type | Default | Description |
@@ -355,7 +356,7 @@ bf.Plot(mpl_fig, scale=1.5)
 | `figure` | any | required | Figure object from Plotly, Altair, Matplotlib, or Bokeh |
 | `caption` | `str` | `None` | Caption shown below the chart |
 | `responsive` | `bool` | `True` | Scale chart to fill container width |
-| `scale` | `float` | `1.0` | Scale multiplier (Matplotlib/static figures) |
+| `scale` | `float` | `None` | **Deprecated**, no effect, removed after 0.2. Size the figure in its library (e.g. Matplotlib `figsize`) |
 
 ---
 
@@ -425,7 +426,8 @@ bf.lab.DataProfile(df, max_categories=10)        # cap top-N bars for categorica
 
 #### `bf.lab.DataDive`: Interactive dot explorer
 
-Each DataFrame row becomes a dot. Dropdowns let the viewer dynamically change which columns drive X, Y, colour, and facets, similar to Google Facets Dive.
+Each DataFrame row becomes a dot. Dropdowns let the viewer dynamically change which columns drive X, Y and colour, similar to Google Facets Dive. (Faceting into rows
+and columns is planned for DataDive v2.)
 
 ```python
 bf.lab.DataDive(df)                                              # auto-selects axes
@@ -439,8 +441,6 @@ bf.lab.DataDive(df, x="region", y="channel", color="product", layout="tile")
 | `x` | `str` | `None` | Initial X-axis column |
 | `y` | `str` | `None` | Initial Y-axis column |
 | `color` | `str` | `None` | Initial colour column |
-| `facet_row` | `str` | `None` | Column to facet into rows |
-| `facet_col` | `str` | `None` | Column to facet into columns |
 | `layout` | `str` | `"scatter"` | `"scatter"` (2-D axes) or `"tile"` (packed dot grid) |
 | `max_rows` | `int` | `10 000` | Rows beyond this are sampled with a warning |
 
@@ -526,7 +526,8 @@ bf.save(
             bf.BigNumber("Total Revenue", "€ 1 260 000", change="+12.4%", is_upward_change=True),
             bf.BigNumber("Units Sold",    "12 640",      change="+3.1%",  is_upward_change=True),
             bf.BigNumber("Avg Margin",    "31.2 %",      change="-0.8%",  is_upward_change=False),
-            bf.BigNumber("Return Rate",   "8.0 %",       change="+0.2%",  is_upward_change=False),
+            bf.BigNumber("Return Rate",   "8.0 %",       change="+0.2%",  is_upward_change=True,
+                         is_positive_intent=False),  # up, but bad news: ▲ in red
             columns=4,
         ),
 
