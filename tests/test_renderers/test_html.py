@@ -186,6 +186,46 @@ class TestCodeRendering:
 # ── BigNumber block ───────────────────────────────────────────────────────────
 
 
+class TestBigNumberColour:
+    """The arrow follows is_upward_change; the colour can follow is_positive_intent (#14)."""
+
+    @staticmethod
+    def _fragment(block: BigNumber) -> str:
+        from briefing.renderers.html import _render_bignumber
+        from briefing.renderers.registry import IdGen
+
+        return _render_bignumber(block, IdGen())
+
+    def test_existing_calls_render_unchanged(self):
+        # Exact output of 0.1.0 for calls that don't use the new flag.
+        assert self._fragment(BigNumber("Revenue", "$4.2M", change="-12%", is_upward_change=False)) == (
+            '<div class="bf-block bf-bignumber"><div class="bf-bignumber__heading">Revenue</div>'
+            '<div class="bf-bignumber__value">$4.2M</div>'
+            '<div class="bf-bignumber__change bf-bignumber__change--down">▼ -12%</div></div>'
+        )
+        assert self._fragment(BigNumber("Users", "142K", change="+3%", is_upward_change=True)) == (
+            '<div class="bf-block bf-bignumber"><div class="bf-bignumber__heading">Users</div>'
+            '<div class="bf-bignumber__value">142K</div>'
+            '<div class="bf-bignumber__change bf-bignumber__change--up">▲ +3%</div></div>'
+        )
+
+    @pytest.mark.parametrize(
+        ("upward", "positive", "arrow", "tone"),
+        [
+            (True, True, "▲", "good"),  # went up, and that's good (revenue)
+            (True, False, "▲", "bad"),  # went up, and that's bad (return rate)
+            (False, True, "▼", "good"),  # went down, and that's good (churn)
+            (False, False, "▼", "bad"),  # went down, and that's bad (revenue)
+        ],
+    )
+    def test_arrow_and_colour_are_independent(self, upward, positive, arrow, tone):
+        soup = render(blocks(BigNumber("KPI", 1, change="+1%", is_upward_change=upward, is_positive_intent=positive)))
+        change = find_one(soup, ".bf-bignumber__change")
+        assert change.get_text().startswith(arrow)
+        assert f"bf-bignumber__change--{tone}" in classes(change)
+        assert f"bf-bignumber__change--{'up' if upward else 'down'}" in classes(change)
+
+
 class TestBigNumberRendering:
     def test_value_present(self):
         soup = render(blocks(BigNumber("Revenue", "$4.2M")))
