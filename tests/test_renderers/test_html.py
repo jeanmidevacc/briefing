@@ -13,12 +13,9 @@ from briefing.blocks.layout import Briefing, Group, Select, SelectType, Toggle
 from briefing.blocks.text import HTML, Alert, AlertLevel, BigNumber, Code, Text
 from briefing.renderers.formatting import Formatting, Width
 from briefing.renderers.html import render_report
+from tests.html_helpers import attr, classes, find_one, parse
 
 # ── helpers ───────────────────────────────────────────────────────────────────
-
-
-def parse(html: str) -> BeautifulSoup:
-    return BeautifulSoup(html, "html.parser")
 
 
 def render(blocks: Briefing, **kwargs) -> BeautifulSoup:
@@ -36,17 +33,17 @@ class TestSelfContained:
     def test_no_external_script_src(self):
         soup = render(blocks(Text("hi")))
         for tag in soup.find_all("script", src=True):
-            assert not tag["src"].startswith("http"), f"External script: {tag['src']}"
+            assert not attr(tag, "src").startswith("http"), f"External script: {attr(tag, 'src')}"
 
     def test_no_external_link_href(self):
         soup = render(blocks(Text("hi")))
         for tag in soup.find_all("link", href=True):
-            assert not tag["href"].startswith("http"), f"External link: {tag['href']}"
+            assert not attr(tag, "href").startswith("http"), f"External link: {attr(tag, 'href')}"
 
     def test_no_external_img_src(self):
         soup = render(blocks(Text("hi")))
         for tag in soup.find_all("img", src=True):
-            assert not tag["src"].startswith("http"), f"External image: {tag['src']}"
+            assert not attr(tag, "src").startswith("http"), f"External image: {attr(tag, 'src')}"
 
     def test_output_is_parseable_html(self):
         soup = render(blocks(Text("# Hello")))
@@ -60,7 +57,7 @@ class TestSelfContained:
 class TestDocumentStructure:
     def test_title_in_head(self):
         soup = render(blocks(Text("hi")), name="My Report")
-        assert soup.find("title").text == "My Report"
+        assert find_one(soup, "title").text == "My Report"
 
     def test_header_shown_when_name_not_default(self):
         soup = render(blocks(Text("hi")), name="Sales Q1")
@@ -97,8 +94,7 @@ class TestDocumentStructure:
 class TestTextRendering:
     def test_markdown_h1_rendered(self):
         soup = render(blocks(Text("# Hello World")))
-        assert soup.find("h1") is not None
-        assert "Hello World" in soup.find("h1").text
+        assert "Hello World" in find_one(soup, "h1").text
 
     def test_markdown_bold(self):
         soup = render(blocks(Text("**bold text**")))
@@ -120,8 +116,7 @@ class TestTextRendering:
 class TestHTMLRendering:
     def test_raw_html_preserved(self):
         soup = render(blocks(HTML("<b>bold</b>")))
-        assert soup.find("b") is not None
-        assert soup.find("b").text == "bold"
+        assert find_one(soup, "b").text == "bold"
 
     def test_wrapped_in_fl_html(self):
         soup = render(blocks(HTML("<span>x</span>")))
@@ -139,8 +134,7 @@ class TestCodeRendering:
 
     def test_language_in_class(self):
         soup = render(blocks(Code("SELECT 1", language="sql")))
-        code = soup.find("code")
-        assert "language-sql" in code.get("class", [])
+        assert "language-sql" in classes(find_one(soup, "code"))
 
     def test_caption_rendered(self):
         soup = render(blocks(Code("x", caption="My snippet")))
@@ -209,14 +203,14 @@ class TestGroupRendering:
 
     def test_column_count_in_style(self):
         soup = render(blocks(Group(Text("a"), Text("b"), columns=2)))
-        group = soup.find(class_="bf-group")
-        assert "--bf-cols: 2" in group.get("style", "")
+        group = find_one(soup, ".bf-group")
+        assert "--bf-cols: 2" in attr(group, "style")
 
     def test_custom_widths_in_style(self):
         soup = render(blocks(Group(Text("a"), Text("b"), columns=2, widths=[3, 1])))
-        group = soup.find(class_="bf-group")
-        assert "3fr" in group.get("style", "")
-        assert "1fr" in group.get("style", "")
+        group = find_one(soup, ".bf-group")
+        assert "3fr" in attr(group, "style")
+        assert "1fr" in attr(group, "style")
 
     def test_children_rendered(self):
         soup = render(blocks(Group(Text("**hello**"), Text("world"), columns=2)))
@@ -278,8 +272,8 @@ class TestToggleRendering:
 
     def test_aria_expanded_false_by_default(self):
         soup = render(blocks(Toggle(Text("x"), label="T")))
-        header = soup.find(class_="bf-toggle__header")
-        assert header.get("aria-expanded") == "false"
+        header = find_one(soup, ".bf-toggle__header")
+        assert attr(header, "aria-expanded") == "false"
 
 
 # ── public API ────────────────────────────────────────────────────────────────

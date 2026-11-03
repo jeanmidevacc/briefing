@@ -8,6 +8,7 @@ from briefing._error import BriefingError
 from briefing.blocks.asset import Plot
 from briefing.blocks.layout import Briefing
 from briefing.renderers.plot import detect_library, render_figure, scan_for_plots
+from tests.html_helpers import attr, classes, find_one
 
 # ── detect_library ────────────────────────────────────────────────────────────
 
@@ -123,8 +124,7 @@ class TestRenderMatplotlib:
         fig, _ = self.mpl.subplots()
         html = render_figure(Plot(fig))
         soup = BeautifulSoup(html, "html.parser")
-        assert soup.find("figure") is not None
-        assert "bf-plot" in soup.find("figure")["class"]
+        assert "bf-plot" in classes(find_one(soup, "figure"))
 
     def test_responsive_removes_fixed_width(self):
         fig, _ = self.mpl.subplots()
@@ -169,7 +169,7 @@ class TestRenderMatplotlib:
         html = render_figure(Plot(fig))
         soup = BeautifulSoup(html, "html.parser")
         for tag in soup.find_all(src=True):
-            assert not tag["src"].startswith("http"), f"External src found: {tag['src']}"
+            assert not attr(tag, "src").startswith("http"), f"External src found: {attr(tag, 'src')}"
 
 
 # ── render_figure (plotly) ────────────────────────────────────────────────────
