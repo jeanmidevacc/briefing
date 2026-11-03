@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `DataTable` no longer crashes on infinite values: `inf` and `-inf` display as such and
+  sort at the ends of the column (#60).
 - `mypy src/briefing tests` passes again with beautifulsoup4's own type hints;
   the `dev` extra now requires `beautifulsoup4>=4.14` (#48).
 - pandas 3: `DataDive` trims long strings to 64 characters again. pandas 3's

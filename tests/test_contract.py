@@ -78,6 +78,14 @@ def _over_frame(make: Callable[[pd.DataFrame], Block], fixture: str) -> Build:
     return lambda df: bf.Briefing(make(df(fixture)))
 
 
+def _infinite_frame() -> pd.DataFrame:
+    return pd.DataFrame({"x": [1.0, float("inf"), float("-inf"), None, 2.5], "n": [1, 2, 3, 4, 5]})
+
+
+def _over_infinite(make: Callable[[pd.DataFrame], Block]) -> Build:
+    return lambda _: bf.Briefing(make(_infinite_frame()))
+
+
 SCENARIOS: dict[str, Build] = {
     "text": lambda _: bf.Briefing(bf.Text("# Title\n\nSome *markdown* with a [link](https://example.com).")),
     "text-markdown-table": lambda _: bf.Briefing(bf.Text("| a | b |\n| --- | --- |\n| 1 | 2 |")),
@@ -123,6 +131,7 @@ SCENARIOS: dict[str, Build] = {
         for kind, make in FRAME_BLOCKS.items()
         for fixture in FRAME_FIXTURES
     },
+    **{f"{kind}-infinite": _over_infinite(make) for kind, make in FRAME_BLOCKS.items()},
     "everything": lambda df: bf.Briefing(
         bf.Text("# Everything"),
         bf.Group(bf.BigNumber("A", 1), bf.Alert("note"), columns=2),
@@ -141,6 +150,8 @@ SCENARIOS: dict[str, Build] = {
 KNOWN_FAILURES: dict[tuple[str, str], str] = {
     ("unique_ids", "two-matplotlib-plots"): "#56: Matplotlib SVGs reuse ids such as figure_1",
     **{("generator_meta", s): "#23: no generator meta tag yet" for s in SCENARIOS},
+    **{(rule, "dataprofile-infinite"): "#79: DataProfile crashes on infinite values"
+       for rule in [*RULES, "deterministic"]},
 }
 
 

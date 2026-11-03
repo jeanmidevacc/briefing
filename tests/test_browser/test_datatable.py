@@ -124,3 +124,12 @@ def test_text_sorts_alphabetically(viewer: Viewer) -> None:
     page = viewer.open(bf.Briefing(bf.DataTable(pd.DataFrame({"s": ["pear", "apple", "fig"]}))))
     sort_by(page, 0)
     assert visible_column(page) == ["apple", "fig", "pear"]
+
+
+def test_infinite_values_sort_at_the_ends(viewer: Viewer) -> None:
+    df = pd.DataFrame({"x": [2.0, float("inf"), None, float("-inf"), -1.0]})
+    page = viewer.open(bf.Briefing(bf.DataTable(df)))
+    sort_by(page, 0)
+    assert visible_column(page) == ["-inf", "-1", "2", "inf", ""]
+    sort_by(page, 0)
+    assert visible_column(page) == ["inf", "2", "-1", "-inf", ""]

@@ -44,6 +44,8 @@ def _fmt(val: t.Any) -> str:
     except (TypeError, ValueError, ImportError):
         pass
     if isinstance(val, float):
+        if math.isinf(val):  # int(inf) raises OverflowError
+            return "inf" if val > 0 else "-inf"
         if val == int(val) and abs(val) < 1e15:
             return str(int(val))
         return f"{val:g}"
