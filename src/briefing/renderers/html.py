@@ -241,8 +241,8 @@ def _render_toggle(block: Toggle, idgen: _IdGen) -> str:
 
 
 @renderer_for(Plot)
-def _render_plot(block: Plot, _: _IdGen) -> str:
-    return render_figure(block)
+def _render_plot(block: Plot, idgen: _IdGen) -> str:
+    return render_figure(block, idgen)
 
 
 @renderer_for(Table)
