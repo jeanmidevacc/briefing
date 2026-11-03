@@ -57,8 +57,11 @@ class DataDive(Block):
     """Interactive dot explorer — similar to Google's Facets Dive.
 
     Each row in the DataFrame becomes a dot in a 2-D space. Dropdowns let the
-    viewer dynamically reassign which columns drive X position, Y position,
-    colour and facet rows/columns.
+    viewer dynamically reassign which columns drive X position, Y position and
+    colour.
+
+    ``facet_row`` and ``facet_col`` are accepted but not drawn yet: passing one
+    emits a ``UserWarning``. Faceting is planned for DataDive v2 (#16).
 
     Fully self-contained: the plot is drawn with hand-rolled SVG and vanilla JS
     (no Vega, D3, or CDN). The row data is embedded in the page as JSON.
@@ -109,6 +112,16 @@ class DataDive(Block):
                     f"DataDive: column {col_val!r} (passed as '{col_name}') "
                     f"not found in DataFrame. Available: {list(df.columns)}"
                 )
+
+        facets = [p for p, v in (("facet_row", facet_row), ("facet_col", facet_col)) if v is not None]
+        if facets:
+            warnings.warn(
+                f"DataDive: {' and '.join(facets)} {'are' if len(facets) > 1 else 'is'} accepted but not drawn "
+                "yet; the dots are not split into facets. Faceting is planned for DataDive v2 "
+                "(https://github.com/jeanmidevacc/briefing/issues/16).",
+                UserWarning,
+                stacklevel=2,
+            )
 
         self.df = df
         self.x = x
