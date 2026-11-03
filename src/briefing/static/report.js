@@ -5,9 +5,9 @@
   // Plotly sizes a chart when it draws it; one drawn while hidden keeps the 700 px
   // default. Redraw the charts inside a panel once that panel is shown.
   function resizePlots(root) {
-    var Plotly = window.Plotly;
-    if (!root || !Plotly || !Plotly.Plots) return;
-    root.querySelectorAll('.js-plotly-plot').forEach(function (el) { Plotly.Plots.resize(el); });
+    var plotly = window.Plotly;
+    if (!root || !plotly || !plotly.Plots) return;
+    root.querySelectorAll('.js-plotly-plot').forEach(function (el) { plotly.Plots.resize(el); });
   }
 
   // ── Select / tabs ───────────────────────────────────────────────────────────
