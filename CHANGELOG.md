@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DataTable` sorts by value: dates chronologically, numbers by their full value
   (also when shown as `1.23457e+06` or with thousands separators), and empty cells
   last in both directions. Cells carry a `data-sort` key where the text isn't enough (#2).
+- Reports with Plotly or Matplotlib charts are now byte-identical from one render to
+  the next (with `now=` or `SOURCE_DATE_EPOCH`): Plotly div ids and Matplotlib SVG
+  id salts come from the render, and the SVG no longer embeds its creation date (#10).
 
 ## [0.1.0] - 2026-09-09
 

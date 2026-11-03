@@ -29,6 +29,7 @@ import typing as t
 import warnings
 
 from briefing._error import BriefingError
+from briefing.renderers.registry import IdGen
 
 if t.TYPE_CHECKING:
     from briefing.blocks.asset import Plot
@@ -115,12 +116,17 @@ def _plotlyjs_script() -> str:
 # ── per-library renderers ─────────────────────────────────────────────────────
 
 
-def _render_matplotlib(fig: t.Any, responsive: bool) -> str:
+def _render_matplotlib(fig: t.Any, responsive: bool, salt: str) -> str:
+    import matplotlib
+
     # Accept both Figure and Axes-like objects (seaborn, plotnine, etc.)
     actual = fig.get_figure() if (hasattr(fig, "get_figure") and not hasattr(fig, "savefig")) else fig
 
+    # A salt from the render's IdGen (instead of a random one) and no date
+    # metadata keep the SVG byte-identical from one render to the next.
     buf = io.StringIO()
-    actual.savefig(buf, format="svg", bbox_inches="tight")
+    with matplotlib.rc_context({"svg.hashsalt": salt}):
+        actual.savefig(buf, format="svg", bbox_inches="tight", metadata={"Date": None})
     svg = buf.getvalue()
     buf.close()
 
@@ -136,7 +142,7 @@ def _render_matplotlib(fig: t.Any, responsive: bool) -> str:
     return svg
 
 
-def _render_plotly(fig: t.Any, responsive: bool) -> str:
+def _render_plotly(fig: t.Any, responsive: bool, div_id: str) -> str:
     try:
         import plotly.io as pio
     except ImportError as exc:
@@ -148,6 +154,7 @@ def _render_plotly(fig: t.Any, responsive: bool) -> str:
             full_html=False,
             include_plotlyjs=False,  # already embedded in <head> via get_runtime_scripts()
             config={"responsive": responsive},
+            div_id=div_id,  # Plotly's default is a random uuid
         )
     )
 
@@ -198,8 +205,13 @@ def _render_bokeh(fig: t.Any) -> str:
 # ── public render entry ───────────────────────────────────────────────────────
 
 
-def render_figure(block: Plot) -> str:
-    """Render a :class:`~briefing.Plot` block to a self-contained HTML fragment."""
+def render_figure(block: Plot, idgen: IdGen | None = None) -> str:
+    """Render a :class:`~briefing.Plot` block to a self-contained HTML fragment.
+
+    *idgen* is the render pass's id generator; chart ids and salts come from it
+    so the output is deterministic and unique within the report.
+    """
+    idgen = idgen or IdGen()
     fig = block.figure
 
     # Normalise Axes → Figure for matplotlib-compatible objects
@@ -217,9 +229,9 @@ def render_figure(block: Plot) -> str:
 
     try:
         if lib == "matplotlib":
-            inner = _render_matplotlib(fig, block.responsive)
+            inner = _render_matplotlib(fig, block.responsive, salt=idgen.next("mpl"))
         elif lib == "plotly":
-            inner = _render_plotly(fig, block.responsive)
+            inner = _render_plotly(fig, block.responsive, div_id=idgen.next("plotly"))
         elif lib == "altair":
             inner = _render_altair(fig, block.responsive)
         elif lib == "bokeh":
