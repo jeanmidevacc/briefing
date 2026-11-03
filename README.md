@@ -203,7 +203,8 @@ bf.BigNumber("Accuracy", 0.924)   # no change indicator
 | `heading` | `str` | required | Metric label |
 | `value` | `str \| int \| float` | required | Headline value |
 | `change` | `str` | `None` | Delta string, e.g. `"+3.1%"` |
-| `is_upward_change` | `bool` | `None` | `True` = green arrow, `False` = red arrow. Required if `change` is set. |
+| `is_upward_change` | `bool` | `None` | The arrow: `True` = ▲, `False` = ▼. Required if `change` is set. |
+| `is_positive_intent` | `bool` | `None` | The colour, when it shouldn't follow the arrow: `True` = green, `False` = red. `None`: ▲ green, ▼ red. |
 
 > If `change` is provided without `is_upward_change` a warning is issued and no arrow is shown.
 
@@ -518,7 +519,8 @@ bf.save(
             bf.BigNumber("Total Revenue", "€ 1 260 000", change="+12.4%", is_upward_change=True),
             bf.BigNumber("Units Sold",    "12 640",      change="+3.1%",  is_upward_change=True),
             bf.BigNumber("Avg Margin",    "31.2 %",      change="-0.8%",  is_upward_change=False),
-            bf.BigNumber("Return Rate",   "8.0 %",       change="+0.2%",  is_upward_change=False),
+            bf.BigNumber("Return Rate",   "8.0 %",       change="+0.2%",  is_upward_change=True,
+                         is_positive_intent=False),  # up, but bad news: ▲ in red
             columns=4,
         ),
 

@@ -138,8 +138,12 @@ def _render_bignumber(block: BigNumber, _: _IdGen) -> str:
     if block.change is not None:
         direction = "up" if block.is_upward_change else "down"
         arrow = "▲" if block.is_upward_change else "▼"
+        # Without is_positive_intent the colour follows the arrow (the --up/--down class).
+        tone = ""
+        if block.is_positive_intent is not None:
+            tone = " bf-bignumber__change--good" if block.is_positive_intent else " bf-bignumber__change--bad"
         change_html = (
-            f'<div class="bf-bignumber__change bf-bignumber__change--{direction}">'
+            f'<div class="bf-bignumber__change bf-bignumber__change--{direction}{tone}">'
             f"{arrow} {_html.escape(block.change)}"
             f"</div>"
         )

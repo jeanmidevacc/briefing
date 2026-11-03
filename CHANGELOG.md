@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `BigNumber(is_positive_intent=...)` sets the change colour apart from the arrow, so
+  "went up, and that's bad" shows ▲ in red. Calls without it render as before (#14).
+
 ### Deprecated
 
 - `Plot(scale=...)` never had an effect. It now emits a `DeprecationWarning` and will be

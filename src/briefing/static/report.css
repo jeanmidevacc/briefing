@@ -300,6 +300,9 @@ body {
 }
 .bf-bignumber__change--up   { color: #16a34a; }
 .bf-bignumber__change--down { color: #dc2626; }
+/* is_positive_intent sets the colour apart from the arrow; declared later, so it wins. */
+.bf-bignumber__change--good { color: #16a34a; }
+.bf-bignumber__change--bad  { color: #dc2626; }
 
 /* ── Alert ────────────────────────────────────────────────────────────────── */
 .bf-alert {
