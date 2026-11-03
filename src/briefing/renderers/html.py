@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import html as _html
 import os
+import warnings
 from datetime import UTC, datetime
 from importlib.resources import files
 
@@ -27,6 +28,7 @@ from briefing.blocks.base import Block
 from briefing.blocks.layout import Briefing, Group, Select, SelectType, Toggle, VAlign
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
 from briefing.renderers.formatting import Formatting
+from briefing.renderers.formula import latex_to_mathml
 from briefing.renderers.normalize import normalize
 from briefing.renderers.plot import get_runtime_scripts, render_figure, scan_for_plots
 from briefing.renderers.registry import (
@@ -115,18 +117,28 @@ def _render_code(block: Code, _: _IdGen) -> str:
 
 @renderer_for(Formula)
 def _render_formula(block: Formula, _: _IdGen) -> str:
-    content = _html.escape(block.content)
     caption = (
         f'<div class="bf-formula__caption">{_html.escape(block.caption)}</div>'
         if block.caption
         else ""
     )
-    return (
-        f'<div class="bf-block bf-formula">'
-        f'<span class="bf-formula__content">\\({content}\\)</span>'
-        f"{caption}"
-        f"</div>"
-    )
+    mathml = latex_to_mathml(block.content)
+    if mathml is not None:
+        content = f'<div class="bf-formula__content">{mathml}</div>'
+    else:
+        warnings.warn(
+            f"Formula: couldn't convert {block.content[:80]!r} to MathML; the report shows the LaTeX source. "
+            "Check for typos, unbalanced braces or unsupported commands.",
+            UserWarning,
+            stacklevel=2,
+        )
+        content = (
+            '<div class="bf-formula__error" role="note">'
+            "⚠ This formula couldn't be rendered; showing its LaTeX source.</div>"
+            f'<pre class="bf-formula__source"><code>{_html.escape(block.content)}</code></pre>'
+        )
+    return f'<div class="bf-block bf-formula">{content}{caption}</div>'
+
 
 
 @renderer_for(BigNumber)

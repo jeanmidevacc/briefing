@@ -39,7 +39,7 @@ bf.save(report, "q1_analysis.html")
 - **Self-contained HTML**: zero CDN, works offline forever
 - **No plotting or dataframe dependencies in the core**: the report grammar
   renders with a few small pure-Python libraries (Jinja2, markdown-it-py,
-  Pygments). Charts and dataframes are opt-in (see below).
+  Pygments, latex2mathml). Charts and dataframes are opt-in (see below).
 - **Bring-your-own-figure `Plot`**: hand it a Plotly, Altair, Matplotlib or
   Bokeh figure; briefing imports that library only when you pass its figure.
 - **Interactive tables**: sortable, searchable DataTable with client-side pagination
@@ -177,7 +177,14 @@ bf.Code(
 bf.Formula(r"\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i", caption="Sample mean")
 ```
 
-Rendered via MathJax (inlined in the report, no CDN needed).
+Converted to MathML when the report is rendered, so browsers typeset it natively:
+no JavaScript, no network. Supported LaTeX is what
+[`latex2mathml`](https://github.com/roniemartinez/latex2mathml) handles: fractions,
+roots, sub/superscripts, sums and integrals, Greek letters and common symbols,
+`\mathbb`/`\mathrm`-style fonts, accents (`\bar`, `\hat`, …), `\left…\right`, and
+matrix environments (`pmatrix`, `bmatrix`, `cases`, `align`, …). A formula that can't
+be converted (a typo, unbalanced braces, an unknown command, `\href`, or markup in
+`\text{}`) shows its LaTeX source with a note, and Python emits a `UserWarning`.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|

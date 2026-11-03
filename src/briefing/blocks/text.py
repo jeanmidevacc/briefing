@@ -112,7 +112,11 @@ class Code(EmbeddedTextBlock):
 
 
 class Formula(EmbeddedTextBlock):
-    r"""LaTeX formula block (rendered via MathJax in the browser).
+    r"""LaTeX formula block, converted to MathML when the report is rendered.
+
+    Browsers display MathML natively, so the formula needs no JavaScript and
+    no network. LaTeX that can't be converted is shown as source, with a
+    visible note and a ``UserWarning``.
 
     Example::
 

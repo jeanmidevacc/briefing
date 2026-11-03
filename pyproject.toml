@@ -56,6 +56,8 @@ dependencies = [
     "markdown-it-py>=3.0",
     # Code: syntax highlighting at render time, coloured by the theme
     "pygments>=2.15",
+    # Formula: LaTeX → MathML at render time (pure Python, MIT, no dependencies)
+    "latex2mathml>=3.77",
 ]
 
 [project.urls]
