@@ -64,7 +64,7 @@ present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer
 - Blocks take `name=` and `label=` as their last parameters; captions and labels are
   shortened with `_truncate`.
 - Docstrings: one summary line, then Google-style `Args:` and an `Example::` block using
-  the `bf.` prefix. Some old docstrings still say `fl.`; fix them when you touch them.
+  the `bf.` prefix (`tests/test_readme.py` rejects the old `fl.`).
 - Static JavaScript is vanilla ES5 inside an IIFE (`var`, `function`), with no build step
   and no dependency. CSS uses the `--bf-*` variables so every theme applies.
 - Renaming or removing public API: keep the old name in `__init__.__getattr__` with a
@@ -104,7 +104,7 @@ present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer
 - The backlog lives in GitHub issues (#1–#46). Read the issue's Problem, Proposal and
   "Done when" first; a "Decision" section is settled and not to be reopened. Issues
   labelled `needs spec` need a short agreed spec before code.
-- The README describes some features that 0.1.0 doesn't implement yet (see #13). Trust the
-  code and tests over the README.
+- Every ```python block in the README runs in `tests/test_readme.py`, offline, with the
+  names its intro promises (`df`, `fig`, …). Keep README claims true to the code.
 - Reference the issue in commits (`Fix DataTable sort order (#1)`) and keep one issue per
   pull request.
