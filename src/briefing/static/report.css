@@ -74,31 +74,53 @@ body {
 .bf-group--valign-center { align-items: center; }
 .bf-group--valign-bottom { align-items: end; }
 
-/* ── Text (markdown output) ───────────────────────────────────────────────── */
+/* ── Text (markdown output) and HTML blocks share their typography ───────── */
 .bf-text { text-align: var(--bf-text-align); }
 
-.bf-text h1, .bf-text h2, .bf-text h3,
-.bf-text h4, .bf-text h5, .bf-text h6 {
+.bf-text h1,
+.bf-text h2,
+.bf-text h3,
+.bf-text h4,
+.bf-text h5,
+.bf-text h6,
+.bf-html h1,
+.bf-html h2,
+.bf-html h3,
+.bf-html h4,
+.bf-html h5,
+.bf-html h6 {
   margin-top: 1.25em;
   margin-bottom: 0.4em;
   font-weight: 600;
   line-height: 1.3;
   color: var(--bf-text);
 }
-.bf-text h1 { font-size: 1.75rem; margin-top: 0; }
-.bf-text h2 { font-size: 1.35rem; }
-.bf-text h3 { font-size: 1.125rem; }
-.bf-text h4 { font-size: 1rem; }
+.bf-text h1,
+.bf-html h1 { font-size: 1.75rem; margin-top: 0; }
+.bf-text h2,
+.bf-html h2 { font-size: 1.35rem; }
+.bf-text h3,
+.bf-html h3 { font-size: 1.125rem; }
+.bf-text h4,
+.bf-html h4 { font-size: 1rem; }
 
-.bf-text p         { margin-bottom: 0.75rem; }
+.bf-text p,
+.bf-html p         { margin-bottom: 0.75rem; }
 .bf-text ul,
-.bf-text ol        { padding-left: 1.5rem; margin-bottom: 0.75rem; }
-.bf-text li        { margin-bottom: 0.25rem; }
-.bf-text a         { color: var(--bf-accent); text-decoration: underline; }
-.bf-text strong    { font-weight: 600; }
-.bf-text em        { font-style: italic; }
+.bf-text ol,
+.bf-html ul,
+.bf-html ol        { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+.bf-text li,
+.bf-html li        { margin-bottom: 0.25rem; }
+.bf-text a,
+.bf-html a         { color: var(--bf-accent); text-decoration: underline; }
+.bf-text strong,
+.bf-html strong    { font-weight: 600; }
+.bf-text em,
+.bf-html em        { font-style: italic; }
 
-.bf-text code {
+.bf-text code,
+.bf-html code {
   background: var(--bf-surface);
   border: 1px solid var(--bf-border);
   padding: 0.125em 0.4em;
@@ -106,7 +128,8 @@ body {
   font-size: 0.875em;
   font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
 }
-.bf-text pre {
+.bf-text pre,
+.bf-html pre {
   background: #1e1e2e;
   color: #cdd6f4;
   border-radius: var(--bf-radius);
@@ -114,14 +137,16 @@ body {
   overflow-x: auto;
   margin-bottom: 0.75rem;
 }
-.bf-text pre code {
+.bf-text pre code,
+.bf-html pre code {
   background: none;
   border: none;
   padding: 0;
   font-size: 0.875rem;
   color: inherit;
 }
-.bf-text blockquote {
+.bf-text blockquote,
+.bf-html blockquote {
   border-left: 3px solid var(--bf-accent);
   padding: 0.5rem 1rem;
   color: var(--bf-muted);
@@ -130,25 +155,31 @@ body {
   border-radius: 0 var(--bf-radius) var(--bf-radius) 0;
 }
 /* Markdown tables match Table blocks (.bf-table__table), but wrap their text. */
-.bf-text table {
+.bf-text table,
+.bf-html table {
   border-collapse: collapse;
   width: 100%;
   margin-bottom: 0.75rem;
   font-size: 0.875rem;
 }
 .bf-text th,
-.bf-text td {
+.bf-text td,
+.bf-html th,
+.bf-html td {
   border: 1px solid var(--bf-border);
   padding: 0.45rem 0.75rem;
   text-align: left;
 }
-.bf-text th {
+.bf-text th,
+.bf-html th {
   background: var(--bf-surface);
   font-weight: 600;
   color: var(--bf-text);
 }
-.bf-text tr:nth-child(even) td { background: #fafafa; }
-.bf-text hr {
+.bf-text tr:nth-child(even) td,
+.bf-html tr:nth-child(even) td { background: #fafafa; }
+.bf-text hr,
+.bf-html hr {
   border: none;
   border-top: 1px solid var(--bf-border);
   margin: 1.5rem 0;
