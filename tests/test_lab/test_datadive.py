@@ -231,3 +231,36 @@ class TestFacetParameters:
 
         with pytest.raises(BriefingError, match="facet_row"):
             DataDive(simple_df, facet_row="nope")
+
+
+# ── embedded JSON can't be closed by the data (#55) ───────────────────────────
+
+
+class TestEmbeddedJsonIsSafe:
+    HOSTILE = ["</script><img src=x onerror=alert(1)>", "<!--<script>", "a & b > c"]
+
+    def _payloads(self, df: pd.DataFrame) -> tuple[list[dict[str, object]], dict[str, str], BeautifulSoup]:
+        soup = BeautifulSoup(render_datadive(DataDive(df)), "html.parser")
+        data = json.loads(find_one(soup, "script.bf-dd__data").get_text())
+        meta = json.loads(find_one(soup, "script.bf-dd__meta").get_text())
+        return data, meta, soup
+
+    @pytest.mark.parametrize("text", HOSTILE)
+    def test_column_names_round_trip(self, text):
+        data, meta, soup = self._payloads(pd.DataFrame({text: [1, 2], "y": [3, 4]}))
+        assert text in meta and text in data[0]
+        assert soup.find("img") is None
+
+    @pytest.mark.parametrize("text", HOSTILE)
+    def test_cell_values_round_trip(self, text):
+        data, _, soup = self._payloads(pd.DataFrame({"label": [text, "plain"], "y": [3, 4]}))
+        assert data[0]["label"] == text
+        assert soup.find("img") is None
+        assert len(soup.find_all("script")) == 2  # data and meta only
+
+    def test_payloads_have_no_raw_angle_brackets(self):
+        html = render_datadive(DataDive(pd.DataFrame({"</script>": ["<!--"], "y": [1]})))
+        soup = BeautifulSoup(html, "html.parser")
+        for cls in ("bf-dd__data", "bf-dd__meta"):
+            text = find_one(soup, f"script.{cls}").get_text()
+            assert "<" not in text and ">" not in text

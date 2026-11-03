@@ -13,8 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.1] - 2026-11-03
 
 Makes the README true: every feature it describes now works as described,
-offline, and is covered by HTML contract tests and browser tests. New core
-dependencies: Pygments and latex2mathml.
+offline, and is covered by HTML contract tests and browser tests. Also fixes
+two script-injection bugs found by those tests. New core dependencies:
+Pygments and latex2mathml.
+
+### Security
+
+- The report `name` (tab title and header) is now HTML-escaped. Before, markup in it
+  was inserted as-is, so a name such as `<img src=x onerror=...>` ran script (#54).
+- `DataDive` escapes the JSON it embeds, so a column name or value containing
+  `</script>` or `<!--` can no longer end its `<script>` tag and inject markup (#55).
 
 ### Added
 
@@ -34,6 +42,8 @@ dependencies: Pygments and latex2mathml.
 
 ### Fixed
 
+- `DataTable` no longer crashes on infinite values: `inf` and `-inf` display as such and
+  sort at the ends of the column (#60).
 - `mypy src/briefing tests` passes again with beautifulsoup4's own type hints;
   the `dev` extra now requires `beautifulsoup4>=4.14` (#48).
 - pandas 3: `DataDive` trims long strings to 64 characters again. pandas 3's

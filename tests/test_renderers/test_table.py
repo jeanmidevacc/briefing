@@ -242,6 +242,12 @@ class TestDataTableSortKeys:
         assert [td.get_text() for td in first_row] == ["", ""]
         assert [td.get("data-sort") for td in first_row] == [None, None]
 
+    def test_infinity(self):
+        df = pd.DataFrame({"x": [float("inf"), float("-inf"), 1.5]})
+        soup = BeautifulSoup(render_datatable(DataTable(df)), "html.parser")
+        assert [td.get_text() for td in find_one(soup, "tbody").find_all("td")] == ["inf", "-inf", "1.5"]
+        assert self._keys(df) == ["Infinity", "-Infinity", None]
+
     def test_text_and_booleans_have_no_key(self):
         assert self._keys(pd.DataFrame({"s": ["b", "a"], "flag": [True, False]})) == [None, None, None, None]
 

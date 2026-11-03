@@ -309,3 +309,14 @@ class TestRenderReportWithPlot:
         html = render_report(Briefing(Plot(fig), Plot(go.Figure())))
         # plotlyjs bundle should appear exactly once in <head>
         assert html.count("var Plotly") <= 1
+
+
+def test_script_json_round_trips_and_has_no_angle_brackets():
+    import json
+
+    from briefing.renderers.script_json import script_json
+
+    value = {"t": "</script><!-- a & b >", "n": [1, 2.5, None]}
+    text = script_json(value)
+    assert "<" not in text and ">" not in text and "&" not in text
+    assert json.loads(text) == value
