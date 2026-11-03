@@ -367,7 +367,7 @@ def render_report(
     template = _jinja_env.get_template("report.html.j2")
 
     return template.render(
-        report_name=name,
+        report_name=_html.escape(name),
         report_date=now.strftime("%Y-%m-%d %H:%M UTC"),
         report_date_iso=now.isoformat(),
         css_vars=fmt.to_css_vars(),

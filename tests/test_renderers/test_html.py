@@ -59,6 +59,14 @@ class TestDocumentStructure:
         soup = render(blocks(Text("hi")), name="My Report")
         assert find_one(soup, "title").text == "My Report"
 
+    def test_name_is_escaped_in_title_and_header(self):
+        name = 'Q1 </title><script>alert(1)</script><img src=x onerror=alert(1)> & "co"'
+        soup = render(blocks(Text("hi")), name=name)
+        assert soup.find_all("script", string=lambda s: s is not None and "alert" in s) == []
+        assert soup.find_all("img") == []
+        assert find_one(soup, "title").get_text() == name
+        assert find_one(soup, ".bf-report__title").get_text() == name
+
     def test_header_shown_when_name_not_default(self):
         soup = render(blocks(Text("hi")), name="Sales Q1")
         assert soup.find(class_="bf-report__header") is not None

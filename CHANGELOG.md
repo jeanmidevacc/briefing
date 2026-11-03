@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- The report `name` (tab title and header) is now HTML-escaped. Before, markup in it
+  was inserted as-is, so a name such as `<img src=x onerror=...>` ran script (#54).
+
 ### Added
 
 - Notebook previews: every block and `Briefing` has a `_repr_html_`, so it displays itself
