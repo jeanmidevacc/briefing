@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Deprecated
+
+- `Plot(scale=...)` never had an effect. It now emits a `DeprecationWarning` and will be
+  removed after 0.2: size the figure in its plotting library instead, for example
+  Matplotlib's `figsize` (#7).
+
 ### Fixed
 
 - `mypy src/briefing tests` passes again with beautifulsoup4's own type hints;

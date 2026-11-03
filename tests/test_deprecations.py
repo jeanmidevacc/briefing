@@ -49,3 +49,26 @@ def test_lab_block_via_lab_does_not_warn(name: str) -> None:
 def test_unknown_attribute_still_raises_attributeerror() -> None:
     with pytest.raises(AttributeError):
         bf.DefinitelyNotAThing
+
+
+# ── Plot(scale=...) (#7) ──────────────────────────────────────────────────────
+
+
+def test_plot_scale_warns_and_points_to_figsize() -> None:
+    with pytest.warns(DeprecationWarning, match=r"scale=.*removed after 0\.2.*figsize"):
+        bf.Plot(object(), scale=2.0)
+
+
+def test_plot_without_scale_does_not_warn() -> None:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        bf.Plot(object())
+
+
+def test_plot_scale_is_gone_after_0_2() -> None:
+    # Fails from 0.3 on until `scale` is removed, alongside the other deprecated aliases.
+    import inspect
+
+    version = tuple(int(part) for part in bf.__version__.split(".")[:2])
+    if version >= (0, 3):
+        assert "scale" not in inspect.signature(bf.Plot).parameters

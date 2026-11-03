@@ -340,7 +340,7 @@ Library-agnostic chart block. Auto-detects the figure type at render time:
 ```python
 bf.Plot(plotly_fig, caption="Revenue over time")
 bf.Plot(altair_chart, label="Chart", responsive=True)
-bf.Plot(mpl_fig, scale=1.5)
+bf.Plot(mpl_fig)  # size it in Matplotlib: plt.subplots(figsize=(8, 4))
 ```
 
 | Parameter | Type | Default | Description |
@@ -348,7 +348,7 @@ bf.Plot(mpl_fig, scale=1.5)
 | `figure` | any | required | Figure object from Plotly, Altair, Matplotlib, or Bokeh |
 | `caption` | `str` | `None` | Caption shown below the chart |
 | `responsive` | `bool` | `True` | Scale chart to fill container width |
-| `scale` | `float` | `1.0` | Scale multiplier (Matplotlib/static figures) |
+| `scale` | `float` | `None` | **Deprecated**, no effect, removed after 0.2. Size the figure in its library (e.g. Matplotlib `figsize`) |
 
 ---
 
