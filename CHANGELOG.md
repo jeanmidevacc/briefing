@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Text` renders markdown pipe tables, styled like `Table` blocks (#4).
 - `HTML` blocks get the same paragraph, list, heading, link, code, blockquote and
   table spacing as `Text`, instead of none at all; inline styles still win (#47).
+- `Code` blocks are syntax-highlighted with Pygments (new core dependency). Token
+  colours and the block itself follow the theme, light or dark, instead of a fixed
+  dark palette; an unknown language shows plain text (#5).
 
 ## [0.1.0] - 2026-09-09
 

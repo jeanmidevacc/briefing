@@ -146,6 +146,34 @@ class TestCodeRendering:
         soup = render(blocks(Code("SELECT 1", language="sql")))
         assert "language-sql" in classes(find_one(soup, "code"))
 
+    def test_python_is_highlighted(self):
+        soup = render(blocks(Code("def f(x):\n    return x + 1  # add one", language="python")))
+        code = find_one(soup, ".bf-code pre code")
+        tokens = {(classes(span)[0], span.get_text()) for span in code.find_all("span")}
+        assert {("k", "def"), ("nf", "f"), ("k", "return"), ("mi", "1"), ("c1", "# add one")} <= tokens
+        assert code.get_text() == "def f(x):\n    return x + 1  # add one"
+
+    def test_sql_is_highlighted(self):
+        soup = render(blocks(Code("SELECT name FROM users WHERE id = 'x'", language="sql")))
+        tokens = {(classes(span)[0], span.get_text()) for span in find_one(soup, ".bf-code code").find_all("span")}
+        assert {("k", "SELECT"), ("k", "FROM"), ("k", "WHERE"), ("s1", "'x'")} <= tokens
+
+    def test_unknown_language_is_plain_text(self):
+        soup = render(blocks(Code("a <b> & c", language="no-such-language")))
+        code = find_one(soup, ".bf-code code")
+        assert code.find_all("span") == []
+        assert code.get_text() == "a <b> & c"
+        assert "language-no-such-language" in classes(code)
+
+    def test_code_is_escaped(self):
+        soup = render(blocks(Code("x = '<script>alert(1)</script>'", language="python")))
+        assert soup.select(".bf-code script") == []
+        assert "<script>alert(1)</script>" in find_one(soup, ".bf-code code").get_text()
+
+    def test_highlighting_is_deterministic(self):
+        b = blocks(Code("for i in range(3):\n    print(i)", language="python"))
+        assert render_report(b) == render_report(b)
+
     def test_caption_rendered(self):
         soup = render(blocks(Code("x", caption="My snippet")))
         assert "My snippet" in soup.get_text()
