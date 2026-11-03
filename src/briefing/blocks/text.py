@@ -30,17 +30,19 @@ class EmbeddedTextBlock(Block):
 
 
 class Text(EmbeddedTextBlock):
-    """Markdown text block.
+    """Markdown text block (CommonMark plus pipe tables).
+
+    Raw HTML inside the markdown is passed through as-is, like :class:`HTML`.
 
     Example::
 
-        fl.Text("# Hello world")
-        fl.Text(\"\"\"
+        bf.Text("# Hello world")
+        bf.Text(\"\"\"
             ## Multi-line markdown
             - item one
             - item two
         \"\"\")
-        fl.Text(file="notes.md")
+        bf.Text(file="notes.md")
     """
 
     def __init__(
@@ -76,7 +78,7 @@ class HTML(EmbeddedTextBlock):
 
     Example::
 
-        fl.HTML("<b>Bold text</b>")
+        bf.HTML("<b>Bold text</b>")
     """
 
     def __init__(
@@ -93,7 +95,7 @@ class Code(EmbeddedTextBlock):
 
     Example::
 
-        fl.Code("SELECT * FROM orders LIMIT 10", language="sql")
+        bf.Code("SELECT * FROM orders LIMIT 10", language="sql")
     """
 
     def __init__(
@@ -110,11 +112,15 @@ class Code(EmbeddedTextBlock):
 
 
 class Formula(EmbeddedTextBlock):
-    r"""LaTeX formula block (rendered via MathJax in the browser).
+    r"""LaTeX formula block, converted to MathML when the report is rendered.
+
+    Browsers display MathML natively, so the formula needs no JavaScript and
+    no network. LaTeX that can't be converted is shown as source, with a
+    visible note and a ``UserWarning``.
 
     Example::
 
-        fl.Formula(r"\frac{1}{\sqrt{x^2 + 1}}")
+        bf.Formula(r"\frac{1}{\sqrt{x^2 + 1}}")
     """
 
     def __init__(
@@ -186,8 +192,8 @@ class Alert(Block):
 
     Example::
 
-        fl.Alert("Data drift detected in feature 'age'.", level="warning")
-        fl.Alert("Pipeline completed successfully.", level=fl.AlertLevel.SUCCESS)
+        bf.Alert("Data drift detected in feature 'age'.", level="warning")
+        bf.Alert("Pipeline completed successfully.", level=bf.AlertLevel.SUCCESS)
     """
 
     def __init__(

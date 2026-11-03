@@ -104,7 +104,7 @@ class DataTable(Block):
 
     Example::
 
-        fl.DataTable(df, caption="Top 1 000 orders")
+        bf.DataTable(df, caption="Top 1 000 orders")
     """
 
     #: Maximum rows rendered by default; larger DataFrames are truncated with a warning.

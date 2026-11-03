@@ -260,8 +260,21 @@ body {
   overflow-x: auto;
 }
 .bf-formula__content {
+  font-family: math, 'STIX Two Math', 'Cambria Math', 'Latin Modern Math', serif;
+  font-size: 1.25rem;
+}
+/* The global reset zeroes the browser's MathML cell padding; restore MathML Core's default. */
+.bf-formula mtd { padding: 0.5ex 0.4em; }
+.bf-formula__error {
+  color: var(--bf-muted);
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+.bf-formula__source {
   font-family: ui-monospace, monospace;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+  text-align: left;
 }
 .bf-formula__caption {
   margin-top: 0.5rem;

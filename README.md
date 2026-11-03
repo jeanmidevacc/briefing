@@ -37,15 +37,17 @@ bf.save(report, "q1_analysis.html")
 
 - **One block vocabulary, for you or your agent**: `bf.Text`, `bf.Table`, `bf.Plot`, `bf.Group`, … the same small set of blocks composes every report, so output stays consistent whether you write the Python yourself or a coding agent does.
 - **Self-contained HTML**: zero CDN, works offline forever
-- **Zero visualisation dependencies in the core**: the report grammar renders
-  with only Jinja2 + markdown-it-py. Charts are opt-in (see below).
+- **No plotting or dataframe dependencies in the core**: the report grammar
+  renders with a few small pure-Python libraries (Jinja2, markdown-it-py,
+  Pygments, latex2mathml). Charts and dataframes are opt-in (see below).
 - **Bring-your-own-figure `Plot`**: hand it a Plotly, Altair, Matplotlib or
   Bokeh figure; briefing imports that library only when you pass its figure.
 - **Interactive tables**: sortable, searchable DataTable with client-side pagination
 - **`briefing.lab`**: richer custom visualisations (`DataProfile` column stats,
   `DataDive` Facets-style dot explorer), all hand-rolled SVG + vanilla JS, no CDN
 - **Themes**: five built-in presets plus full CSS token control
-- **Pandas 2.x** first-class support; PySpark via `.toPandas()`
+- **Dataframes**: pandas 2 and 3 first-class; polars, pyarrow and anything with the
+  dataframe interchange protocol are converted for you; for PySpark, call `.toPandas()` first
 
 ## Installation
 
@@ -57,9 +59,9 @@ pip install briefing                # core grammar + HTML renderer, no viz deps
 | --- | --- |
 | `briefing[pandas]` | pandas engine for `Table` / `DataTable` |
 | `briefing[lab]` | `briefing.lab` custom-visualisation blocks (`DataProfile`, `DataDive`) |
-| `briefing[plotly]` `[altair]` `[bokeh]` `[matplotlib]` | the matching backend for `Plot` |
+| `briefing[plotly]` `[altair]` `[bokeh]` `[matplotlib]` | the matching backend for `Plot` (`[altair]` also installs `vl-convert-python`, which supplies the Vega runtime embedded in the report) |
 | `briefing[charts]` | all four `Plot` backends at once |
-| `briefing[email]` | email-safe HTML + SMTP sending |
+| `briefing[email]` | reserved for the upcoming email digest ([#42](https://github.com/jeanmidevacc/briefing/issues/42)); it installs its future dependencies (premailer, kaleido), but there is no email feature yet |
 
 `Plot` never imports a plotting library unless you actually pass it a figure from
 that library, so the extras only need to be installed for the backends you use.
@@ -92,29 +94,30 @@ In a notebook (Jupyter, JupyterLab, VS Code), any block or `Briefing` previews i
 
 ## API
 
+The examples below assume `import briefing as bf`, a pandas DataFrame `df` (with
+columns such as `region`, `revenue` and `margin_pct`) and a chart `fig`;
+`tests/test_readme.py` runs every one of them, offline.
+
 ### `bf.save`
 
 ```python
 bf.save(
-    blocks,                  # Briefing, list, or a single block
-    path,                    # destination file, e.g. "report.html"
-    *,
-    open=False,              # open in default browser after saving
+    report,                  # a Briefing, a list of blocks, or a single block
+    "report.html",           # destination file
+    open=False,              # open in the default browser after saving
     name="Report",           # browser tab title and report header
-    formatting=None,         # Formatting instance, controls theme
+    formatting=None,         # a Formatting instance: the theme
+    now=None,                # pin the header timestamp (or set SOURCE_DATE_EPOCH)
 )
 ```
 
 ### `bf.stringify`
 
 ```python
-html: str = bf.stringify(
-    blocks,
-    *,
-    name="Report",
-    formatting=None,
-)
+html = bf.stringify(report, name="Report", formatting=None)   # the same page, as a string
 ```
+
+Same input, same `now` (or `SOURCE_DATE_EPOCH`): byte-identical output.
 
 ---
 
@@ -137,7 +140,9 @@ bf.Text(file="notes.md")
 | `file` | `str \| Path` | Path to a `.md` file (alternative to `text`) |
 | `label` | `str` | Tab/selector label when used inside `Select` |
 
-Supports headings, bold, italics, inline code, blockquotes, tables, and lists.
+Supports CommonMark (headings, bold, italics, links, inline code, code blocks,
+blockquotes, lists) plus pipe tables. Raw HTML inside the markdown is passed through
+as-is, like `bf.HTML`.
 
 ---
 
@@ -146,7 +151,7 @@ Supports headings, bold, italics, inline code, blockquotes, tables, and lists.
 ```python
 bf.Code("SELECT * FROM orders LIMIT 10", language="sql")
 bf.Code(
-    "import briefing as bf\nfl.save(bf.Briefing(bf.Text('# Hi')), 'out.html')",
+    "import briefing as bf\nbf.save(bf.Briefing(bf.Text('# Hi')), 'out.html')",
     language="python",
     caption="Minimal report",
 )
@@ -166,7 +171,14 @@ bf.Code(
 bf.Formula(r"\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i", caption="Sample mean")
 ```
 
-Rendered via MathJax (inlined in the report, no CDN needed).
+Converted to MathML when the report is rendered, so browsers typeset it natively:
+no JavaScript, no network. Supported LaTeX is what
+[`latex2mathml`](https://github.com/roniemartinez/latex2mathml) handles: fractions,
+roots, sub/superscripts, sums and integrals, Greek letters and common symbols,
+`\mathbb`/`\mathrm`-style fonts, accents (`\bar`, `\hat`, …), `\left…\right`, and
+matrix environments (`pmatrix`, `bmatrix`, `cases`, `align`, …). A formula that can't
+be converted (a typo, unbalanced braces, an unknown command, `\href`, or markup in
+`\text{}`) shows its LaTeX source with a note, and Python emits a `UserWarning`.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -181,7 +193,9 @@ Rendered via MathJax (inlined in the report, no CDN needed).
 bf.HTML("<p style='color:#4F46E5'>Custom <strong>HTML</strong>.</p>")
 ```
 
-Rendered inside a sandboxed container: inline styles work, scripts are stripped.
+Inserted into the report as-is, inside a plain `<div>`. It is **not** sandboxed or
+sanitised: inline styles work and any `<script>` it contains runs, so only pass HTML
+you trust. Paragraphs, lists and headings get the same typography as `Text`.
 
 ---
 
@@ -200,7 +214,9 @@ bf.BigNumber("Accuracy", 0.924)   # no change indicator
 | `is_upward_change` | `bool` | `None` | The arrow: `True` = ▲, `False` = ▼. Required if `change` is set. |
 | `is_positive_intent` | `bool` | `None` | The colour, when it shouldn't follow the arrow: `True` = green, `False` = red. `None`: ▲ green, ▼ red. |
 
-> If `change` is provided without `is_upward_change` a warning is issued and no arrow is shown.
+> If `change` is provided without `is_upward_change`, a warning is issued and the change
+> shows with a red ▼ ([#71](https://github.com/jeanmidevacc/briefing/issues/71) decides
+> what it should do). Pass `is_upward_change` whenever you pass `change`.
 
 ---
 
@@ -327,10 +343,10 @@ Library-agnostic chart block. Auto-detects the figure type at render time:
 
 | Library | Output |
 |---------|--------|
-| **Plotly** | Interactive HTML (inline JS) |
-| **Altair / Vega-Lite** | Embedded Vega spec |
+| **Plotly** | Interactive chart; the Plotly runtime is embedded once per report |
+| **Altair / Vega-Lite** | Interactive chart; the Vega runtime is embedded once per report (`briefing[altair]`) |
 | **Matplotlib / Seaborn / Plotnine** | Inline SVG |
-| **Bokeh** | Inline resources |
+| **Bokeh** | Interactive chart in an iframe, with Bokeh's resources inlined |
 
 ```python
 bf.Plot(plotly_fig, caption="Revenue over time")
@@ -389,11 +405,12 @@ bf.DataTable(df, max_rows=500)   # cap at 500 rows
 
 #### `bf.lab.DataProfile`: Column statistics
 
-Renders one card per column with dtype, missing %, and a mini-chart.
+Renders one card per column with its dtype, row count, missing count and %, and a
+mini-chart.
 
-- **Numeric**: mean, std, min/quartiles/max + inline histogram
-- **Categorical**: n_unique, top values + inline bar chart
-- **Datetime**: date range + gap detection
+- **Numeric**: unique count, mean, std, min, median, max + inline histogram
+- **Categorical**: unique count, top values + inline bar chart
+- **Datetime**: earliest and latest value + a range chart
 
 No extra dependencies: mini-charts are pure SVG.
 
@@ -608,23 +625,11 @@ Previews run in their own frame. In a notebook that isn't trusted yet (for examp
 
 ---
 
-## Running the demo
+## Examples
 
-```bash
-cd /path/to/html_reporting_python
-python demo/generate.py
-```
-
-This writes nine self-contained HTML files to `demo/`:
+The [`examples/`](examples/) folder holds:
 
 | File | Contents |
 |------|----------|
-| `01_blocks.html` | All text and layout blocks |
-| `02_tables.html` | Static `Table` and interactive `DataTable` |
-| `03_profile.html` | `DataProfile` on a mixed dataset |
-| `04_datadive.html` | `DataDive` scatter explorer |
-| `05_full_report.html` | Full combined KPI report |
-| `06_facets_dive.html` | Tile layout comparison |
-| `07_plotly.html` | Interactive Plotly charts |
-| `08_matplotlib.html` | Static Matplotlib charts (inline SVG) |
-| `09_theme_*.html` | CSS theme showcase (dark, corporate, minimal, ocean, warm) |
+| [`notebook_walkthrough.ipynb`](examples/notebook_walkthrough.ipynb) | Build a report cell by cell in a notebook, then save it |
+| [`sales_report.html`](examples/sales_report.html) | The report that notebook saves: open it in any browser, offline |
