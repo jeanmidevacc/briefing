@@ -31,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Code` blocks are syntax-highlighted with Pygments (new core dependency). Token
   colours and the block itself follow the theme, light or dark, instead of a fixed
   dark palette; an unknown language shows plain text (#5).
+- A Plotly chart inside a `Toggle` fills its width when the toggle opens, instead of
+  staying at Plotly's 700 px default. Charts are also resized when a tab or dropdown
+  panel is shown (#9).
 
 ## [0.1.0] - 2026-09-09
 

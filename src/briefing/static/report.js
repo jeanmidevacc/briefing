@@ -2,6 +2,14 @@
 (function () {
   'use strict';
 
+  // Plotly sizes a chart when it draws it; one drawn while hidden keeps the 700 px
+  // default. Redraw the charts inside a panel once that panel is shown.
+  function resizePlots(root) {
+    var Plotly = window.Plotly;
+    if (!root || !Plotly || !Plotly.Plots) return;
+    root.querySelectorAll('.js-plotly-plot').forEach(function (el) { Plotly.Plots.resize(el); });
+  }
+
   // ── Select / tabs ───────────────────────────────────────────────────────────
 
   document.querySelectorAll('.bf-select:not(.bf-select--dropdown)').forEach(function (sel) {
@@ -19,6 +27,7 @@
       panels.forEach(function (p, i) {
         p.hidden = i !== idx;
       });
+      resizePlots(panels[idx]);
     }
 
     tabs.forEach(function (tab, i) {
@@ -44,6 +53,7 @@
 
     function activate(idx) {
       panels.forEach(function (p, i) { p.hidden = i !== idx; });
+      resizePlots(panels[idx]);
     }
 
     if (select) {
@@ -167,6 +177,7 @@
       var expanded = header.getAttribute('aria-expanded') === 'true';
       header.setAttribute('aria-expanded', String(!expanded));
       if (body) body.hidden = expanded;
+      if (!expanded) resizePlots(body);
     }
 
     header.addEventListener('click', toggle);

@@ -31,7 +31,6 @@ def test_visible_plotly_chart_fills_its_width(viewer: Viewer) -> None:
     assert chart_fill(page) > 0.97
 
 
-@pytest.mark.xfail(reason="#9: Plotly charts drawn while hidden keep the 700 px default", strict=True)
 def test_plotly_chart_fills_its_width_when_toggle_opens(viewer: Viewer) -> None:
     page = viewer.open(bf.Briefing(bf.Toggle(bf.Plot(_plotly_figure()), label="Chart")))
     page.get_by_role("button", name="Chart").click()
@@ -45,6 +44,21 @@ def test_plotly_chart_fills_its_width_in_dropdown(viewer: Viewer) -> None:
     # Passes in 0.1.0 (the dropdown hides panels after Plotly has drawn); kept so #9 can't regress it.
     page = viewer.open(report)
     page.locator(".bf-select__select").select_option(label="Chart")
+    assert chart_fill(page) > 0.97
+
+
+def test_plotly_chart_fills_its_width_in_nested_toggle(viewer: Viewer) -> None:
+    inner = bf.Toggle(bf.Plot(_plotly_figure()), label="Inner")
+    page = viewer.open(bf.Briefing(bf.Toggle(bf.Text("outer"), inner, label="Outer")))
+    page.get_by_role("button", name="Outer").click()
+    page.get_by_role("button", name="Inner").click()
+    assert chart_fill(page) > 0.97
+
+
+def test_plotly_chart_fills_its_width_in_second_tab(viewer: Viewer) -> None:
+    report = bf.Briefing(bf.Select(bf.Text("first", label="Text"), bf.Plot(_plotly_figure(), label="Chart")))
+    page = viewer.open(report)
+    page.get_by_role("tab", name="Chart").click()
     assert chart_fill(page) > 0.97
 
 
