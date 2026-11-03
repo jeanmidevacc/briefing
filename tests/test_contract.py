@@ -141,7 +141,6 @@ SCENARIOS: dict[str, Build] = {
 KNOWN_FAILURES: dict[tuple[str, str], str] = {
     ("no_external_urls", "plot-altair"): "#8: Altair loads Vega from a CDN",
     ("unique_ids", "two-matplotlib-plots"): "#56: Matplotlib SVGs reuse ids such as figure_1",
-    ("markdown_rendered", "text-markdown-table"): "#4: Text leaves markdown tables off",
     ("user_text_escaped", "report-name"): "#54: report name is not escaped",
     ("user_text_escaped", "datadive"): "#55: DataDive JSON can be closed by </script>",
     **{("generator_meta", s): "#23: no generator meta tag yet" for s in SCENARIOS},
