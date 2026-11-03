@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 
 from briefing.blocks.layout import Briefing
 from briefing.lab import DataDive
-from briefing.lab._render_datadive import _col_kind, _pick_defaults, render_datadive
+from briefing.lab._render_datadive import _col_kind, _pick_defaults, _serialise, render_datadive
 from briefing.renderers.html import render_report
 from tests.html_helpers import attr, classes, find_one
 
@@ -167,6 +167,21 @@ class TestRenderDataDive:
         soup = BeautifulSoup(html, "html.parser")
         records = json.loads(find_one(soup, "script.bf-dd__data").get_text())
         assert len(records) == 50
+
+
+# ── _serialise ────────────────────────────────────────────────────────────────
+
+
+class TestSerialise:
+    # None → pandas' default inference: object on pandas 2, str on pandas 3.
+    @pytest.mark.parametrize("dtype", [None, object, "string"])
+    def test_long_strings_trimmed_to_64_chars(self, dtype):
+        df = pd.DataFrame({"s": pd.Series(["x" * 100, "short", None], dtype=dtype), "v": [1.0, 2.0, 3.0]})
+        records = json.loads(_serialise(df))
+        assert records[0]["s"] == "x" * 64
+        assert records[1]["s"] == "short"
+        assert records[2]["s"] is None
+        assert records[0]["v"] == 1.0
 
 
 # ── integration ───────────────────────────────────────────────────────────────

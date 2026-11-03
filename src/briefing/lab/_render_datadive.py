@@ -72,7 +72,7 @@ def _serialise(df: t.Any) -> str:
         if pd.api.types.is_datetime64_any_dtype(out[col]):
             out[col] = out[col].dt.strftime("%Y-%m-%d %H:%M")
         # Truncate long strings to avoid huge payloads
-        if out[col].dtype == object:
+        if out[col].dtype == object or pd.api.types.is_string_dtype(out[col]):
             out[col] = out[col].apply(lambda v: str(v)[:64] if isinstance(v, str) else v)
 
     return str(out.to_json(orient="records", date_format="iso", default_handler=str))

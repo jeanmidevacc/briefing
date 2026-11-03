@@ -22,6 +22,7 @@ that rewrite.
 from __future__ import annotations
 
 import contextlib
+import sys
 import typing as t
 
 from briefing._error import BriefingError
@@ -42,10 +43,9 @@ def _import_pandas() -> t.Any:
 
 def is_pandas_dataframe(obj: object) -> bool:
     """True if *obj* is a pandas DataFrame, without importing pandas eagerly."""
-    return any(
-        f"{c.__module__}.{c.__qualname__}" == "pandas.core.frame.DataFrame"
-        for c in type(obj).__mro__
-    )
+    # If pandas was never imported, nothing can be a pandas DataFrame.
+    pandas = sys.modules.get("pandas")
+    return pandas is not None and isinstance(obj, pandas.DataFrame)
 
 
 def looks_like_dataframe(obj: object) -> bool:
