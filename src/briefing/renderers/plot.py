@@ -25,12 +25,12 @@ import contextlib
 import functools
 import html as _html
 import io
-import json
 import re
 import typing as t
 
 from briefing._error import BriefingError
 from briefing.renderers.registry import IdGen
+from briefing.renderers.script_json import script_json
 
 if t.TYPE_CHECKING:
     from briefing.blocks.asset import Plot
@@ -136,12 +136,6 @@ def _vega_bundle() -> str | None:
 _VEGA_GLOBALS = "window.vegaEmbed = vegaEmbed; window.vegaLite = vegaLite; window.vega = vega;"
 
 
-def _script_json(value: t.Any) -> str:
-    """JSON that is safe inside ``<script type="application/json">``: no ``<``, ``>`` or ``&``."""
-    text = json.dumps(value, separators=(",", ":"))
-    return text.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
-
-
 def _plotlyjs_script() -> str:
     try:
         from plotly.offline import get_plotlyjs
@@ -215,7 +209,7 @@ def _render_altair(fig: t.Any, responsive: bool, div_id: str) -> str:
     # Drawn in the page by report.js with the Vega runtime embedded in <head>.
     return (
         f'<div class="bf-altair" id="{div_id}"></div>'
-        f'<script type="application/json" class="bf-altair__spec">{_script_json(fig.to_dict())}</script>'
+        f'<script type="application/json" class="bf-altair__spec">{script_json(fig.to_dict())}</script>'
     )
 
 

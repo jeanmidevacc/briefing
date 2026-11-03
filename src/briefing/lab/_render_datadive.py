@@ -15,8 +15,9 @@ No Vega, no D3, no CDN — works forever in a standalone HTML file.
 from __future__ import annotations
 
 import html as _html
-import json
 import typing as t
+
+from briefing.renderers.script_json import escape_script_json, script_json
 
 if t.TYPE_CHECKING:
     from briefing.lab._blocks import DataDive
@@ -135,8 +136,9 @@ def render_datadive(block: DataDive) -> str:
         + "</div>"
     )
 
-    data_json = _serialise(df)
-    meta_json = json.dumps(meta)
+    # Escaped so a column name or value holding "</script>" or "<!--" can't end the tag.
+    data_json = escape_script_json(_serialise(df))
+    meta_json = script_json(meta)
     n_rows = len(df)
     vb = "0 0 620 400" if layout == "scatter" else "0 0 820 500"
     aria = f"DataDive {layout} plot"

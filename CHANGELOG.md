@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The report `name` (tab title and header) is now HTML-escaped. Before, markup in it
   was inserted as-is, so a name such as `<img src=x onerror=...>` ran script (#54).
+- `DataDive` escapes the JSON it embeds, so a column name or value containing
+  `</script>` or `<!--` can no longer end its `<script>` tag and inject markup (#55).
 
 ### Added
 
