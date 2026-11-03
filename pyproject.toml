@@ -95,9 +95,10 @@ dev = [
     "pandas>=2.0",
     "pandas-stubs>=2.0",
     "pyarrow>=15.0",
-    # exercised by the Plot renderer tests so the adapter branches are covered
+    # exercised by the Plot renderer and contract tests so the adapter branches are covered
     "plotly>=5.0",
     "matplotlib>=3.7",
+    "altair>=5.0",
 ]
 
 [tool.pytest.ini_options]
