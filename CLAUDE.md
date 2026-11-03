@@ -9,6 +9,7 @@ agents together, so keep the grammar small, the output predictable and every cha
 ```bash
 pip install -e ".[dev]"                 # Python 3.11+
 pytest                                  # full suite with coverage (addopts in pyproject.toml)
+pytest -m browser                       # browser tests only; `playwright install chromium` once
 pytest -o addopts="" -q tests/test_lab  # quick run of one area, no coverage
 ruff check src tests                    # lint; line length 120
 mypy src/briefing tests                 # strict mode, tests included
@@ -85,8 +86,10 @@ present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer
   issue: remove the entry in `KNOWN_FAILURES` when you fix it.
 - Every bug fix comes with a test that fails without the fix.
 - JavaScript behaviour (sorting, tabs, toggles, DataDive) can't be verified from HTML alone.
-  After changing `static/` or `lab/static/`, open a rendered report in a browser (Playwright
-  works headless) and check what a reader sees.
+  After changing `static/` or `lab/static/`, add or update a test in `tests/test_browser/`
+  (marked `browser` automatically; the `viewer` fixture opens a report offline and fails on
+  any network request or JavaScript error), and look at a rendered report yourself.
+  CI runs them in a separate `browser` job and uploads screenshots of failures.
 
 ## Releases and changelog
 

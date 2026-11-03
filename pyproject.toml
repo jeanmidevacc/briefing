@@ -99,11 +99,16 @@ dev = [
     "plotly>=5.0",
     "matplotlib>=3.7",
     "altair>=5.0",
+    # browser tests (pytest -m browser); run `playwright install chromium` once
+    "pytest-playwright>=0.5",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov=briefing --cov-report=term-missing -v"
+markers = [
+    "browser: opens rendered reports in headless Chromium (pytest -m browser; needs `playwright install chromium`)",
+]
 
 [tool.coverage.run]
 source = ["src/briefing"]

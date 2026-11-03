@@ -30,7 +30,25 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: pip install -e ".[dev]" "pandas==${{ matrix.pandas }}.*"
       - run: python -c "import pandas; print('pandas', pandas.__version__)"
-      - run: pytest
+      - run: pytest -m "not browser"
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: python -m playwright install --with-deps chromium
+      - run: pytest -m browser --no-cov --screenshot only-on-failure --output test-results
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-test-screenshots
+          path: test-results/
+          if-no-files-found: ignore
 
   lint:
     runs-on: ubuntu-latest
