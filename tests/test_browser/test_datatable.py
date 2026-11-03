@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import pandas as pd
-import pytest
 from playwright.sync_api import Page
 
 import briefing as bf
@@ -88,7 +87,6 @@ def test_sort_combines_with_search_and_paging(viewer: Viewer) -> None:
 # ── #2: sort by the real value ────────────────────────────────────────────────
 
 
-@pytest.mark.xfail(reason="#2: dates sort by year only", strict=True)
 def test_dates_sort_chronologically(viewer: Viewer) -> None:
     dates = pd.to_datetime(["2023-12-15", "2022-06-01", "2023-01-02", "2021-03-04"])
     page = viewer.open(bf.Briefing(bf.DataTable(pd.DataFrame({"when": dates}))))
@@ -96,10 +94,33 @@ def test_dates_sort_chronologically(viewer: Viewer) -> None:
     assert [c[:10] for c in visible_column(page)] == ["2021-03-04", "2022-06-01", "2023-01-02", "2023-12-15"]
 
 
-@pytest.mark.xfail(reason="#2: empty cells sort first in ascending order", strict=True)
 def test_empty_cells_sort_last_both_ways(viewer: Viewer) -> None:
     page = viewer.open(bf.Briefing(bf.DataTable(pd.DataFrame({"x": [3.0, None, 1.0, 2.0]}))))
     sort_by(page, 0)
     assert visible_column(page) == ["1", "2", "3", ""]
     sort_by(page, 0)
     assert visible_column(page) == ["3", "2", "1", ""]
+
+
+def test_numbers_sort_by_value_not_by_display(viewer: Viewer) -> None:
+    # Both display as 1.23457e+06; only the data-sort key tells them apart.
+    page = viewer.open(bf.Briefing(bf.DataTable(pd.DataFrame({"x": [1234568.25, 1234567.5, 99.0]}))))
+    sort_by(page, 0)
+    assert visible_column(page) == ["99", "1.23457e+06", "1.23457e+06"]
+    assert page.locator(".bf-dt__table tbody tr:not([hidden]) td").evaluate_all(
+        "tds => tds.map(td => td.dataset.sort)"
+    ) == [None, "1234567.5", "1234568.25"]  # no key where it would equal the text
+
+
+def test_numbers_shown_with_separators_sort_numerically(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.DataTable(pd.DataFrame({"amount": ["1,200", "950", "12,000", "", "-3"]}))))
+    sort_by(page, 0)
+    assert visible_column(page) == ["-3", "950", "1,200", "12,000", ""]
+    sort_by(page, 0)
+    assert visible_column(page) == ["12,000", "1,200", "950", "-3", ""]
+
+
+def test_text_sorts_alphabetically(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.DataTable(pd.DataFrame({"s": ["pear", "apple", "fig"]}))))
+    sort_by(page, 0)
+    assert visible_column(page) == ["apple", "fig", "pear"]
