@@ -247,6 +247,9 @@ body {
   border-top: 1px solid var(--bf-border);
 }
 
+/* ── Altair (drawn in the page by vega-embed) ─────────────────────────────── */
+.bf-altair { width: 100%; display: flex; }
+
 /* ── Formula ──────────────────────────────────────────────────────────────── */
 .bf-formula {
   background: var(--bf-surface);

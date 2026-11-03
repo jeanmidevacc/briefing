@@ -34,6 +34,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A Plotly chart inside a `Toggle` fills its width when the toggle opens, instead of
   staying at Plotly's 700 px default. Charts are also resized when a tab or dropdown
   panel is shown (#9).
+- Altair charts work offline: the Vega runtime is embedded once per report (about
+  880 KB) and charts are drawn in the page instead of a CDN-loading iframe. The
+  `altair` and `charts` extras now include `vl-convert-python`, which supplies the
+  runtime; without it an Altair chart shows an install hint. The offline warning is
+  gone (#8).
 
 ## [0.1.0] - 2026-09-09
 

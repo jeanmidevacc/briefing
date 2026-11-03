@@ -194,6 +194,83 @@ class TestRenderPlotly:
         assert "var Plotly" not in html or len(html) < 500_000
 
 
+# ── render_figure (altair) ────────────────────────────────────────────────────
+
+
+def _altair_chart(title: str = "c") -> object:
+    alt = pytest.importorskip("altair")
+    import pandas as pd
+
+    data = pd.DataFrame({"x": [1, 2, 3], "y": [3, 1, 2]})
+    return alt.Chart(data, title=title).mark_point().encode(x="x", y="y")
+
+
+class TestRenderAltair:
+    """Altair charts draw in the page from an inlined Vega runtime (#8)."""
+
+    def test_chart_is_drawn_in_the_page_not_an_iframe(self):
+        import json
+        import warnings
+
+        pytest.importorskip("vl_convert")
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")  # the old CDN warning is gone
+            html = render_figure(Plot(_altair_chart()))
+        soup = BeautifulSoup(html, "html.parser")
+        assert soup.find("iframe") is None
+        target = find_one(soup, "figure.bf-plot div.bf-altair")
+        assert attr(target, "id").startswith("altair-")
+        spec = json.loads(find_one(soup, 'script.bf-altair__spec[type="application/json"]').get_text())
+        assert spec["mark"]["type"] == "point" and spec["width"] == "container"
+
+    def test_spec_cannot_close_its_script_tag(self):
+        pytest.importorskip("vl_convert")
+        html = render_figure(Plot(_altair_chart(title="</script><img src=x onerror=alert(1)>")))
+        soup = BeautifulSoup(html, "html.parser")
+        assert soup.find("img") is None
+        assert "</script><img" not in find_one(soup, "script.bf-altair__spec").get_text()
+
+    def test_runtime_embedded_once_per_report(self):
+        pytest.importorskip("vl_convert")
+        from briefing.renderers.html import render_report
+
+        html = render_report(Briefing(Plot(_altair_chart("a")), Plot(_altair_chart("b"))))
+        assert html.count("window.vegaEmbed=") == 1
+        assert len(BeautifulSoup(html, "html.parser").select("div.bf-altair")) == 2
+
+    def test_no_runtime_without_altair_charts(self):
+        from briefing.blocks.text import Text
+        from briefing.renderers.html import render_report
+
+        assert "vegaEmbed=" not in render_report(Briefing(Text("no charts")))
+
+    def test_missing_vl_convert_shows_install_hint(self, monkeypatch):
+        import builtins
+
+        from briefing.renderers.html import render_report
+
+        real_import = builtins.__import__
+
+        def no_vl_convert(name: str, *args: object, **kwargs: object) -> object:
+            if name == "vl_convert":
+                raise ImportError("no vl_convert")
+            return real_import(name, *args, **kwargs)  # type: ignore[arg-type]
+
+        from briefing.renderers import plot as plot_module
+
+        chart = _altair_chart()
+        plot_module._vega_bundle.cache_clear()  # the bundle is cached per process
+        monkeypatch.setattr(builtins, "__import__", no_vl_convert)
+        try:
+            html = render_report(Briefing(Plot(chart)))
+        finally:
+            monkeypatch.undo()
+            plot_module._vega_bundle.cache_clear()
+        placeholder = find_one(BeautifulSoup(html, "html.parser"), ".bf-placeholder")
+        assert "pip install briefing[altair]" in placeholder.get_text()
+        assert "cdn.jsdelivr.net" not in html
+
+
 # ── render_figure (unsupported) ───────────────────────────────────────────────
 
 
