@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   which only looked at `object` columns. CI now tests pandas 2 and 3 (#11).
 - `DataTable`: clicking a column header now reorders the rows. Before, sorting only
   changed which rows landed on the current page, in their original order (#1).
+- `DataTable` sorts by value: dates chronologically, numbers by their full value
+  (also when shown as `1.23457e+06` or with thousands separators), and empty cells
+  last in both directions. Cells carry a `data-sort` key where the text isn't enough (#2).
 
 ## [0.1.0] - 2026-09-09
 

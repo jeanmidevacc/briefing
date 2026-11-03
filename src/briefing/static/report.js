@@ -104,12 +104,29 @@
       render();
     }
 
+    // The value a row sorts by: the cell's data-sort key (written by Python for
+    // numbers, dates and durations), else its text.
+    function sortKey(row) {
+      var cell = row.cells[sortCol];
+      if (!cell) return '';
+      var key = cell.getAttribute('data-sort');
+      return key !== null ? key : cell.textContent.trim();
+    }
+
+    // A key that is a whole number, optionally with thousands separators ("1,200"); else NaN.
+    function asNumber(s) {
+      if (/^[-+]?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g, '');
+      return s === '' ? NaN : Number(s);
+    }
+
     function applySortToFiltered() {
       filtered.sort(function (a, b) {
-        var av = a.cells[sortCol] ? a.cells[sortCol].textContent.trim() : '';
-        var bv = b.cells[sortCol] ? b.cells[sortCol].textContent.trim() : '';
-        var an = parseFloat(av);
-        var bn = parseFloat(bv);
+        var av = sortKey(a);
+        var bv = sortKey(b);
+        // Empty cells go last whichever way the column is sorted.
+        if (av === '' || bv === '') return av === bv ? 0 : (av === '' ? 1 : -1);
+        var an = asNumber(av);
+        var bn = asNumber(bv);
         var cmp = (!isNaN(an) && !isNaN(bn)) ? (an - bn) : av.localeCompare(bv);
         return sortAsc ? cmp : -cmp;
       });

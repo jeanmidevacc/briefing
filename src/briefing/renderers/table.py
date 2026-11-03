@@ -10,7 +10,8 @@ DataTable
 ---------
 Renders a DataFrame as a fully self-contained interactive table with:
 - Live search / filter (all columns)
-- Click-to-sort columns (auto-detects numeric vs text)
+- Click-to-sort columns, by value: each cell carries a ``data-sort`` key for
+  numbers, dates and durations (see :func:`_sort_key`); text sorts as text
 - Client-side pagination (25 rows per page)
 
 All interaction is handled by vanilla JS in ``report.js``; the rendered
@@ -19,7 +20,10 @@ HTML contains the full data set, so the table works offline forever.
 from __future__ import annotations
 
 import html as _html
+import math
+import numbers
 import typing as t
+from datetime import date, timedelta
 
 from briefing._error import BriefingError
 
@@ -44,6 +48,44 @@ def _fmt(val: t.Any) -> str:
             return str(int(val))
         return f"{val:g}"
     return str(val)
+
+
+def _sort_key(val: t.Any) -> str | None:
+    """Return the ``data-sort`` key for a cell, or ``None`` to sort it by its text.
+
+    Numbers give their full-precision value, dates their ISO form (which sorts
+    chronologically as text), durations their length in seconds. Missing values
+    give ``""``, which the browser always sorts last. :func:`_cell` leaves the key
+    out when it equals the displayed text, since the browser falls back to that.
+    """
+    if _fmt(val) == "" and not isinstance(val, str):
+        return ""
+    if isinstance(val, bool) or type(val).__name__ == "bool_":
+        return None
+    if isinstance(val, numbers.Integral):
+        return str(int(val))
+    if isinstance(val, numbers.Real):
+        return _number_key(float(val))
+    if isinstance(val, date):  # datetime and pandas.Timestamp are dates too
+        return val.isoformat()
+    if isinstance(val, timedelta):  # includes pandas.Timedelta
+        return _number_key(val.total_seconds())
+    return None
+
+
+def _number_key(f: float) -> str:
+    """A number as JavaScript's ``Number()`` reads it back exactly, in its shortest form."""
+    if math.isinf(f):
+        return "Infinity" if f > 0 else "-Infinity"
+    return str(int(f)) if f.is_integer() and abs(f) < 2**53 else repr(f)
+
+
+def _cell(val: t.Any) -> str:
+    """One ``<td>``: escaped display text, plus its sort key when that differs from the text."""
+    text = _fmt(val)
+    key = _sort_key(val)
+    sort_attr = "" if key is None or key == text else f' data-sort="{_html.escape(key)}"'
+    return f"<td{sort_attr}>{_html.escape(text)}</td>"
 
 
 def _use_index(df: t.Any) -> bool:
@@ -124,9 +166,9 @@ def render_datatable(block: DataTable) -> str:
     for idx_val, row in zip(df.index, df.itertuples(index=False), strict=True):
         cells = ""
         if show_index:
-            cells += f"<td>{_html.escape(_fmt(idx_val))}</td>"
+            cells += _cell(idx_val)
         for val in row:
-            cells += f"<td>{_html.escape(_fmt(val))}</td>"
+            cells += _cell(val)
         rows_html += f"<tr>{cells}</tr>"
 
     caption_html = (
