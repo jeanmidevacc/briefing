@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reports with Plotly or Matplotlib charts are now byte-identical from one render to
   the next (with `now=` or `SOURCE_DATE_EPOCH`): Plotly div ids and Matplotlib SVG
   id salts come from the render, and the SVG no longer embeds its creation date (#10).
+- `Text` renders markdown pipe tables, styled like `Table` blocks (#4).
 
 ## [0.1.0] - 2026-09-09
 

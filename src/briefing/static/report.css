@@ -129,21 +129,23 @@ body {
   background: var(--bf-surface);
   border-radius: 0 var(--bf-radius) var(--bf-radius) 0;
 }
+/* Markdown tables match Table blocks (.bf-table__table), but wrap their text. */
 .bf-text table {
   border-collapse: collapse;
   width: 100%;
   margin-bottom: 0.75rem;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 .bf-text th,
 .bf-text td {
   border: 1px solid var(--bf-border);
-  padding: 0.5rem 0.75rem;
+  padding: 0.45rem 0.75rem;
   text-align: left;
 }
 .bf-text th {
   background: var(--bf-surface);
   font-weight: 600;
+  color: var(--bf-text);
 }
 .bf-text tr:nth-child(even) td { background: #fafafa; }
 .bf-text hr {

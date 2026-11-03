@@ -105,6 +105,16 @@ class TestTextRendering:
         link = soup.find("a")
         assert link is not None
 
+    def test_markdown_table_rendered(self):
+        soup = render(blocks(Text("| a | b |\n| :-- | --: |\n| 1 | 2 |\n| 3 | 4 |")))
+        table = find_one(soup, ".bf-text table")
+        assert [th.get_text() for th in table.select("thead th")] == ["a", "b"]
+        assert [[td.get_text() for td in tr.find_all("td")] for tr in table.select("tbody tr")] == [
+            ["1", "2"],
+            ["3", "4"],
+        ]
+        assert "text-align:right" in attr(table.select("tbody td")[1], "style")
+
     def test_wrapped_in_fl_text(self):
         soup = render(blocks(Text("hello")))
         assert soup.find(class_="bf-text") is not None

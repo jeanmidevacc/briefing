@@ -70,7 +70,7 @@ _jinja_env = Environment(
 def _render_text(block: Text, _: _IdGen) -> str:
     from markdown_it import MarkdownIt
 
-    md = MarkdownIt("commonmark")
+    md = MarkdownIt("commonmark").enable("table")
     body = md.render(block.content)
     return f'<div class="bf-block bf-text">{body}</div>'
 
