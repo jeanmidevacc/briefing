@@ -30,6 +30,7 @@ from pathlib import Path
 # the pandas dependency those blocks need at render time.
 from briefing import lab
 from briefing._error import BriefingError
+from briefing._preview import Preview, preview
 
 # ── blocks ────────────────────────────────────────────────────────────────────
 from briefing.blocks import (
@@ -105,10 +106,8 @@ def stringify(
 ) -> str:
     """Render *blocks* to a self-contained HTML string.
 
-    Useful for inline display in Jupyter notebooks::
-
-        from IPython.display import HTML, display
-        display(HTML(bf.stringify(report)))
+    In a notebook you don't need this: a block or a ``Briefing`` displays itself
+    as an isolated preview, and :func:`preview` adds a name or a theme.
 
     Pass *now* (or set ``SOURCE_DATE_EPOCH``) for byte-reproducible output.
     """
@@ -150,6 +149,8 @@ __all__: list[str] = [
     "TextAlignment",
     "Width",
     # api
+    "Preview",
+    "preview",
     "save",
     "stringify",
     # meta

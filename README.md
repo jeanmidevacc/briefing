@@ -86,15 +86,9 @@ bf.save(
 )
 ```
 
-To get an HTML string instead of writing a file (useful in Jupyter):
+To get the HTML as a string instead of writing a file, use `bf.stringify(report)`.
 
-```python
-from IPython.display import HTML, display
-
-display(HTML(bf.stringify(bf.Briefing(bf.Text("# Hello")))))
-```
-
-That same `display(HTML(bf.stringify(block)))` call works on a single block too, which is the natural way to build a report cell by cell in a notebook: create one block, preview it in place, keep going, then combine everything you built into one `Briefing` at the end. See [`examples/notebook_walkthrough.ipynb`](examples/notebook_walkthrough.ipynb) for the full walkthrough, or open the [finished report](examples/sales_report.html) it produces.
+In a notebook (Jupyter, JupyterLab, VS Code), any block or `Briefing` previews itself when it is the last expression of a cell. Each preview is the complete report in its own frame, sized to its content, so previews never affect each other or the notebook. That is the natural way to build a report cell by cell: create one block, see it in place, keep going, then combine everything you built into one `Briefing` at the end. See [`examples/notebook_walkthrough.ipynb`](examples/notebook_walkthrough.ipynb) for the full walkthrough, or open the [finished report](examples/sales_report.html) it produces.
 
 ---
 
@@ -617,13 +611,17 @@ bf.lab.DataDive(df, x="region", y="channel", color="product", layout="tile")
 ### Jupyter inline display
 
 ```python
-from IPython.display import HTML, display
+bf.lab.DataProfile(df)            # last expression of a cell: previews itself
 
-display(HTML(bf.stringify(
+# with the name and theme you will save with
+bf.preview(
     bf.Briefing(bf.Text("# Quick look"), bf.lab.DataProfile(df)),
     name="Quick look",
-)))
+    formatting=bf.Formatting.dark(),
+)
 ```
+
+Previews run in their own frame. In a notebook that isn't trusted yet (for example one you just cloned), Jupyter hides frames: run the cell, or trust the notebook, to see it.
 
 ---
 
