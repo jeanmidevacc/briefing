@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `mypy src/briefing tests` passes again with beautifulsoup4's own type hints;
+  the `dev` extra now requires `beautifulsoup4>=4.14` (#48).
+
 ## [0.1.0] - 2026-09-09
 
 First public release.

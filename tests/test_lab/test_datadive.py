@@ -11,6 +11,7 @@ from briefing.blocks.layout import Briefing
 from briefing.lab import DataDive
 from briefing.lab._render_datadive import _col_kind, _pick_defaults, render_datadive
 from briefing.renderers.html import render_report
+from tests.html_helpers import attr, classes, find_one
 
 # ── fixtures ──────────────────────────────────────────────────────────────────
 
@@ -73,8 +74,7 @@ class TestRenderDataDive:
     def test_fl_block_class(self, simple_df):
         html = render_datadive(DataDive(simple_df))
         soup = BeautifulSoup(html, "html.parser")
-        outer = soup.find("div", class_="bf-datadive")
-        assert "bf-block" in outer["class"]
+        assert "bf-block" in classes(find_one(soup, "div.bf-datadive"))
 
     def test_controls_present(self, simple_df):
         html = render_datadive(DataDive(simple_df))
@@ -91,24 +91,20 @@ class TestRenderDataDive:
     def test_data_json_embedded(self, simple_df):
         html = render_datadive(DataDive(simple_df))
         soup = BeautifulSoup(html, "html.parser")
-        data_el = soup.find("script", class_="bf-dd__data")
-        assert data_el is not None
-        records = json.loads(data_el.string)
+        records = json.loads(find_one(soup, "script.bf-dd__data").get_text())
         assert len(records) == 3
 
     def test_meta_json_embedded(self, simple_df):
         html = render_datadive(DataDive(simple_df))
         soup = BeautifulSoup(html, "html.parser")
-        meta_el = soup.find("script", class_="bf-dd__meta")
-        assert meta_el is not None
-        meta = json.loads(meta_el.string)
+        meta = json.loads(find_one(soup, "script.bf-dd__meta").get_text())
         assert meta["x"] == "numeric"
         assert meta["cat"] == "categorical"
 
     def test_all_columns_in_selects(self, simple_df):
         html = render_datadive(DataDive(simple_df))
         soup = BeautifulSoup(html, "html.parser")
-        x_select = soup.find("select", attrs={"data-axis": "x"})
+        x_select = find_one(soup, 'select[data-axis="x"]')
         opts = [o["value"] for o in x_select.find_all("option") if o.get("value")]
         for col in simple_df.columns:
             assert col in opts
@@ -116,16 +112,15 @@ class TestRenderDataDive:
     def test_default_x_selected(self, simple_df):
         html = render_datadive(DataDive(simple_df))
         soup = BeautifulSoup(html, "html.parser")
-        x_select = soup.find("select", attrs={"data-axis": "x"})
+        x_select = find_one(soup, 'select[data-axis="x"]')
         selected = x_select.find("option", selected=True)
         assert selected is not None
 
     def test_hint_x_pre_selected(self, simple_df):
         html = render_datadive(DataDive(simple_df, x="y"))
         soup = BeautifulSoup(html, "html.parser")
-        x_select = soup.find("select", attrs={"data-axis": "x"})
-        selected = x_select.find("option", selected=True)
-        assert selected["value"] == "y"
+        selected = find_one(soup, 'select[data-axis="x"] option[selected]')
+        assert attr(selected, "value") == "y"
 
     def test_row_count_in_footer(self, simple_df):
         html = render_datadive(DataDive(simple_df))
@@ -135,7 +130,7 @@ class TestRenderDataDive:
         df = pd.DataFrame({"a": [1.0, float("nan"), 3.0], "b": [4.0, 5.0, 6.0]})
         html = render_datadive(DataDive(df))
         soup = BeautifulSoup(html, "html.parser")
-        records = json.loads(soup.find("script", class_="bf-dd__data").string)
+        records = json.loads(find_one(soup, "script.bf-dd__data").get_text())
         assert records[1]["a"] is None
 
     def test_datetime_serialised_as_string(self):
@@ -145,7 +140,7 @@ class TestRenderDataDive:
         })
         html = render_datadive(DataDive(df))
         soup = BeautifulSoup(html, "html.parser")
-        records = json.loads(soup.find("script", class_="bf-dd__data").string)
+        records = json.loads(find_one(soup, "script.bf-dd__data").get_text())
         assert isinstance(records[0]["ts"], str)
 
     def test_no_external_resources(self, simple_df):
@@ -170,7 +165,7 @@ class TestRenderDataDive:
             block = DataDive(big, max_rows=50)
         html = render_datadive(block)
         soup = BeautifulSoup(html, "html.parser")
-        records = json.loads(soup.find("script", class_="bf-dd__data").string)
+        records = json.loads(find_one(soup, "script.bf-dd__data").get_text())
         assert len(records) == 50
 
 
