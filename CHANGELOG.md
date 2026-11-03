@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Notebook previews: every block and `Briefing` has a `_repr_html_`, so it displays itself
+  as the last expression of a cell, as a complete report in its own `srcdoc` iframe that
+  grows to fit its content. Previews no longer share ids, CSS or scripts with each other
+  or the notebook. `bf.preview(blocks, name=, formatting=)` previews with a name or
+  theme (#12).
 - `BigNumber(is_positive_intent=...)` sets the change colour apart from the arrow, so
   "went up, and that's bad" shows ▲ in red. Calls without it render as before (#14).
 

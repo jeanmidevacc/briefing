@@ -36,6 +36,12 @@ class Block:
         self.name = name
         self.label = _truncate(label, _MAX_LABEL_LEN) if label else label
 
+    def _repr_html_(self) -> str:
+        """Notebook preview: this block as a complete report, isolated in its own iframe."""
+        from briefing._preview import preview_html
+
+        return preview_html(self)
+
     def __repr__(self) -> str:
         parts = []
         if self.name:
