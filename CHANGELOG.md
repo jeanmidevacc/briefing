@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Text` renders markdown pipe tables, styled like `Table` blocks (#4).
 - `HTML` blocks get the same paragraph, list, heading, link, code, blockquote and
   table spacing as `Text`, instead of none at all; inline styles still win (#47).
+- `Formula` now displays typeset math: LaTeX is converted to MathML when the report is
+  rendered, with no JavaScript. Before, readers saw the raw `\(...\)` source.
+  LaTeX that can't be converted shows its source with a visible note and a
+  `UserWarning`. New core dependency: `latex2mathml` (#3).
 
 ## [0.1.0] - 2026-09-09
 

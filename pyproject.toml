@@ -54,6 +54,8 @@ classifiers = [
 dependencies = [
     "jinja2>=3.1",
     "markdown-it-py>=3.0",
+    # Formula: LaTeX → MathML at render time (pure Python, MIT, no dependencies)
+    "latex2mathml>=3.77",
 ]
 
 [project.urls]
