@@ -78,6 +78,11 @@ present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer
 - Check HTML structure with BeautifulSoup, not substring matching. bs4 types `find()` as
   `Tag | None` and attributes as `str | AttributeValueList`, so use the typed helpers in
   `tests/html_helpers.py` (`parse`, `find_one`, `attr`, `classes`) or mypy fails.
+- `tests/contract.py` holds the rules every report must follow (offline, unique ids, valid
+  embedded JSON, escaped user text, deterministic output, …); `tests/test_contract.py` runs
+  them over a scenario per block. A new block needs a scenario there, or
+  `test_every_block_type_is_covered` fails. Known failures are strict `xfail`s naming their
+  issue: remove the entry in `KNOWN_FAILURES` when you fix it.
 - Every bug fix comes with a test that fails without the fix.
 - JavaScript behaviour (sorting, tabs, toggles, DataDive) can't be verified from HTML alone.
   After changing `static/` or `lab/static/`, open a rendered report in a browser (Playwright
