@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `mypy src/briefing tests` passes again with beautifulsoup4's own type hints;
+  the `dev` extra now requires `beautifulsoup4>=4.14` (#48).
 - pandas 3: `DataDive` trims long strings to 64 characters again. pandas 3's
   default `str` dtype (and the `"string"` dtype on pandas 2) skipped the trim,
   which only looked at `object` columns. CI now tests pandas 2 and 3 (#11).

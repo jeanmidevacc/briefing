@@ -9,6 +9,7 @@ from briefing.blocks.asset import DataTable, Table
 from briefing.blocks.layout import Briefing
 from briefing.renderers.html import render_report
 from briefing.renderers.table import render_datatable, render_table
+from tests.html_helpers import attr, classes, find_one
 
 # ── fixtures ──────────────────────────────────────────────────────────────────
 
@@ -36,9 +37,9 @@ class TestRenderTable:
     def test_outer_div_classes(self, simple_df):
         html = render_table(Table(simple_df))
         soup = BeautifulSoup(html, "html.parser")
-        outer = soup.find("div")
-        assert "bf-block" in outer["class"]
-        assert "bf-table" in outer["class"]
+        outer = classes(find_one(soup, "div"))
+        assert "bf-block" in outer
+        assert "bf-table" in outer
 
     def test_scroll_wrapper_present(self, simple_df):
         html = render_table(Table(simple_df))
@@ -83,8 +84,7 @@ class TestRenderTable:
         html = render_table(Table(simple_df))
         soup = BeautifulSoup(html, "html.parser")
         # The first header should be 'a' not '0'
-        first_th = soup.find("th")
-        assert first_th.get_text(strip=True) == "a"
+        assert find_one(soup, "th").get_text(strip=True) == "a"
 
     def test_named_index_shown(self, named_index_df):
         html = render_table(Table(named_index_df))
@@ -104,8 +104,7 @@ class TestRenderDataTable:
     def test_fl_block_class(self, simple_df):
         html = render_datatable(DataTable(simple_df))
         soup = BeautifulSoup(html, "html.parser")
-        outer = soup.find("div", class_="bf-datatable")
-        assert "bf-block" in outer["class"]
+        assert "bf-block" in classes(find_one(soup, "div.bf-datatable"))
 
     def test_search_input_present(self, simple_df):
         html = render_datatable(DataTable(simple_df))
@@ -123,13 +122,13 @@ class TestRenderDataTable:
         soup = BeautifulSoup(html, "html.parser")
         ths = soup.find_all("th", class_="bf-dt__th")
         assert len(ths) == 2  # no named index → 2 columns
-        cols = [int(th["data-col"]) for th in ths]
+        cols = [int(attr(th, "data-col")) for th in ths]
         assert cols == [0, 1]
 
     def test_all_rows_rendered(self, simple_df):
         html = render_datatable(DataTable(simple_df))
         soup = BeautifulSoup(html, "html.parser")
-        rows = soup.find("tbody").find_all("tr")
+        rows = find_one(soup, "tbody").find_all("tr")
         assert len(rows) == 3
 
     def test_cell_data_present(self, simple_df):
@@ -176,7 +175,7 @@ class TestRenderDataTable:
         df = pd.DataFrame({"x": [1.0, float("nan"), 3.0]})
         html = render_datatable(DataTable(df))
         soup = BeautifulSoup(html, "html.parser")
-        cells = soup.find("tbody").find_all("td")
+        cells = find_one(soup, "tbody").find_all("td")
         texts = [c.get_text() for c in cells]
         assert "" in texts
 
@@ -192,7 +191,7 @@ class TestRenderDataTable:
             dt = DataTable(big, max_rows=100)
         html = render_datatable(dt)
         soup = BeautifulSoup(html, "html.parser")
-        rows = soup.find("tbody").find_all("tr")
+        rows = find_one(soup, "tbody").find_all("tr")
         assert len(rows) == 100
 
     def test_sort_icon_span_present(self, simple_df):

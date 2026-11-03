@@ -14,6 +14,7 @@ from briefing.lab._render_profile import (
     render_profile,
 )
 from briefing.renderers.html import render_report
+from tests.html_helpers import find_one
 
 # ── fixtures ──────────────────────────────────────────────────────────────────
 
@@ -203,7 +204,7 @@ class TestRenderProfile:
         html = render_profile(DataProfile(df, max_categories=5))
         soup = BeautifulSoup(html, "html.parser")
         # only 5 values' bars should appear in SVG (SVG rect count = 5)
-        card = soup.find("div", class_="bf-profile__card")
+        card = find_one(soup, "div.bf-profile__card")
         rects = card.find_all("rect")
         assert len(rects) <= 5
 

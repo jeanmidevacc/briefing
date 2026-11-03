@@ -76,7 +76,8 @@ present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer
 - Shared dataframes live in `tests/conftest.py` (`df_mixed`, `df_empty`, `df_large`, …).
   Use them before writing new ad hoc frames.
 - Check HTML structure with BeautifulSoup, not substring matching. bs4 types `find()` as
-  `Tag | None`, so assert the result is not `None` before indexing, or mypy fails.
+  `Tag | None` and attributes as `str | AttributeValueList`, so use the typed helpers in
+  `tests/html_helpers.py` (`parse`, `find_one`, `attr`, `classes`) or mypy fails.
 - Every bug fix comes with a test that fails without the fix.
 - JavaScript behaviour (sorting, tabs, toggles, DataDive) can't be verified from HTML alone.
   After changing `static/` or `lab/static/`, open a rendered report in a browser (Playwright
