@@ -52,6 +52,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gone (#8).
 - `DataDive` warns when `facet_row` or `facet_col` is passed: they were validated, then
   silently ignored. Faceting is planned for DataDive v2; the README no longer lists them (#6).
+- The README and docstrings match the code (#13):
+  - `HTML` (and raw HTML in `Text`) is inserted as-is; scripts run.
+  - `[email]` is reserved for the upcoming email digest; there is no email feature yet.
+  - `DataProfile` lists the stats it actually shows (median, not quartiles; no gap
+    detection).
+  - The missing `demo/` section is replaced by `examples/`.
+  - No docstring uses the old `fl.` prefix.
+  - Every README example now runs as written, offline, in the test suite.
 
 ## [0.1.0] - 2026-09-09
 

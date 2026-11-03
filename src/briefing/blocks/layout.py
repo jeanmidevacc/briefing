@@ -34,8 +34,8 @@ class Group(ContainerBlock):
 
     Example::
 
-        fl.Group(plot, table, columns=2)
-        fl.Group(a, b, c, columns=3, widths=[2, 1, 1])
+        bf.Group(plot, table, columns=2)
+        bf.Group(a, b, c, columns=3, widths=[2, 1, 1])
     """
 
     min_blocks: t.ClassVar[int] = 0
@@ -68,10 +68,10 @@ class Select(ContainerBlock):
 
     Example::
 
-        fl.Select(
-            fl.Plot(fig, label="Chart"),
-            fl.DataTable(df, label="Data"),
-            type=fl.SelectType.TABS,
+        bf.Select(
+            bf.Plot(fig, label="Chart"),
+            bf.DataTable(df, label="Data"),
+            type=bf.SelectType.TABS,
         )
     """
 
@@ -99,7 +99,7 @@ class Toggle(ContainerBlock):
 
     Example::
 
-        fl.Toggle(fl.DataTable(df), label="Show raw data")
+        bf.Toggle(bf.DataTable(df), label="Show raw data")
     """
 
     min_blocks: t.ClassVar[int] = 1
@@ -125,9 +125,9 @@ class Page(ContainerBlock):
 
     Example::
 
-        fl.Briefing(
-            fl.Page(summary_group, title="Summary"),
-            fl.Page(detail_group, title="Detail"),
+        bf.Briefing(
+            bf.Page(summary_group, title="Summary"),
+            bf.Page(detail_group, title="Detail"),
         )
     """
 
@@ -151,15 +151,15 @@ class Page(ContainerBlock):
 class Briefing(ContainerBlock):
     """Root document container.
 
-    This is the top-level object passed to ``save`` / ``send_email``.
+    This is the top-level object passed to ``save`` and ``stringify``.
 
     Example::
 
-        report = fl.Briefing(
-            fl.Text("# My report"),
-            fl.Plot(fig),
+        report = bf.Briefing(
+            bf.Text("# My report"),
+            bf.Plot(fig),
         )
-        fl.save(report, "report.html")
+        bf.save(report, "report.html")
     """
 
     min_blocks: t.ClassVar[int] = 1
