@@ -418,7 +418,8 @@ bf.lab.DataProfile(df, max_categories=10)        # cap top-N bars for categorica
 
 #### `bf.lab.DataDive`: Interactive dot explorer
 
-Each DataFrame row becomes a dot. Dropdowns let the viewer dynamically change which columns drive X, Y, colour, and facets, similar to Google Facets Dive.
+Each DataFrame row becomes a dot. Dropdowns let the viewer dynamically change which columns drive X, Y and colour, similar to Google Facets Dive. (Faceting into rows
+and columns is planned for DataDive v2.)
 
 ```python
 bf.lab.DataDive(df)                                              # auto-selects axes
@@ -432,8 +433,6 @@ bf.lab.DataDive(df, x="region", y="channel", color="product", layout="tile")
 | `x` | `str` | `None` | Initial X-axis column |
 | `y` | `str` | `None` | Initial Y-axis column |
 | `color` | `str` | `None` | Initial colour column |
-| `facet_row` | `str` | `None` | Column to facet into rows |
-| `facet_col` | `str` | `None` | Column to facet into columns |
 | `layout` | `str` | `"scatter"` | `"scatter"` (2-D axes) or `"tile"` (packed dot grid) |
 | `max_rows` | `int` | `10 000` | Rows beyond this are sampled with a warning |
 

@@ -45,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `altair` and `charts` extras now include `vl-convert-python`, which supplies the
   runtime; without it an Altair chart shows an install hint. The offline warning is
   gone (#8).
+- `DataDive` warns when `facet_row` or `facet_col` is passed: they were validated, then
+  silently ignored. Faceting is planned for DataDive v2; the README no longer lists them (#6).
 
 ## [0.1.0] - 2026-09-09
 
