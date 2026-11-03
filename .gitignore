@@ -29,3 +29,6 @@ coverage.xml
 *.swp
 .idea/
 .vscode/
+
+# Playwright failure screenshots
+test-results/

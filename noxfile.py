@@ -1,9 +1,9 @@
-"""Developer tasks: `nox -s tests lint typecheck` (or just `nox`)."""
+"""Developer tasks: `nox -s tests browser lint typecheck` (or just `nox`)."""
 from __future__ import annotations
 
 import nox
 
-nox.options.sessions = ["tests", "lint", "typecheck"]
+nox.options.sessions = ["tests", "browser", "lint", "typecheck"]
 nox.options.reuse_existing_virtualenvs = True
 
 PYTHONS = ["3.11", "3.12", "3.13"]
@@ -14,7 +14,15 @@ PYTHONS = ["3.11", "3.12", "3.13"]
 def tests(session: nox.Session, pandas: str) -> None:
     """Run the test suite with coverage, against pandas 2 and pandas 3."""
     session.install("-e", ".[dev]", f"pandas=={pandas}.*")
-    session.run("pytest", *session.posargs)
+    session.run("pytest", "-m", "not browser", *session.posargs)
+
+
+@nox.session(python="3.12")
+def browser(session: nox.Session) -> None:
+    """Browser tests in headless Chromium (pytest -m browser)."""
+    session.install("-e", ".[dev]")
+    session.run("playwright", "install", "chromium")
+    session.run("pytest", "-m", "browser", "--no-cov", *session.posargs)
 
 
 @nox.session(python="3.11")
