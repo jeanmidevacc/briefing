@@ -59,7 +59,6 @@ def test_search_filters_rows(viewer: Viewer) -> None:
 # ── #1: sorting must move rows ────────────────────────────────────────────────
 
 
-@pytest.mark.xfail(reason="#1: sorting doesn't reorder rows", strict=True)
 def test_sort_orders_page_one_ascending_then_descending(viewer: Viewer) -> None:
     page = viewer.open(_table())
     sort_by(page, 0)
@@ -68,14 +67,12 @@ def test_sort_orders_page_one_ascending_then_descending(viewer: Viewer) -> None:
     assert _ints(visible_column(page)) == list(range(60, 35, -1))
 
 
-@pytest.mark.xfail(reason="#1: sorting doesn't reorder rows", strict=True)
 def test_sort_reorders_a_single_page_table(viewer: Viewer) -> None:
     page = viewer.open(_table([3, 1, 2, 5, 4]))
     sort_by(page, 0)
     assert _ints(visible_column(page)) == [1, 2, 3, 4, 5]
 
 
-@pytest.mark.xfail(reason="#1: sorting doesn't reorder rows", strict=True)
 def test_sort_combines_with_search_and_paging(viewer: Viewer) -> None:
     page = viewer.open(_table())
     page.locator(".bf-dt__search").fill("row")  # matches all 60 rows
@@ -84,6 +81,8 @@ def test_sort_combines_with_search_and_paging(viewer: Viewer) -> None:
     assert _ints(visible_column(page)) == list(range(26, 51))
     page.locator(".bf-dt__search").fill("row 5")  # row 5, row 50–59; sort is kept
     assert _ints(visible_column(page)) == [5, *range(50, 60)]
+    page.locator(".bf-dt__search").fill("")  # clearing the search keeps the sort
+    assert _ints(visible_column(page)) == list(range(1, 26))
 
 
 # ── #2: sort by the real value ────────────────────────────────────────────────

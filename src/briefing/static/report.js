@@ -76,6 +76,11 @@
     var filtered = allRows.slice();
 
     function render() {
+      // Move the matching rows to the end of tbody in their current (sorted) order,
+      // so the page shows them in that order and not in the original one.
+      var frag = document.createDocumentFragment();
+      filtered.forEach(function (r) { frag.appendChild(r); });
+      tbody.appendChild(frag);
       allRows.forEach(function (r) { r.hidden = true; });
       var start = page * PAGE_SIZE;
       filtered.slice(start, start + PAGE_SIZE).forEach(function (r) { r.hidden = false; });
