@@ -54,6 +54,13 @@ def test_is_pandas_dataframe() -> None:
     assert not is_pandas_dataframe({"a": [1]})
 
 
+def test_is_pandas_dataframe_subclass() -> None:
+    class MyFrame(pd.DataFrame):
+        pass
+
+    assert is_pandas_dataframe(MyFrame({"a": [1]}))
+
+
 def test_looks_like_dataframe() -> None:
     assert looks_like_dataframe(pd.DataFrame())
 

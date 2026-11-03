@@ -12,11 +12,12 @@ pytest                                  # full suite with coverage (addopts in p
 pytest -o addopts="" -q tests/test_lab  # quick run of one area, no coverage
 ruff check src tests                    # lint; line length 120
 mypy src/briefing tests                 # strict mode, tests included
-nox                                     # tests on 3.11–3.13 + lint + typecheck, as CI does
+nox                                     # tests on 3.11–3.13 × pandas 2/3 + lint + typecheck, as CI
 ```
 
 Run `ruff`, `mypy` and `pytest` before saying a change is done. CI runs the same three on
-Python 3.11, 3.12 and 3.13, then builds the package and runs `twine check --strict`.
+Python 3.11, 3.12 and 3.13 (tests against both pandas 2 and 3), then builds the package
+and runs `twine check --strict`.
 
 ## How it works
 

@@ -10,9 +10,10 @@ PYTHONS = ["3.11", "3.12", "3.13"]
 
 
 @nox.session(python=PYTHONS)
-def tests(session: nox.Session) -> None:
-    """Run the test suite with coverage."""
-    session.install("-e", ".[dev]")
+@nox.parametrize("pandas", ["2", "3"])
+def tests(session: nox.Session, pandas: str) -> None:
+    """Run the test suite with coverage, against pandas 2 and pandas 3."""
+    session.install("-e", ".[dev]", f"pandas=={pandas}.*")
     session.run("pytest", *session.posargs)
 
 

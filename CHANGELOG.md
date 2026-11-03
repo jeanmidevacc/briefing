@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- pandas 3: `DataDive` trims long strings to 64 characters again. pandas 3's
+  default `str` dtype (and the `"string"` dtype on pandas 2) skipped the trim,
+  which only looked at `object` columns. CI now tests pandas 2 and 3 (#11).
+
 ## [0.1.0] - 2026-09-09
 
 First public release.
