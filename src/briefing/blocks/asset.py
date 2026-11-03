@@ -29,10 +29,17 @@ class Plot(Block):
     - **Matplotlib / Seaborn / Plotnine** → embedded as inline SVG
     - **Bokeh** → embedded with inline resources
 
+    Args:
+        figure: A Plotly, Altair, Matplotlib (or Seaborn / Plotnine) or Bokeh figure.
+        caption: Optional caption shown below the chart.
+        responsive: Let the chart fill the width of its container.
+        scale: Deprecated, has no effect, and is removed after 0.2. Size the figure
+            in its plotting library instead, e.g. Matplotlib's ``figsize=(w, h)``.
+
     Example::
 
-        fl.Plot(plotly_fig, caption="Revenue over time")
-        fl.Plot(altair_chart, label="Chart", responsive=True)
+        bf.Plot(plotly_fig, caption="Revenue over time")
+        bf.Plot(altair_chart, label="Chart", responsive=True)
     """
 
     def __init__(
@@ -40,15 +47,23 @@ class Plot(Block):
         figure: t.Any,
         caption: str | None = None,
         responsive: bool = True,
-        scale: float = 1.0,
+        scale: float | None = None,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
+        if scale is not None:
+            warnings.warn(
+                "Plot(scale=...) is deprecated, has no effect, and will be removed after 0.2. "
+                "Size the figure in its plotting library instead, e.g. Matplotlib's figsize=(w, h); "
+                "responsive=True already makes it fill its container.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         super().__init__(name=name, label=label)
         self.figure = figure
         self.caption = _truncate(caption, _MAX_CAPTION_LEN) if caption else caption
         self.responsive = responsive
-        self.scale = scale
+        self.scale = 1.0 if scale is None else scale
 
 
 class Table(Block):
