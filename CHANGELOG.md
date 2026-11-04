@@ -10,6 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `lab.CalendarHeatmap`: hovering a day, an hour or an event band shows a tooltip at once,
+  styled with the theme: the date (now with its weekday) in bold, the exact value, "below
+  target …" and the day's events. It also opens on keyboard focus and on tap, stays inside
+  the window, and never prints. The browser's slower built-in tooltip no longer doubles up;
+  without JavaScript it is still there (#109).
+
+### Fixed
+
+- `lab.CalendarHeatmap` shows values exactly: a non-integer of 10,000 or more read
+  `1.235e+04` in the tooltip and the legend; it now reads `12,345.67` (#109).
+
 ## [0.2.1] - 2026-11-04
 
 ### Changed

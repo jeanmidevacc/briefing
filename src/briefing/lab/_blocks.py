@@ -163,6 +163,7 @@ class CalendarHeatmap(Block):
     continuously across a year boundary, with month labels and a year marker.
     The calendar fits the width available (the report or a ``Group`` column),
     between 0.6x and 2x its natural size; below that it scrolls sideways.
+    Hovering a cell shows its date and exact value.
 
     Args:
         df: The data, as any dataframe briefing accepts (pandas, polars, pyarrow…).

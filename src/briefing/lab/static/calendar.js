@@ -1,4 +1,5 @@
-/* briefing lab: CalendarHeatmap — sizing, and on_click="rows" (click a day or an hour to list its rows). Vanilla JS. */
+/* briefing lab: CalendarHeatmap — sizing, hover tooltip, and on_click="rows" (click a day or an hour to
+   list its rows). Vanilla JS. */
 (function () {
   'use strict';
 
@@ -27,6 +28,60 @@
     });
   });
 
+  // Hover tooltip (#109): instant, themed, and shown on keyboard focus and tap too. Its text comes
+  // from each cell's <title>, which is then removed so the browser's own slow tooltip doesn't double
+  // up; clickable cells keep the text as their aria-label. Built with textContent only.
+  var tips = [];
+  function hideTips() { tips.forEach(function (tip) { tip.hidden = true; }); }
+  function showTip(tip, cell) {
+    var lines = (cell.getAttribute('data-tip') || '').split(' \u00b7 ');
+    tip.textContent = '';
+    lines.forEach(function (line, i) {
+      var el = document.createElement(i === 0 ? 'strong' : 'div');
+      el.textContent = line;
+      tip.appendChild(el);
+    });
+    hideTips();
+    tip.hidden = false;
+    // Above the cell, centred; below it when there is no room above; always inside the window.
+    var box = cell.getBoundingClientRect(), gap = 6, edge = 4;
+    var width = tip.offsetWidth, height = tip.offsetHeight;
+    var left = box.left + box.width / 2 - width / 2;
+    left = Math.max(edge, Math.min(left, document.documentElement.clientWidth - width - edge));
+    var top = box.top - height - gap;
+    if (top < edge) top = box.bottom + gap;
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
+  }
+  document.querySelectorAll('.bf-calendar').forEach(function (figure) {
+    var tip = document.createElement('div');
+    tip.className = 'bf-cal__tip';
+    tip.setAttribute('role', 'tooltip');
+    tip.hidden = true;
+    figure.appendChild(tip);
+    tips.push(tip);
+    figure.querySelectorAll('rect.bf-cal__day, rect.bf-cal__hour, g.bf-cal__event').forEach(function (cell) {
+      var title = cell.querySelector('title');
+      if (!title) return;
+      cell.setAttribute('data-tip', title.textContent);
+      if (cell.getAttribute('role') === 'button') cell.setAttribute('aria-label', title.textContent);
+      cell.removeChild(title);
+      cell.addEventListener('mouseenter', function () { showTip(tip, cell); });
+      cell.addEventListener('mouseleave', hideTips);
+      cell.addEventListener('focus', function () { showTip(tip, cell); });
+      cell.addEventListener('blur', hideTips);
+      cell.addEventListener('pointerdown', function (e) { if (e.pointerType !== 'mouse') showTip(tip, cell); });
+    });
+  });
+  if (tips.length) {
+    // A tap elsewhere, scrolling (the page or a calendar's own scroll box) or Escape hides it.
+    document.addEventListener('pointerdown', function (e) {
+      if (!(e.target.closest && e.target.closest('[data-tip]'))) hideTips();
+    });
+    window.addEventListener('scroll', hideTips, true);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideTips(); });
+  }
+
   document.querySelectorAll('.bf-calendar').forEach(function (figure) {
     var dataEl = figure.querySelector('script.bf-cal__rows');
     if (!dataEl) return;
@@ -42,7 +97,7 @@
       var date = cell.getAttribute('data-date');
       var key = (date ? 'd|' + date : 'h|' + cell.getAttribute('data-hour')) + (group !== null ? '|' + group : '');
       var entry = data.cells[key];
-      var when = cell.querySelector('title').textContent.split(' · ')[0];
+      var when = (cell.getAttribute('data-tip') || '').split(' \u00b7 ')[0];
       var count = entry ? entry.total + (entry.total === 1 ? ' row' : ' rows') : 'no rows';
       title.textContent = [when, group, count].filter(function (x) { return x !== null; }).join(' · ');
       body.textContent = '';
