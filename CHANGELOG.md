@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   report as one PDF with the print layout: each top-level page on a new sheet, text
   selectable, links clickable, charts vector. One page by title, `name` or index;
   `paper` is `a4`, `letter`, `legal`, `a3` or `a5` (#49).
+- Command line for saved reports: `python -m briefing image report.html --page all -o out/`
+  and `python -m briefing pdf report.html -o report.pdf`, with the same options as
+  `save_image` / `save_pdf` and `--help` (#49).
 
 ## [0.1.2] - 2026-11-03
 
