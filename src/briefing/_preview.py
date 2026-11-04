@@ -67,6 +67,10 @@ class Preview:
     def _repr_html_(self) -> str:
         return preview_html(self.blocks, name=self.name, formatting=self.formatting)
 
+    def __repr__(self) -> str:
+        # Shown where HTML isn't (a terminal, a notebook's text/plain output): no memory address.
+        return f"Preview({self.blocks!r}, name={self.name!r})"
+
 
 def preview(blocks: t.Any, *, name: str = "Report", formatting: Formatting | None = None) -> Preview:
     """Preview *blocks* in a notebook with a report name or a theme.

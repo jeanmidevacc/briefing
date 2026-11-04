@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Two Matplotlib figures in one report no longer share DOM ids: each inline SVG's ids
   (and the clip-path, marker and glyph references to them) get the figure's own prefix,
   so no reference resolves into another figure (#56).
+- `bf.preview(...)` has a readable `repr` instead of one with a memory address, so
+  notebook outputs are stable from one run to the next (#82).
 
 ## [0.1.1] - 2026-11-03
 

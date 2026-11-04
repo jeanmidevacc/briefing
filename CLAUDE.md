@@ -101,7 +101,7 @@ present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer
 
 ## Working on issues
 
-- The backlog lives in GitHub issues (#1–#46). Read the issue's Problem, Proposal and
+- The backlog lives in GitHub issues, grouped by milestone. Read the issue's Problem, Proposal and
   "Done when" first; a "Decision" section is settled and not to be reopened. Issues
   labelled `needs spec` need a short agreed spec before code.
 - Every ```python block in the README runs in `tests/test_readme.py`, offline, with the

@@ -39,8 +39,26 @@ def typecheck(session: nox.Session) -> None:
     session.run("mypy", "src/briefing", "tests")
 
 
+# Re-executes the walkthrough in place. SOURCE_DATE_EPOCH pins every timestamp, so
+# re-running it without code changes leaves the notebook and its saved report as they are.
+_RUN_WALKTHROUGH = """
+import nbformat
+from nbclient import NotebookClient
+path = "notebook_walkthrough.ipynb"
+nb = nbformat.read(path, as_version=4)
+NotebookClient(
+    nb, timeout=300, kernel_name="python3", record_timing=False, resources={"metadata": {"path": "."}}
+).execute()
+for cell in nb.cells:
+    cell.metadata.pop("execution", None)  # wall-clock timings would change on every run
+nbformat.write(nb, path)
+print("re-executed", path)
+"""
+
+
 @nox.session(python="3.11")
-def demo(session: nox.Session) -> None:
-    """Regenerate the demo reports in ../demo/."""
-    session.install("-e", ".[dev]", "plotly", "matplotlib")
-    session.run("python", "../demo/generate.py", external=True)
+def examples(session: nox.Session) -> None:
+    """Re-execute examples/notebook_walkthrough.ipynb (which also rewrites examples/sales_report.html)."""
+    session.install("-e", ".[dev]", "nbclient", "nbformat", "ipykernel")
+    session.chdir("examples")
+    session.run("python", "-c", _RUN_WALKTHROUGH, env={"SOURCE_DATE_EPOCH": "1704067200"})
