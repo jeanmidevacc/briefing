@@ -36,7 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Opt-in export menu: `bf.Briefing(..., export=("png", "pdf"))` adds "Save as PNG" (the
   open page, drawn in the reader's browser at 2×, no library, no network) and "Print"
   to the report header. Reports without `export=` contain no export code. Best effort:
-  Bokeh's iframe charts and WebGL Plotly traces come out blank in the PNG (#49).
+  Bokeh's iframe charts and WebGL Plotly traces come out blank in the PNG. The menu
+  never appears in prints, PDFs or `save_image` images (#49, #100).
 - `bf.lab.CalendarHeatmap(df, date="run_at", value=None, agg="sum")`: a GitHub-style
   calendar, one cell per day and weeks as columns, drawn as SVG in Python. It counts
   rows or aggregates a value per day; runs continuously across year boundaries with
