@@ -690,7 +690,8 @@ body {
    applies on screen too while the print dialog is open, so charts that were
    hidden can be measured and resized to the paper's width. */
 .bf-print-label { display: none; }
-html.bf-printing .bf-report { width: 180mm; max-width: 180mm; }
+/* 180mm fits A4 and Letter; bf.save_pdf sets the exact line for its paper. */
+html.bf-printing .bf-report { width: var(--bf-print-width, 180mm); max-width: var(--bf-print-width, 180mm); }
 html.bf-printing .bf-select__tablist,
 html.bf-printing .bf-select__select,
 html.bf-printing .bf-dt__toolbar,

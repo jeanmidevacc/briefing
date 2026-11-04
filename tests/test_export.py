@@ -54,3 +54,23 @@ def test_bad_arguments_raise_before_launching(tmp_path: Path, kwargs: dict[str, 
 def test_unsupported_suffix_raises(tmp_path: Path) -> None:
     with pytest.raises(bf.BriefingError, match=r"\.png, \.jpg or \.webp"):
         bf.save_image(bf.Text("x"), tmp_path / "x.gif")
+
+
+def test_save_pdf_missing_playwright_names_the_extra(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    real_import = builtins.__import__
+
+    def no_playwright(name: str, *args: object, **kwargs: object) -> object:
+        if name.startswith("playwright"):
+            raise ImportError("No module named 'playwright'")
+        return real_import(name, *args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(builtins, "__import__", no_playwright)
+    with pytest.raises(bf.BriefingError, match=r'pip install "briefing\[image\]"'):
+        bf.save_pdf(bf.Text("x"), tmp_path / "x.pdf")
+
+
+def test_save_pdf_bad_arguments(tmp_path: Path) -> None:
+    with pytest.raises(bf.BriefingError, match="paper"):
+        bf.save_pdf(bf.Text("x"), tmp_path / "x.pdf", paper="b7")
+    with pytest.raises(bf.BriefingError, match=r"\.pdf"):
+        bf.save_pdf(bf.Text("x"), tmp_path / "x.png")

@@ -1,11 +1,8 @@
 """bf.save_image renders report pages to PNG/JPEG/WebP in headless Chromium (#49)."""
 from __future__ import annotations
 
-import http.server
-import threading
 import typing as t
 import warnings
-from collections.abc import Iterator
 from pathlib import Path
 
 import pandas as pd
@@ -116,25 +113,6 @@ STATE_JS = """() => ({
           profile: document.querySelectorAll('.bf-profile__card svg').length,
           chartWidth: document.querySelector('.js-plotly-plot .main-svg').getBoundingClientRect().width,
         })"""
-
-
-@pytest.fixture
-def counting_server() -> Iterator[tuple[str, list[str]]]:
-    hits: list[str] = []
-
-    class Handler(http.server.BaseHTTPRequestHandler):
-        def do_GET(self) -> None:  # noqa: N802
-            hits.append(self.path)
-            self.send_response(404)
-            self.end_headers()
-
-        def log_message(self, *args: object) -> None:
-            pass
-
-    server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    yield f"http://127.0.0.1:{server.server_address[1]}", hits
-    server.shutdown()
 
 
 def test_no_network_request_while_rendering(tmp_path: Path, counting_server: tuple[str, list[str]]) -> None:
