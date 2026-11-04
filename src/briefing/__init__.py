@@ -114,6 +114,21 @@ def stringify(
     as an isolated preview, and :func:`preview` adds a name or a theme.
 
     Pass *now* (or set ``SOURCE_DATE_EPOCH``) for byte-reproducible output.
+
+    Args:
+        blocks: A :class:`Briefing`, a list of blocks, or a single block.
+        name: Report title, shown in the browser tab and the header.
+        formatting: A :class:`Formatting` instance controlling the theme.
+        now: Pin the header timestamp for byte-reproducible output (see also
+            the ``SOURCE_DATE_EPOCH`` environment variable).
+
+    Returns:
+        The complete HTML document.
+
+    Example::
+
+        html = bf.stringify(bf.Text("# Hello"), name="Greeting")
+        email_body = html  # or write it anywhere a string goes
     """
     wrapped = Briefing.wrap(blocks)
     return render_report(wrapped, name=name, formatting=formatting, now=now)

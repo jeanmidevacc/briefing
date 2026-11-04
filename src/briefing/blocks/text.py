@@ -33,6 +33,12 @@ class Text(EmbeddedTextBlock):
 
     Raw HTML inside the markdown is passed through as-is, like :class:`HTML`.
 
+    Args:
+        text: Markdown; common leading indentation is removed.
+        file: Path to a ``.md`` file to read instead of ``text``.
+        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        label: Tab or dropdown label when the block is inside a ``Select``.
+
     Example::
 
         bf.Text("# Hello world")
@@ -75,6 +81,11 @@ class HTML(EmbeddedTextBlock):
     ``<div>`` — it is **not** sandboxed or sanitised. Only pass HTML you
     trust; any ``<script>`` it contains will run.
 
+    Args:
+        html: The HTML fragment, inserted as-is.
+        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        label: Tab or dropdown label when the block is inside a ``Select``.
+
     Example::
 
         bf.HTML("<b>Bold text</b>")
@@ -91,6 +102,14 @@ class HTML(EmbeddedTextBlock):
 
 class Code(EmbeddedTextBlock):
     """Syntax-highlighted code block.
+
+    Args:
+        code: The source code.
+        language: Language for syntax highlighting (any Pygments lexer name, e.g.
+            ``"python"``, ``"sql"``); an unknown language is shown as plain text.
+        caption: Optional caption below the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
 
@@ -116,6 +135,12 @@ class Formula(EmbeddedTextBlock):
     Browsers display MathML natively, so the formula needs no JavaScript and
     no network. LaTeX that can't be converted is shown as source, with a
     visible note and a ``UserWarning``.
+
+    Args:
+        formula: A LaTeX expression, without ``$`` or ``\\(`` delimiters.
+        caption: Optional caption below the formula.
+        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
 
@@ -149,6 +174,8 @@ class BigNumber(Block):
             is red (bad news). Leave it ``None`` and the colour follows the arrow
             (▲ green, ▼ red); with neither flag the change is shown neutral, in
             the theme's muted colour.
+        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
 
@@ -177,6 +204,13 @@ class BigNumber(Block):
 
 
 class AlertLevel(StrEnum):
+    """Colour and icon of an :class:`Alert`.
+
+    Example::
+
+        bf.Alert("Data is a day late", level=bf.AlertLevel.WARNING)  # or level="warning"
+    """
+
     INFO = "info"
     SUCCESS = "success"
     WARNING = "warning"
@@ -185,6 +219,13 @@ class AlertLevel(StrEnum):
 
 class Alert(Block):
     """Styled callout / alert block.
+
+    Args:
+        message: The alert's text.
+        level: ``"info"``, ``"success"``, ``"warning"`` or ``"error"`` (or an :class:`AlertLevel`).
+        title: Optional bold title above the message.
+        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
 

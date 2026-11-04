@@ -21,6 +21,14 @@ class Block:
     All blocks carry an optional ``name`` (a stable ID for referencing the
     block) and an optional ``label`` (a human-readable display string used
     e.g. as a tab title inside a Select).
+
+    Args:
+        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        label: Tab or dropdown label when the block is inside a ``Select``.
+
+    Example::
+
+        bf.Text("Revenue grew 12 %", name="summary", label="Summary")
     """
 
     def __init__(
@@ -86,10 +94,23 @@ class ContainerBlock(Block):
 def wrap_block(b: BlockOrPrimitive) -> Block:
     """Auto-wrap primitives into appropriate blocks.
 
-    Supported auto-wrapping:
-    - ``str``       → :class:`~briefing.blocks.text.Text`
-    - a dataframe   → :class:`~briefing.blocks.asset.DataTable`
-      (pandas / polars / pyarrow / dataframe-interchange objects)
+    Containers call this on their children, so ``bf.Group("# Title", df)``
+    works without spelling out ``Text`` and ``DataTable``.
+
+    Args:
+        b: A block (returned as-is), a string (becomes :class:`~briefing.Text`)
+            or a dataframe — pandas, polars, pyarrow or any dataframe-interchange
+            object (becomes :class:`~briefing.DataTable`).
+
+    Returns:
+        The block.
+
+    Raises:
+        BriefingError: For any other type; the message names the supported ones.
+
+    Example::
+
+        bf.wrap_block("**Note**: figures are provisional")  # a Text block
     """
     if isinstance(b, Block):
         return b

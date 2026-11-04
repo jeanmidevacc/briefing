@@ -59,6 +59,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `--bf-bg-rgb` token for the veil (#50).
 - `bf.Banner(..., fade=False)`: one uniform veil at `opacity` over the whole image, for
   full-width backgrounds and textures; the text still follows `text_position` (#50).
+- API reference documentation, built with Sphinx (`nox -s docs`): every public block
+  and function in `briefing` and `briefing.lab` documents each argument and gives an
+  example. New extra: `pip install "briefing[docs]"` (#41).
 
 ## [0.1.2] - 2026-11-03
 

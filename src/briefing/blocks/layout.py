@@ -13,11 +13,25 @@ from briefing.blocks.base import BlockId, BlockOrPrimitive, ContainerBlock
 
 
 class SelectType(StrEnum):
+    """How a :class:`Select` shows its panels: a row of tabs or a dropdown.
+
+    Example::
+
+        bf.Select(a, b, type=bf.SelectType.DROPDOWN)  # or type="dropdown"
+    """
+
     TABS = "tabs"
     DROPDOWN = "dropdown"
 
 
 class VAlign(StrEnum):
+    """Vertical alignment of the cells of a :class:`Group`.
+
+    Example::
+
+        bf.Group(chart, note, columns=2, valign=bf.VAlign.CENTER)  # or valign="center"
+    """
+
     TOP = "top"
     CENTER = "center"
     BOTTOM = "bottom"
@@ -31,6 +45,15 @@ class Group(ContainerBlock):
 
     Lays out child blocks in *n* columns. Use ``widths`` to control the
     relative proportion of each column.
+
+    Args:
+        *arg_blocks: The child blocks; strings become ``Text`` and dataframes ``DataTable``.
+        blocks: The children as a list, instead of positional arguments.
+        columns: Number of grid columns.
+        widths: Relative column widths, one per column (e.g. ``[2, 1]``).
+        valign: Vertical alignment of the cells: ``"top"``, ``"center"`` or ``"bottom"``.
+        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
 
@@ -66,6 +89,13 @@ class Select(ContainerBlock):
     Each child block should have a ``label`` set, which becomes the tab/option
     title. A minimum of 2 children is expected.
 
+    Args:
+        *arg_blocks: The panels; each child's ``label`` is its tab or option title.
+        blocks: The panels as a list, instead of positional arguments.
+        type: ``"tabs"`` (default) or ``"dropdown"`` (or a :class:`SelectType`).
+        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        label: Tab or dropdown label when the block is inside a ``Select``.
+
     Example::
 
         bf.Select(
@@ -97,6 +127,12 @@ class Select(ContainerBlock):
 class Toggle(ContainerBlock):
     """Collapsible container — hidden by default, expanded on click.
 
+    Args:
+        *arg_blocks: The hidden content; several blocks are wrapped in a ``Group``.
+        blocks: The content as a list, instead of positional arguments.
+        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        label: The clickable title (``"Details"`` when omitted).
+
     Example::
 
         bf.Toggle(bf.DataTable(df), label="Show raw data")
@@ -122,6 +158,12 @@ class Page(ContainerBlock):
 
     Pages are converted to a ``Select(type=TABS)`` wrapping ``Group`` blocks
     during the pre-render normalisation pass — they cannot be nested.
+
+    Args:
+        *arg_blocks: The page's blocks.
+        blocks: The blocks as a list, instead of positional arguments.
+        title: The page's tab title.
+        name: Stable block id; ``save_image`` / ``save_pdf`` accept it as ``page=``.
 
     Example::
 
