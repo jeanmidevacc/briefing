@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Printing a report (or saving it as PDF from the browser) shows everything: every
+  page and tab prints under its label, with each top-level `Page` on a new sheet;
+  toggles print open; search boxes, pagination, tab bars, dropdowns and DataDive
+  selectors are hidden; a `DataTable` prints up to 1,000 rows matching its search,
+  with a note giving the total; charts are resized to the paper's width and KPI
+  groups, charts and alerts avoid splitting across sheets; colours print. The
+  screen layout is restored afterwards (#37).
+
 ## [0.1.2] - 2026-11-03
 
 Bug fixes after 0.1.1, plus one rendering change: a `BigNumber` change with no

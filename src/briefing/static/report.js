@@ -24,6 +24,8 @@
       .catch(function (err) { el.textContent = 'This chart could not be drawn: ' + err; });
   });
 
+  function thousands(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
   // ── Select / tabs ───────────────────────────────────────────────────────────
 
   document.querySelectorAll('.bf-select:not(.bf-select--dropdown)').forEach(function (sel) {
@@ -94,6 +96,7 @@
 
     var allRows  = Array.from(tbody.rows);
     var PAGE_SIZE = 25;
+    var PRINT_ROWS = 1000;
     var page     = 0;
     var sortCol  = -1;
     var sortAsc  = true;
@@ -177,6 +180,23 @@
     if (prevBtn) prevBtn.addEventListener('click', function () { if (page > 0) { page--; render(); } });
     if (nextBtn) nextBtn.addEventListener('click', function () { page++; render(); });
 
+    // Print every row matching the search, up to PRINT_ROWS, instead of one page.
+    var printNote = null;
+    window.addEventListener('beforeprint', function () {
+      allRows.forEach(function (r) { r.hidden = true; });
+      filtered.slice(0, PRINT_ROWS).forEach(function (r) { r.hidden = false; });
+      if (filtered.length > PRINT_ROWS) {
+        printNote = document.createElement('p');
+        printNote.className = 'bf-dt__print-note';
+        printNote.textContent = 'Printed ' + thousands(PRINT_ROWS) + ' of ' + thousands(filtered.length) + ' rows.';
+        container.querySelector('.bf-dt__scroll').insertAdjacentElement('afterend', printNote);
+      }
+    });
+    window.addEventListener('afterprint', function () {
+      if (printNote) { printNote.remove(); printNote = null; }
+      render();
+    });
+
     render();
   });
 
@@ -198,6 +218,40 @@
     header.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
     });
+  });
+
+  // ── Print ────────────────────────────────────────────────────────────────────
+  // While printing, html.bf-printing lays the report out at the paper's width
+  // with every panel and toggle shown (report.css), each panel under its tab or
+  // option label. Charts are resized for that width, and everything is restored
+  // afterwards. The class also applies on screen, so hidden charts can be measured.
+
+  var printing = false;
+
+  window.addEventListener('beforeprint', function () {
+    if (printing) return;
+    printing = true;
+    document.documentElement.classList.add('bf-printing');
+    document.querySelectorAll('.bf-select').forEach(function (sel) {
+      var labels = sel.classList.contains('bf-select--dropdown')
+        ? Array.from(sel.querySelectorAll('.bf-select__select option'))
+        : Array.from(sel.querySelectorAll(':scope > .bf-select__tablist > .bf-select__tab'));
+      sel.querySelectorAll(':scope > .bf-select__panel').forEach(function (panel, i) {
+        var label = document.createElement('div');
+        label.className = 'bf-print-label';
+        label.textContent = labels[i] ? labels[i].textContent : '';
+        panel.insertAdjacentElement('beforebegin', label);
+      });
+    });
+    resizePlots(document.body);
+  });
+
+  window.addEventListener('afterprint', function () {
+    if (!printing) return;
+    printing = false;
+    document.querySelectorAll('.bf-print-label').forEach(function (label) { label.remove(); });
+    document.documentElement.classList.remove('bf-printing');
+    resizePlots(document.body);
   });
 
 })();
