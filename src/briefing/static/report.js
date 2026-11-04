@@ -185,7 +185,7 @@
     window.addEventListener('beforeprint', function () {
       allRows.forEach(function (r) { r.hidden = true; });
       filtered.slice(0, PRINT_ROWS).forEach(function (r) { r.hidden = false; });
-      if (filtered.length > PRINT_ROWS) {
+      if (filtered.length > PRINT_ROWS && !printNote) {
         printNote = document.createElement('p');
         printNote.className = 'bf-dt__print-note';
         printNote.textContent = 'Printed ' + thousands(PRINT_ROWS) + ' of ' + thousands(filtered.length) + ' rows.';

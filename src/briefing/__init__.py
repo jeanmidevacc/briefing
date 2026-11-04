@@ -56,7 +56,7 @@ from briefing.blocks import (
 )
 
 # ── export: images and PDFs (Playwright is imported only when called) ────────
-from briefing.export import save_image
+from briefing.export import save_image, save_pdf
 
 # ── formatting ────────────────────────────────────────────────────────────────
 from briefing.renderers.formatting import Formatting, TextAlignment, Width
@@ -156,6 +156,7 @@ __all__: list[str] = [
     "preview",
     "save",
     "save_image",
+    "save_pdf",
     "stringify",
     # meta
     "__version__",

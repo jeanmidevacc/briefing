@@ -5,6 +5,8 @@ Every test here is marked ``browser`` automatically. Run them with
 """
 from __future__ import annotations
 
+import http.server
+import threading
 import typing as t
 from collections.abc import Iterator
 from datetime import UTC, datetime
@@ -80,3 +82,22 @@ def viewer(page: Page, tmp_path: Path, request: pytest.FixtureRequest) -> Iterat
     if request.node.get_closest_marker("xfail") is None:
         assert v.external_requests == [], f"the report made network requests: {v.external_requests}"
         assert v.errors == [], f"JavaScript errors: {v.errors}"
+
+
+@pytest.fixture
+def counting_server() -> Iterator[tuple[str, list[str]]]:
+    hits: list[str] = []
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802
+            hits.append(self.path)
+            self.send_response(404)
+            self.end_headers()
+
+        def log_message(self, *args: object) -> None:
+            pass
+
+    server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    yield f"http://127.0.0.1:{server.server_address[1]}", hits
+    server.shutdown()

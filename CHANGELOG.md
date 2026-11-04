@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   without cropping; `expand=True` opens toggles first. Accepts a `Briefing` or a saved
   `.html`. New extra: `pip install "briefing[image]"` (Playwright), then
   `playwright install chromium` (#49).
+- `bf.save_pdf(report, "q1.pdf", page="all", paper="a4", landscape=False)` writes the
+  report as one PDF with the print layout: each top-level page on a new sheet, text
+  selectable, links clickable, charts vector. One page by title, `name` or index;
+  `paper` is `a4`, `letter`, `legal`, `a3` or `a5` (#49).
 
 ## [0.1.2] - 2026-11-03
 
