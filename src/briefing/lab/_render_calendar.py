@@ -32,6 +32,16 @@ _WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
+def _svg_open(cls: str, width: int, height: int, label: str) -> str:
+    """Open a calendar SVG that scales with its block (#106).
+
+    ``width``/``height`` are the natural size. The CSS stretches the SVG to the block's
+    width, between its natural width (``--bf-cal-w``) and twice that.
+    """
+    return (f'<svg class="{cls}" xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+            f'viewBox="0 0 {width} {height}" style="--bf-cal-w: {width}px" role="img" aria-label="{label}">')
+
+
 @dataclass(frozen=True)
 class _Event:
     start: dt.date
@@ -215,8 +225,7 @@ def _days_svg(
     grid_h = 7 * _STEP
     width = _LEFT + weeks * _STEP
     height = _TOP + grid_h + (len(lanes) * _LANE + 6 if lanes else 0)
-    parts = [f'<svg class="bf-cal__days" xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
-             f'viewBox="0 0 {width} {height}" role="img" aria-label="Calendar heatmap">']
+    parts = [_svg_open("bf-cal__days", width, height, "Calendar heatmap")]
 
     for row in (0, 2, 4):  # Mon, Wed, Fri
         name = _WEEKDAYS[(row - shift) % 7]
@@ -352,8 +361,7 @@ _HOUR_STEP = 16
 def _hours_svg(block: CalendarHeatmap, data: dict[t.Any, float], colour: Callable[[float], tuple[str, str]]) -> str:
     shift = 0 if block.week_start == "monday" else 1
     width, height = _LEFT + 24 * _HOUR_STEP, 18 + 7 * _HOUR_STEP
-    parts = [f'<svg class="bf-cal__hours" xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
-             f'viewBox="0 0 {width} {height}" role="img" aria-label="Activity by weekday and hour">']
+    parts = [_svg_open("bf-cal__hours", width, height, "Activity by weekday and hour")]
     for hour in range(0, 24, 3):
         parts.append(f'<text class="bf-cal__month" x="{_LEFT + hour * _HOUR_STEP}" y="12">{hour:02d}</text>')
     what = _what(block)

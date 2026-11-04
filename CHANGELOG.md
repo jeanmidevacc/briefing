@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `lab.CalendarHeatmap` fits the width available to it, the report's or its `Group`
+  column's, instead of a fixed size: a year fills a full-width report, and in a column it
+  shrinks to fit instead of widening the column and overflowing the page. Cells stay
+  between 0.6× and 2× their natural 11 px (a short range stops at 2×; below 0.6× the
+  calendar scrolls inside its block); labels change size at half that rate and legend
+  swatches follow the cells. When printed it shrinks to fit the sheet instead of being cut
+  off (#106).
+
 ## [0.2.0] - 2026-11-04
 
 ### Added
