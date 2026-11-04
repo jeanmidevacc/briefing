@@ -38,4 +38,3 @@ myst_enable_extensions = ["colon_fence"]
 
 html_theme = "furo"
 html_title = f"briefing {release}"
-html_static_path = ["_static"]
