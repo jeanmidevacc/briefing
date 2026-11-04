@@ -83,3 +83,35 @@ def test_altair_chart_fills_its_width_when_toggle_opens(viewer: Viewer) -> None:
     figure = page.locator("figure.bf-plot").first.bounding_box()
     assert drawn is not None and figure is not None
     assert drawn["width"] > 0.9 * figure["width"]
+
+
+def _mpl(kind: str) -> t.Any:
+    figure = pytest.importorskip("matplotlib.figure")
+    fig = figure.Figure(figsize=(4, 2.5))
+    ax = fig.add_subplot()
+    if kind == "line":
+        ax.plot([1, 2, 3, 4], [3, 1, 4, 2], marker="o")
+        ax.set_ylim(1.5, 3.5)  # clips the line: needs its clip path
+    else:
+        ax.scatter([1, 2, 3], [2, 3, 1], marker="s")
+    ax.set_title(kind)
+    return fig
+
+
+def test_matplotlib_references_resolve_inside_their_own_figure(viewer: Viewer) -> None:
+    # The browser resolves a clip-path or <use> by document-wide id: with shared ids,
+    # the second figure's references would land in the first figure's SVG.
+    page = viewer.open(bf.Briefing(bf.Plot(_mpl("line")), bf.Plot(_mpl("scatter"))))
+    stray: list[str] = page.evaluate("""() => {
+      const out = [];
+      document.querySelectorAll('figure.bf-plot svg').forEach((svg, n) => {
+        svg.querySelectorAll('[clip-path], use').forEach(el => {
+          const ref = el.getAttribute('clip-path') || el.getAttribute('xlink:href') || el.getAttribute('href') || '';
+          const id = (ref.match(/#([^)"']+)/) || [])[1];
+          const target = id && document.getElementById(id);
+          if (!target || target.closest('svg') !== svg) out.push(`figure ${n}: ${ref}`);
+        });
+      });
+      return out;
+    }""")
+    assert stray == []

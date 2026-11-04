@@ -169,12 +169,36 @@ def _render_matplotlib(fig: t.Any, responsive: bool, salt: str) -> str:
     if "<svg" in svg:
         svg = svg[svg.index("<svg"):]
 
+    svg = _scope_svg_ids(svg, prefix=f"{salt}-")
+
     if responsive:
         # Matplotlib 3.10+ escapes quotes inside SVG attributes (width=\"500pt\")
         svg = re.sub(r'(<svg\b[^>]*?)\s+width=\\?"[^"\\]*\\?"', r'\1 width="100%"', svg, count=1)
         svg = re.sub(r'(<svg\b[^>]*?)\s+height=\\?"[^"\\]*\\?"', r'\1', svg, count=1)
 
     return svg
+
+
+_SVG_ID = re.compile(r'(?<![\w-])id="([^"]+)"')
+_SVG_URL_REF = re.compile(r"url\(#([^)\s]+)\)")
+_SVG_HREF_REF = re.compile(r'((?:xlink:)?href)="#([^"]+)"')
+
+
+def _scope_svg_ids(svg: str, prefix: str) -> str:
+    """Prefix every id in *svg*, and every reference to it, with *prefix*.
+
+    Matplotlib names its groups ``figure_1``, ``axes_1``… and its glyphs
+    ``DejaVuSans-48`` in every figure; inlined side by side, two figures would
+    share those ids and their references could resolve into the other one.
+    """
+    ids = set(_SVG_ID.findall(svg))
+    if not ids:
+        return svg
+    svg = _SVG_ID.sub(lambda m: f'id="{prefix}{m.group(1)}"', svg)
+    svg = _SVG_URL_REF.sub(lambda m: f"url(#{prefix}{m.group(1)})" if m.group(1) in ids else m.group(0), svg)
+    return _SVG_HREF_REF.sub(
+        lambda m: f'{m.group(1)}="#{prefix}{m.group(2)}"' if m.group(2) in ids else m.group(0), svg
+    )
 
 
 def _render_plotly(fig: t.Any, responsive: bool, div_id: str) -> str:
