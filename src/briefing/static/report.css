@@ -316,6 +316,8 @@ body {
 /* is_positive_intent sets the colour apart from the arrow; declared later, so it wins. */
 .bf-bignumber__change--good { color: #16a34a; }
 .bf-bignumber__change--bad  { color: #dc2626; }
+/* Neither an arrow nor a verdict was given: show the change without judging it. */
+.bf-bignumber__change--neutral { color: var(--bf-muted); }
 
 /* ── Alert ────────────────────────────────────────────────────────────────── */
 .bf-alert {

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import textwrap
-import warnings
 from enum import StrEnum
 from pathlib import Path
 
@@ -144,15 +143,18 @@ class BigNumber(Block):
         heading: The metric's name.
         value: The headline value.
         change: Optional change to show under the value, e.g. ``"+3%"``.
-        is_upward_change: The arrow: ``True`` shows ▲, ``False`` shows ▼.
-        is_positive_intent: The colour, when it shouldn't follow the arrow:
-            ``True`` is green (good news), ``False`` is red (bad news). Leave it
-            ``None`` and the colour follows the arrow (▲ green, ▼ red).
+        is_upward_change: The arrow: ``True`` shows ▲, ``False`` shows ▼, ``None``
+            shows no arrow.
+        is_positive_intent: The colour: ``True`` is green (good news), ``False``
+            is red (bad news). Leave it ``None`` and the colour follows the arrow
+            (▲ green, ▼ red); with neither flag the change is shown neutral, in
+            the theme's muted colour.
 
     Example::
 
         bf.BigNumber("Revenue", "$4.2M", change="-12%", is_upward_change=False)
         bf.BigNumber("Return Rate", "8.0 %", change="+0.2%", is_upward_change=True, is_positive_intent=False)
+        bf.BigNumber("Users", "142K", change="+3%")   # neutral: no arrow, muted
         bf.BigNumber("Accuracy", 0.924)
     """
 
@@ -166,12 +168,6 @@ class BigNumber(Block):
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
-        if change is not None and is_upward_change is None:
-            warnings.warn(
-                "BigNumber: 'change' is set but 'is_upward_change' is not. "
-                "The change indicator arrow will not be shown.",
-                stacklevel=2,
-            )
         super().__init__(name=name, label=label)
         self.heading = heading
         self.value = value

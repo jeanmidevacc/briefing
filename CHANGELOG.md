@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `BigNumber`: a `change` without `is_upward_change` is now shown neutral (no arrow, muted
+  colour) instead of a red ▼, matching what the docs and the warning said; the warning is
+  gone. `is_positive_intent` alone now colours a change without adding an arrow (#71).
+
 ## [0.1.1] - 2026-11-03
 
 Makes the README true: every feature it describes now works as described,
