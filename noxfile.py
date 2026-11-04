@@ -46,6 +46,14 @@ def docs(session: nox.Session) -> None:
     session.run("sphinx-build", "-W", "--keep-going", "-b", "html", "docs", "docs/_build/html")
 
 
+@nox.session(name="docs-assets", python="3.11")
+def docs_assets(session: nox.Session) -> None:
+    """Regenerate the committed export samples in docs/_static/export/ (needs a browser)."""
+    session.install("-e", ".[image,docs]")
+    session.run("playwright", "install", "chromium")
+    session.run("python", "docs/make_export_assets.py")
+
+
 # Re-executes the walkthrough in place. SOURCE_DATE_EPOCH pins every timestamp, so
 # re-running it without code changes leaves the notebook and its saved report as they are.
 _RUN_WALKTHROUGH = """

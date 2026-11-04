@@ -62,6 +62,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API reference documentation, built with Sphinx (`nox -s docs`): every public block
   and function in `briefing` and `briefing.lab` documents each argument and gives an
   example. New extra: `pip install "briefing[docs]"` (#41).
+- Documentation guides with a live gallery: a quick start, one guide per block family,
+  themes, notebooks, printing and export, the lab, recipes and the changelog. Every
+  example runs when the docs are built and is embedded as the report it saves; a test
+  runs the same examples against the report contract (#41).
 
 ## [0.1.2] - 2026-11-03
 
