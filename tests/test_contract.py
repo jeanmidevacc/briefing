@@ -27,6 +27,9 @@ from tests.contract import (
     parse_report,
 )
 
+# The "calendar" scenario keeps the deprecated hour view (#111) so the contract still covers it.
+pytestmark = pytest.mark.filterwarnings("ignore:CalendarHeatmap. the hour view:DeprecationWarning")
+
 Frames = Callable[[str], pd.DataFrame]
 Build = Callable[[Frames], bf.Briefing]
 
