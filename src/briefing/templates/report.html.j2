@@ -6,7 +6,7 @@
   <title>{{ report_name }}</title>
   <style>
 {{ report_css }}
-{{ css_vars }}
+{{ css_vars }}{{ export_css }}
   </style>
   {% if head_scripts %}{{ head_scripts }}{% endif %}
 </head>
@@ -15,7 +15,7 @@
     {% if show_header %}
     <header class="bf-report__header">
       <span class="bf-report__title">{{ report_name }}</span>
-      <time class="bf-report__date" datetime="{{ report_date_iso }}">{{ report_date }}</time>
+      <time class="bf-report__date" datetime="{{ report_date_iso }}">{{ report_date }}</time>{{ export_html }}
     </header>
     {% endif %}
     <main class="bf-report__body">

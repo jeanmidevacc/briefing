@@ -153,26 +153,54 @@ class Briefing(ContainerBlock):
 
     This is the top-level object passed to ``save`` and ``stringify``.
 
+    Args:
+        *arg_blocks: The report's blocks, in order.
+        blocks: The blocks as a list, instead of positional arguments.
+        export: Opt-in export menu in the report header: ``"png"`` adds "Save as
+            PNG" (the open page, drawn in the reader's browser at 2×) and ``"pdf"``
+            adds "Print" (the print dialog, which can save a PDF). Reports without
+            it contain no export code. "Save as PNG" is best effort: charts
+            drawn in iframes (Bokeh) and WebGL Plotly traces come out blank, and
+            fonts are whatever the reader's machine has. For exact, reproducible
+            files use :func:`~briefing.save_image` / :func:`~briefing.save_pdf`.
+
     Example::
 
         report = bf.Briefing(
             bf.Text("# My report"),
             bf.Plot(fig),
+            export=("png", "pdf"),
         )
         bf.save(report, "report.html")
     """
 
     min_blocks: t.ClassVar[int] = 1
 
+    #: The actions export= accepts, in menu order.
+    EXPORTS: t.ClassVar[tuple[str, ...]] = ("png", "pdf")
+    export: tuple[str, ...]
+
     def __init__(
         self,
         *arg_blocks: BlockOrPrimitive,
         blocks: Sequence[BlockOrPrimitive] | None = None,
+        export: str | Sequence[str] = (),
     ) -> None:
         # Unwrap if a single Briefing is passed directly (avoids double-wrapping).
         if len(arg_blocks) == 1 and isinstance(arg_blocks[0], Briefing):
+            export = export or arg_blocks[0].export
             arg_blocks = tuple(arg_blocks[0].blocks)
         super().__init__(*arg_blocks, blocks=blocks)
+        self.export = self._check_export(export)
+
+    @classmethod
+    def _check_export(cls, export: object) -> tuple[str, ...]:
+        actions = (export,) if isinstance(export, str) else export
+        if not isinstance(actions, Sequence) or any(a not in cls.EXPORTS for a in actions):
+            raise BriefingError(
+                f"export accepts 'png' and/or 'pdf', for example export=('png', 'pdf'); got {export!r}."
+            )
+        return tuple(dict.fromkeys(t.cast("Sequence[str]", actions)))
 
     @classmethod
     def wrap(
