@@ -133,7 +133,8 @@ SCENARIOS: dict[str, Build] = {
     },
     **{f"{kind}-infinite": _over_infinite(make) for kind, make in FRAME_BLOCKS.items()},
     "calendar": lambda df: bf.Briefing(bf.lab.CalendarHeatmap(
-        df("df_pipeline_log"), date="run_at", value="rows", group="team", expected=500, events=df("df_events"))),
+        df("df_pipeline_log"), date="run_at", value="rows", group="team", expected=500, events=df("df_events"),
+        views=("days", "hours"), tz="America/Montreal")),
     "calendar-diverging": lambda df: bf.Briefing(
         bf.lab.CalendarHeatmap(df("df_signed"), date="day", value="balance", center=0,
                                colors=["#d73027", "#f7f7f7", "#1a9850"], week_start="sunday")),

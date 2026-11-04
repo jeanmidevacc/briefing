@@ -190,3 +190,65 @@ def test_event_labels_only_go_inside_bands_that_fit_them(df_pipeline_log: pd.Dat
     soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", events=events))
     wide, narrow = soup.select(".bf-cal__event--span")
     assert wide.find("text") is not None and narrow.find("text") is None
+
+
+# ── time zones and the hour view (part 3b) ────────────────────────────────────
+
+
+def _day_values(soup: BeautifulSoup) -> dict[str, str]:
+    """Day → tooltip, for days with data."""
+    return {attr(c, "data-date"): find_one(c, "title").get_text()
+            for c in soup.select("svg.bf-cal__days rect.bf-cal__day:not(.bf-cal__day--empty)")}
+
+
+def test_tz_converts_aware_timestamps(df_timestamps_near_midnight: pd.DataFrame) -> None:
+    montreal = _day_values(_soup(CalendarHeatmap(df_timestamps_near_midnight, date="aware", tz="America/Montreal")))
+    assert set(montreal) == {"2026-01-09", "2026-01-10", "2026-01-11"}  # 03:30 UTC is the previous evening
+    utc = _day_values(_soup(CalendarHeatmap(df_timestamps_near_midnight, date="aware")))
+    assert set(utc) == {"2026-01-10", "2026-01-12"}  # without tz, aware stamps keep their own (UTC) date
+
+
+@pytest.mark.parametrize("column", ["naive", "plain"])
+def test_tz_leaves_naive_timestamps_and_dates_alone(df_timestamps_near_midnight: pd.DataFrame, column: str) -> None:
+    days = _day_values(_soup(CalendarHeatmap(df_timestamps_near_midnight, date=column, tz="America/Montreal")))
+    assert set(days) == {"2026-01-10", "2026-01-12"}
+    assert "2 rows" in days["2026-01-10"]  # midnight never moves to the previous day
+
+
+def test_unknown_time_zone(df_timestamps_near_midnight: pd.DataFrame) -> None:
+    with pytest.raises(bf.BriefingError, match="time zone"):
+        CalendarHeatmap(df_timestamps_near_midnight, date="aware", tz="Mars/Olympus")
+
+
+def test_hour_view_is_a_7_by_24_grid(df_pipeline_log: pd.DataFrame) -> None:
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", views=("hours",)))
+    cells = soup.select("svg.bf-cal__hours rect.bf-cal__hour")
+    assert len(cells) == 7 * 24 and not soup.select("svg.bf-cal__days")
+    runs = {attr(c, "data-hour"): find_one(c, "title").get_text() for c in cells
+            if "bf-cal__hour--empty" not in classes(c)}
+    assert set(runs) <= {f"{d}-{h}" for d in range(7) for h in (6, 14)}  # runs start at 06:00 or 14:00
+    assert any(t.startswith("Mon 06:00") for t in runs.values())
+
+
+def test_hour_view_follows_tz(df_timestamps_near_midnight: pd.DataFrame) -> None:
+    soup = _soup(CalendarHeatmap(df_timestamps_near_midnight, date="aware", tz="America/Montreal", views=("hours",)))
+    hours = {attr(c, "data-hour") for c in soup.select("rect.bf-cal__hour:not(.bf-cal__hour--empty)")}
+    assert hours == {"4-22", "5-7", "6-23"}  # Fri 22:30, Sat 07:00, Sun 23:59 in Montréal (Mon = 0)
+
+
+def test_both_views_are_tabs(df_pipeline_log: pd.DataFrame) -> None:
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", views=("days", "hours")))
+    tabs = soup.select(".bf-calendar .bf-select__tab")
+    assert [t.get_text() for t in tabs] == ["Days", "Hours"]
+    panels = soup.select(".bf-calendar .bf-select__panel")
+    assert panels[0].select("svg.bf-cal__days") and panels[1].select("svg.bf-cal__hours")
+
+
+def test_hour_view_needs_times(df_timestamps_near_midnight: pd.DataFrame) -> None:
+    with pytest.raises(bf.BriefingError, match="time of day"):
+        CalendarHeatmap(df_timestamps_near_midnight, date="plain", views=("days", "hours"))
+
+
+def test_bad_views(df_pipeline_log: pd.DataFrame) -> None:
+    with pytest.raises(bf.BriefingError, match="views"):
+        CalendarHeatmap(df_pipeline_log, date="run_at", views=("weeks",))
