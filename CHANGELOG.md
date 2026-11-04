@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `lab.CalendarHeatmap` scales with the width of its block instead of a fixed size: cells
+  grow from 11 px up to twice that (so a year fills a full-width report and a short range
+  stays readable), labels grow at half that rate and legend swatches match the cells. On a
+  narrow screen the calendar keeps 11 px cells and scrolls sideways; when printed it shrinks
+  to fit the sheet instead of being cut off (#106).
+
 ## [0.2.0] - 2026-11-04
 
 ### Added
