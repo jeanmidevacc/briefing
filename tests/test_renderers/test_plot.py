@@ -320,3 +320,48 @@ def test_script_json_round_trips_and_has_no_angle_brackets():
     text = script_json(value)
     assert "<" not in text and ">" not in text and "&" not in text
     assert json.loads(text) == value
+
+
+class TestMatplotlibIds:
+    """Each inline SVG gets its own id prefix, so figures don't share DOM ids (#56)."""
+
+    @staticmethod
+    def _figure(kind: str) -> object:
+        figure = pytest.importorskip("matplotlib.figure")
+        fig = figure.Figure(figsize=(3, 2))
+        ax = fig.add_subplot()
+        if kind == "line":
+            ax.plot([1, 2, 3], [3, 1, 2], marker="o")
+        else:
+            ax.bar(["a", "b"], [2, 5])
+        ax.set_title(kind)
+        return fig
+
+    def test_two_figures_share_no_ids(self):
+        import collections
+
+        from briefing.renderers.html import render_report
+
+        html = render_report(Briefing(Plot(self._figure("line")), Plot(self._figure("bar"))))
+        soup = BeautifulSoup(html, "html.parser")
+        counts = collections.Counter(str(t["id"]) for t in soup.find_all(id=True))
+        assert [i for i, n in counts.items() if n > 1] == []
+
+    def test_every_reference_resolves_inside_its_own_svg(self):
+        import re
+
+        from briefing.renderers.html import render_report
+
+        html = render_report(Briefing(Plot(self._figure("line")), Plot(self._figure("bar"))))
+        for svg in BeautifulSoup(html, "html.parser").select("figure.bf-plot svg"):
+            markup = str(svg)
+            ids = set(re.findall(r'(?<![\w-])id="([^"]+)"', markup))
+            refs = set(re.findall(r'url\(#([^)]+)\)', markup)) | set(re.findall(r'href="#([^"]+)"', markup))
+            assert refs, "expected clip-path / marker references"
+            assert refs <= ids, f"dangling references: {sorted(refs - ids)[:5]}"
+
+    def test_ids_are_deterministic(self):
+        from briefing.renderers.html import render_report
+
+        fig = self._figure("line")
+        assert render_report(Briefing(Plot(fig))) == render_report(Briefing(Plot(fig)))

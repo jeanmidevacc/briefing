@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A hovered `Toggle` header is readable in dark themes: its background now comes from the
   theme instead of a hard-coded light grey (#73).
+- Two Matplotlib figures in one report no longer share DOM ids: each inline SVG's ids
+  (and the clip-path, marker and glyph references to them) get the figure's own prefix,
+  so no reference resolves into another figure (#56).
 
 ## [0.1.1] - 2026-11-03
 
