@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   colour) instead of a red ▼, matching what the docs and the warning said; the warning is
   gone. `is_positive_intent` alone now colours a change without adding an arrow (#71).
 
+### Fixed
+
+- A hovered `Toggle` header is readable in dark themes: its background now comes from the
+  theme instead of a hard-coded light grey (#73).
+
 ## [0.1.1] - 2026-11-03
 
 Makes the README true: every feature it describes now works as described,

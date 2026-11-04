@@ -407,7 +407,8 @@ body {
   font-family: var(--bf-font);
   gap: 0.5rem;
 }
-.bf-toggle__header:hover { background: #f3f4f6; }
+/* From theme tokens, so the label stays readable on dark themes too. */
+.bf-toggle__header:hover { background: color-mix(in oklab, var(--bf-border) 40%, var(--bf-surface)); }
 .bf-toggle__icon { flex-shrink: 0; transition: transform 0.2s ease; color: var(--bf-muted); }
 .bf-toggle__header[aria-expanded="true"] .bf-toggle__icon { transform: rotate(180deg); }
 .bf-toggle__body { padding: 1rem; }
