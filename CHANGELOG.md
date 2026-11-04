@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-03
+
+Makes the README true: every feature it describes now works as described,
+offline, and is covered by HTML contract tests and browser tests. Also fixes
+two script-injection bugs and two crashes on infinite values found by those
+tests. New core dependencies: Pygments and latex2mathml.
+
 ### Security
 
 - The report `name` (tab title and header) is now HTML-escaped. Before, markup in it
@@ -108,5 +115,6 @@ First public release.
   inherits its base's renderer.
 - Ships inline type hints (`py.typed`). Python 3.11+.
 
-[Unreleased]: https://github.com/jeanmidevacc/briefing/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/jeanmidevacc/briefing/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/jeanmidevacc/briefing/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/jeanmidevacc/briefing/releases/tag/v0.1.0
