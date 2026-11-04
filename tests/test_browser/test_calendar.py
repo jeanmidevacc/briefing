@@ -66,12 +66,27 @@ def test_labels_grow_at_half_the_rate_and_swatches_match_cells(viewer: Viewer,
     assert _width(page, ".bf-cal__swatch:not(.bf-cal__swatch--event-day)") == pytest.approx(cell, abs=0.5)
 
 
-def test_a_narrow_screen_keeps_natural_cells_and_scrolls(viewer: Viewer) -> None:
+def test_a_calendar_in_a_group_fits_its_column(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
+    year = bf.lab.CalendarHeatmap(_year(), date="run_at")
+    page = viewer.open(bf.Briefing(bf.Group(year, bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at"), columns=2)))
+    columns = page.locator(".bf-group > .bf-calendar")
+    first, second = columns.nth(0).bounding_box(), columns.nth(1).bounding_box()
+    assert first is not None and second is not None
+    assert first["width"] == pytest.approx(second["width"], abs=1)  # the year no longer widens its column
+    assert _width(page, "svg.bf-cal__days") == pytest.approx(first["width"], abs=1)
+    assert _width(page, 'rect[data-date="2025-06-02"]') < 11  # shrunk to fit
+    assert page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth")
+
+
+def test_a_narrow_screen_shrinks_then_scrolls(viewer: Viewer) -> None:
     viewer.page.set_viewport_size({"width": 375, "height": 800})
     page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(_year(), date="run_at")))
-    assert _width(page, 'rect[data-date="2025-06-02"]') == pytest.approx(11, abs=0.5)
+    assert _width(page, 'rect[data-date="2025-06-02"]') == pytest.approx(0.6 * 11, abs=0.3)  # the floor
     overflow = page.locator(".bf-cal__scroll").evaluate("e => e.scrollWidth > e.clientWidth")
     assert overflow
+    assert page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth")  # inside the block
+    label = page.locator("svg.bf-cal__days text.bf-cal__weekday").first.bounding_box()
+    assert label is not None and label["height"] > 6  # labels shrink at half the rate
 
 
 def test_a_year_prints_without_clipping(viewer: Viewer) -> None:

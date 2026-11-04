@@ -161,8 +161,8 @@ class CalendarHeatmap(Block):
     Counts the rows per day, or aggregates a value column, and colours each day.
     Days without data look different from days with a zero; the grid runs
     continuously across a year boundary, with month labels and a year marker.
-    The calendar stretches to the width of its block, up to twice its natural
-    size; on a narrow screen it scrolls sideways.
+    The calendar fits the width available (the report or a ``Group`` column),
+    between 0.6x and 2x its natural size; below that it scrolls sideways.
 
     Args:
         df: The data, as any dataframe briefing accepts (pandas, polars, pyarrow…).

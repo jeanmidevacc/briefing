@@ -2,13 +2,17 @@
 (function () {
   'use strict';
 
-  // The SVGs stretch with their block (CSS, #106). Publish the stretch factor as --bf-cal-k on the
-  // view, so labels grow at half the rate of the cells and legend swatches match the cells.
+  // The SVGs fit the width of their block (CSS, #106). Publish the scale k on the view: legend
+  // swatches follow the cells (--bf-cal-k), and labels change size at half the cells' rate, so
+  // they stay readable when the calendar grows or shrinks (--bf-cal-text, in the SVG's units).
   function measure(view) {
     var svg = view.querySelector('svg.bf-cal__days, svg.bf-cal__hours');
     var natural = svg ? parseFloat(svg.getAttribute('width')) : 0;
     var shown = svg ? svg.getBoundingClientRect().width : 0;
-    if (natural > 0 && shown > 0) view.style.setProperty('--bf-cal-k', String(shown / natural));
+    if (!(natural > 0 && shown > 0)) return;  // a hidden tab: measured once it is shown
+    var k = shown / natural;
+    view.style.setProperty('--bf-cal-k', String(k));
+    view.style.setProperty('--bf-cal-text', String((1 + k) / (2 * k)));
   }
   document.querySelectorAll('.bf-calendar').forEach(function (figure) {
     var views = figure.querySelectorAll('.bf-cal__views > .bf-select__panel');
