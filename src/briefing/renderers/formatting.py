@@ -6,12 +6,26 @@ from enum import StrEnum
 
 
 class Width(StrEnum):
+    """Content width of a report; :class:`Formatting` also accepts any CSS width.
+
+    Example::
+
+        bf.Formatting(width=bf.Width.NARROW)  # or width="narrow", or width="60rem"
+    """
+
     NARROW = "narrow"   # max-width: 48rem  (768px)
     MEDIUM = "medium"   # max-width: 75rem  (1200px)
     FULL = "full"       # max-width: 100%
 
 
 class TextAlignment(StrEnum):
+    """Paragraph alignment in ``Text`` blocks.
+
+    Example::
+
+        bf.Formatting(text_alignment=bf.TextAlignment.JUSTIFY)
+    """
+
     LEFT = "left"
     CENTER = "center"
     RIGHT = "right"
@@ -91,6 +105,18 @@ class Formatting:
     ``radius``         — border-radius applied to cards, badges, buttons
     ``width``          — report container max-width (NARROW / MEDIUM / FULL or CSS value)
     ``text_alignment`` — paragraph text alignment
+
+    Args:
+        accent_color: Tab underlines, active borders, links and focus rings.
+        bg_color: Page background (hex or ``rgb()``; banner veils use it).
+        text_color: Body and heading text.
+        muted_color: Labels, captions, axis text and icons.
+        border_color: Table, card and divider borders.
+        surface_color: Card, table-header and code-block backgrounds.
+        font: CSS ``font-family`` stack.
+        radius: Corner radius of cards, badges and buttons.
+        width: Content width: a :class:`Width` (``NARROW``, ``MEDIUM``, ``FULL``) or a CSS value.
+        text_alignment: Paragraph alignment in ``Text`` blocks (a :class:`TextAlignment`).
     """
 
     # ── primary colours ───────────────────────────────────────────────────────

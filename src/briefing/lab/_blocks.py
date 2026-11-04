@@ -25,12 +25,21 @@ class DataProfile(Block):
     """Per-column statistical profiling block.
 
     For each column in the DataFrame, renders:
+
     - dtype, row count, missing % (highlighted in red when > 20 %)
     - **Numeric columns**: mean, std, min / quartiles / max + inline SVG histogram
     - **Categorical columns**: n_unique, top values + inline SVG bar chart
     - **Datetime columns**: range, gap detection
 
     Mini-charts are pure SVG — no plotting dependency.
+
+    Args:
+        df: The data, as any dataframe briefing accepts.
+        missing_threshold: Share of missing values (0–1) above which a column's
+            missing count is highlighted in red.
+        max_categories: Most frequent values shown for categorical columns.
+        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
 
@@ -66,6 +75,18 @@ class DataDive(Block):
 
     Fully self-contained: the plot is drawn with hand-rolled SVG and vanilla JS
     (no Vega, D3, or CDN). The row data is embedded in the page as JSON.
+
+    Args:
+        df: The data, as any dataframe briefing accepts.
+        x: Column on the X axis at first (the viewer can change it).
+        y: Column on the Y axis at first.
+        color: Column that colours the dots at first.
+        facet_row: Accepted but not drawn yet (a warning says so); planned for DataDive v2.
+        facet_col: Accepted but not drawn yet (a warning says so); planned for DataDive v2.
+        layout: ``"scatter"`` (two axes) or ``"tile"`` (packed dots per cell).
+        max_rows: Larger frames are sampled down to this many rows, with a warning.
+        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
 

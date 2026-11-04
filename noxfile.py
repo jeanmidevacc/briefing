@@ -39,6 +39,13 @@ def typecheck(session: nox.Session) -> None:
     session.run("mypy", "src/briefing", "tests")
 
 
+@nox.session(python="3.11")
+def docs(session: nox.Session) -> None:
+    """Build the Sphinx site into docs/_build/html; any warning fails the build."""
+    session.install("-e", ".[docs]")
+    session.run("sphinx-build", "-W", "--keep-going", "-b", "html", "docs", "docs/_build/html")
+
+
 # Re-executes the walkthrough in place. SOURCE_DATE_EPOCH pins every timestamp, so
 # re-running it without code changes leaves the notebook and its saved report as they are.
 _RUN_WALKTHROUGH = """

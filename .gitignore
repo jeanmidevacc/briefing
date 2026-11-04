@@ -32,3 +32,6 @@ coverage.xml
 
 # Playwright failure screenshots
 test-results/
+
+# Sphinx build output
+docs/_build/

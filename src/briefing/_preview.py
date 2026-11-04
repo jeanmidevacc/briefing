@@ -57,7 +57,17 @@ def _attribute(text: str) -> str:
 
 
 class Preview:
-    """A notebook preview of *blocks* with a report name and theme; see :func:`preview`."""
+    """A notebook preview of *blocks* with a report name and theme; see :func:`preview`.
+
+    Args:
+        blocks: A block, a list of blocks, or a :class:`~briefing.Briefing`.
+        name: Report title, shown in the header.
+        formatting: The theme.
+
+    Example::
+
+        bf.Preview(report, name="Q1 review", formatting=bf.Formatting.dark())
+    """
 
     def __init__(self, blocks: t.Any, *, name: str = "Report", formatting: Formatting | None = None) -> None:
         self.blocks = blocks
