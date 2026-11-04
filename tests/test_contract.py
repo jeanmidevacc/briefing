@@ -132,6 +132,9 @@ SCENARIOS: dict[str, Build] = {
         for fixture in FRAME_FIXTURES
     },
     **{f"{kind}-infinite": _over_infinite(make) for kind, make in FRAME_BLOCKS.items()},
+    "export-menu": lambda _: bf.Briefing(
+        bf.Page(bf.Text("# One"), title="One"), bf.Page(bf.Text("# Two"), title="Two"), export=("png", "pdf")
+    ),
     "everything": lambda df: bf.Briefing(
         bf.Text("# Everything"),
         bf.Group(bf.BigNumber("A", 1), bf.Alert("note"), columns=2),

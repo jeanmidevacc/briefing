@@ -53,6 +53,9 @@ def _load_static(name: str) -> str:
 
 _CSS = _load_static("report.css")
 _JS = _load_static("report.js")
+_EXPORT_JS = _load_static("export.js")
+_EXPORT_CSS = _load_static("export.css")
+_EXPORT_LABELS = {"png": "Save as PNG", "pdf": "Print"}
 
 _jinja_env = Environment(
     loader=PackageLoader("briefing", "templates"),
@@ -359,6 +362,9 @@ def render_report(
         js = asset_js_for(block)
         if js is not None and js not in extra_js:
             extra_js.append(js)
+    export = getattr(normalised, "export", ())
+    if export:  # the menu's script only ships in reports that asked for the menu
+        extra_js.append(_EXPORT_JS)
     report_js = "\n".join([_JS, *extra_js])
 
     idgen = _IdGen()
@@ -376,8 +382,20 @@ def render_report(
         report_js=report_js,
         head_scripts=head_scripts,
         content_html=content_html,
-        show_header=name != "Report",
+        show_header=name != "Report" or bool(export),
+        export_html=_export_menu(export),
+        export_css=_EXPORT_CSS if export else "",
     )
+
+
+def _export_menu(export: tuple[str, ...]) -> str:
+    """The header's export buttons, or nothing (so other reports render exactly as before)."""
+    if not export:
+        return ""
+    buttons = "".join(
+        f'<button class="bf-export__btn" type="button" data-export="{a}">{_EXPORT_LABELS[a]}</button>' for a in export
+    )
+    return f'<div class="bf-export" role="group" aria-label="Export">{buttons}</div>'
 
 
 __all__ = ["render_report"]

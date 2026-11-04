@@ -1,0 +1,14 @@
+/* briefing export menu (#49): only inlined in reports built with export=. */
+.bf-export { display: flex; gap: 0.5rem; }
+.bf-export__btn {
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--bf-border);
+  border-radius: var(--bf-radius);
+  background: var(--bf-surface);
+  color: var(--bf-text);
+  cursor: pointer;
+}
+.bf-export__btn:hover { border-color: var(--bf-accent); }
+html.bf-printing .bf-export { display: none !important; }

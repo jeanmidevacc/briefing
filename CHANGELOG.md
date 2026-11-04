@@ -33,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command line for saved reports: `python -m briefing image report.html --page all -o out/`
   and `python -m briefing pdf report.html -o report.pdf`, with the same options as
   `save_image` / `save_pdf` and `--help` (#49).
+- Opt-in export menu: `bf.Briefing(..., export=("png", "pdf"))` adds "Save as PNG" (the
+  open page, drawn in the reader's browser at 2×, no library, no network) and "Print"
+  to the report header. Reports without `export=` contain no export code. Best effort:
+  Bokeh's iframe charts and WebGL Plotly traces come out blank in the PNG (#49).
 
 ## [0.1.2] - 2026-11-03
 
