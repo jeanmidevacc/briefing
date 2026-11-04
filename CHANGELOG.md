@@ -14,8 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Makes the README true: every feature it describes now works as described,
 offline, and is covered by HTML contract tests and browser tests. Also fixes
-two script-injection bugs found by those tests. New core dependencies:
-Pygments and latex2mathml.
+two script-injection bugs and two crashes on infinite values found by those
+tests. New core dependencies: Pygments and latex2mathml.
 
 ### Security
 
