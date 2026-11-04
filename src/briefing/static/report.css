@@ -685,6 +685,26 @@ body {
   .bf-report__header { flex-direction: column; gap: 0.25rem; }
 }
 
+/* ── Banner (#50) ─────────────────────────────────────────────────────────── */
+.bf-banner { position: relative; height: var(--bf-banner-h, 16rem); overflow: hidden; border-radius: var(--bf-radius); }
+.bf-banner__image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  object-position: var(--bf-banner-focus, 50% 50%); }
+.bf-banner__veil { position: absolute; inset: 0; }
+.bf-banner__text { position: absolute; top: 0; bottom: 0; display: flex; flex-direction: column;
+  justify-content: center; padding: 1.5rem 2rem; overflow: hidden; }
+.bf-banner--right .bf-banner__text,
+.bf-banner--uniform .bf-banner__text { left: var(--bf-banner-pos); right: 0; }
+.bf-banner--left .bf-banner__text { left: 0; width: var(--bf-banner-pos); }
+.bf-banner__text > :last-child { margin-bottom: 0; }
+@media (max-width: 640px) {
+  /* Phones: the image stacks above the text and fades down into it. */
+  .bf-banner { height: auto; }
+  .bf-banner__image { position: relative; display: block; height: calc(var(--bf-banner-h, 16rem) * 0.6); }
+  .bf-banner__veil { bottom: auto; height: calc(var(--bf-banner-h, 16rem) * 0.6);
+    background: linear-gradient(to bottom, rgba(var(--bf-bg-rgb), 0) 40%, rgba(var(--bf-bg-rgb), 1) 100%) !important; }
+  .bf-banner__text { position: relative; left: 0 !important; width: auto !important; padding: 0.75rem 1rem; }
+}
+
 /* ── lab.CalendarHeatmap ─────────────────────────────────────────────────── */
 .bf-calendar { margin: 0; }
 .bf-cal__calendar + .bf-cal__calendar { margin-top: 1rem; }

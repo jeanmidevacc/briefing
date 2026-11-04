@@ -15,6 +15,7 @@ Architecture
 """
 from __future__ import annotations
 
+import base64
 import html as _html
 import os
 import warnings
@@ -24,6 +25,7 @@ from importlib.resources import files
 from jinja2 import Environment, PackageLoader
 
 from briefing.blocks.asset import DataTable, Plot, Table
+from briefing.blocks.banner import Banner
 from briefing.blocks.base import Block
 from briefing.blocks.layout import Briefing, Group, Select, SelectType, Toggle, VAlign
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
@@ -71,13 +73,48 @@ _jinja_env = Environment(
 # the same way when imported.
 
 
-@renderer_for(Text)
-def _render_text(block: Text, _: _IdGen) -> str:
+def _markdown(text: str) -> str:
+    """Markdown as Text renders it: CommonMark plus pipe tables."""
     from markdown_it import MarkdownIt
 
-    md = MarkdownIt("commonmark").enable("table")
-    body = md.render(block.content)
-    return f'<div class="bf-block bf-text">{body}</div>'
+    return str(MarkdownIt("commonmark").enable("table").render(text))
+
+
+@renderer_for(Text)
+def _render_text(block: Text, _: _IdGen) -> str:
+    return f'<div class="bf-block bf-text">{_markdown(block.content)}</div>'
+
+
+def _veil(block: Banner) -> str:
+    """The veil's background: one rgba layer, or a gradient that eases in over 20 % of the width."""
+    alpha = block.opacity / 100
+    if not block.fade:
+        return f"background: rgba(var(--bf-bg-rgb), {alpha:g})"
+    pos = block.text_position
+    # Smoothstep stops across the fade, so there is no visible edge where it starts or ends.
+    ramp = [(k / 8) ** 2 * (3 - 2 * k / 8) for k in range(9)]
+    if block.side == "right":  # clear on the left, fading in towards the text at pos
+        stops = [(0.0, 0.0)] + [(pos - 20 + 20 * k / 8, alpha * s) for k, s in enumerate(ramp)] + [(100.0, alpha)]
+    else:  # text on the left up to pos, fading out after it
+        stops = [(0.0, alpha)] + [(pos + 20 * k / 8, alpha * (1 - s)) for k, s in enumerate(ramp)] + [(100.0, 0.0)]
+    parts = ", ".join(f"rgba(var(--bf-bg-rgb), {a:.4g}) {x:.4g}%" for x, a in stops)
+    return f"background-image: linear-gradient(to right, {parts})"
+
+
+@renderer_for(Banner)
+def _render_banner(block: Banner, _: _IdGen) -> str:
+    src = f"data:{block.mime};base64,{base64.b64encode(block.image).decode('ascii')}"
+    alt = f'alt="{_html.escape(block.alt)}"' if block.alt else 'alt="" aria-hidden="true"'
+    mode = f"bf-banner--{block.side}" if block.fade else "bf-banner--uniform"
+    style = (f"--bf-banner-h: {block.height}; --bf-banner-pos: {block.text_position:g}%; "
+             f"--bf-banner-focus: {block.focus[0]:g}% {block.focus[1]:g}%")
+    return (
+        f'<div class="bf-block bf-banner {mode}" style="{style}">'
+        f'<img class="bf-banner__image" src="{src}" {alt}>'
+        f'<div class="bf-banner__veil" style="{_veil(block)}"></div>'
+        f'<div class="bf-banner__text bf-text">{_markdown(block.text)}</div>'
+        f"</div>"
+    )
 
 
 @renderer_for(HTML)

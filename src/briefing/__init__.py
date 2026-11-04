@@ -37,6 +37,7 @@ from briefing.blocks import (
     HTML,
     Alert,
     AlertLevel,
+    Banner,
     BigNumber,
     Block,
     Briefing,
@@ -142,6 +143,7 @@ __all__: list[str] = [
     "VAlign",
     "wrap_block",
     # blocks — asset
+    "Banner",
     "DataTable",
     "Plot",
     "Table",
