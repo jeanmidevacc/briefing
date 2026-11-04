@@ -66,6 +66,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   themes, notebooks, printing and export, the lab, recipes and the changelog. Every
   example runs when the docs are built and is embedded as the report it saves; a test
   runs the same examples against the report contract (#41).
+- The documentation is at https://briefing.readthedocs.io; the README is now a short
+  pitch and quick start that links to it, and the package metadata gains a
+  `Documentation` URL (#41).
 
 ## [0.1.2] - 2026-11-03
 

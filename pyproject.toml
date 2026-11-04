@@ -62,6 +62,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/jeanmidevacc/briefing"
+Documentation = "https://briefing.readthedocs.io"
 Repository = "https://github.com/jeanmidevacc/briefing"
 Issues = "https://github.com/jeanmidevacc/briefing/issues"
 Changelog = "https://github.com/jeanmidevacc/briefing/blob/main/CHANGELOG.md"
