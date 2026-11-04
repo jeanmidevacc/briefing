@@ -16,6 +16,18 @@ from playwright.sync_api import Page, Route
 import briefing as bf
 
 _NOW = datetime(2024, 1, 2, 3, 4, tzinfo=UTC)
+
+#: WCAG 2 contrast ratio between two CSS colours, computed in the page: page.evaluate(CONTRAST_JS, [fg, bg]).
+CONTRAST_JS = """([fg, bg]) => {
+  const ctx = document.createElement('canvas').getContext('2d');
+  const rgb = c => { ctx.fillStyle = '#000'; ctx.fillStyle = c; ctx.fillRect(0, 0, 1, 1);
+    return Array.from(ctx.getImageData(0, 0, 1, 1).data).slice(0, 3); };
+  const lin = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  const lum = c => { const [r, g, b] = rgb(c).map(lin);
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const [a, b] = [lum(fg), lum(bg)].sort((x, y) => y - x);
+  return (a + 0.05) / (b + 0.05);
+}"""
 _HERE = Path(__file__).parent
 
 
