@@ -11,6 +11,7 @@ Architecture
 from __future__ import annotations
 
 import html as _html
+import math
 import typing as t
 
 if t.TYPE_CHECKING:
@@ -46,6 +47,8 @@ def _fmt_num(v: t.Any, sig: int = 4) -> str:
     except (TypeError, ValueError):
         pass
     if isinstance(v, float):
+        if math.isinf(v):  # int(inf) raises OverflowError
+            return "inf" if v > 0 else "-inf"
         if v == int(v) and abs(v) < 1e12:
             return str(int(v))
         # g-format respects significant figures
@@ -67,9 +70,15 @@ _HIST_BINS = 20
 _BAR_FILL = 'fill="var(--bf-accent)" fill-opacity="0.65"'
 
 
+def _infinite(series: t.Any) -> t.Any:
+    """Boolean mask of the ``inf`` / ``-inf`` values in a numeric Series."""
+    return series.isin([math.inf, -math.inf])
+
+
 def _histogram_svg(series: t.Any) -> str:
-    """Return an SVG histogram for a numeric pandas Series."""
+    """Return an SVG histogram for a numeric pandas Series (its finite values)."""
     valid = series.dropna()
+    valid = valid[~_infinite(valid)]  # an infinite range would put every value in bin 0
     n = len(valid)
     if n == 0:
         return f'<svg width="{_SVG_W}" height="{_SVG_H}"></svg>'
@@ -183,6 +192,9 @@ def _column_card(
             ("median", _fmt_num(desc["50%"])),
             ("max", _fmt_num(desc["max"])),
         ]
+        infinite = int(_infinite(series).sum())
+        if infinite:
+            stat_rows.append(("infinite", f"{infinite:,}"))
         chart_svg = _histogram_svg(series)
 
     elif kind == "categorical":

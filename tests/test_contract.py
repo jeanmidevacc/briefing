@@ -150,8 +150,6 @@ SCENARIOS: dict[str, Build] = {
 KNOWN_FAILURES: dict[tuple[str, str], str] = {
     ("unique_ids", "two-matplotlib-plots"): "#56: Matplotlib SVGs reuse ids such as figure_1",
     **{("generator_meta", s): "#23: no generator meta tag yet" for s in SCENARIOS},
-    **{(rule, "dataprofile-infinite"): "#79: DataProfile crashes on infinite values"
-       for rule in [*RULES, "deterministic"]},
 }
 
 
