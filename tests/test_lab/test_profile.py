@@ -1,6 +1,8 @@
 """Tests for DataProfile rendering (Phase 5)."""
 from __future__ import annotations
 
+import re
+
 import pandas as pd
 import pytest
 from bs4 import BeautifulSoup
@@ -236,3 +238,36 @@ class TestProfileInReport:
         df = pd.DataFrame({"a": pd.Series([], dtype=float)})
         html = render_report(Briefing(DataProfile(df)))
         assert "bf-profile" in html
+
+
+# ── infinite values (#79) ─────────────────────────────────────────────────────
+
+
+class TestInfiniteValues:
+    @staticmethod
+    def _stats(html: str) -> dict[str, str]:
+        soup = BeautifulSoup(html, "html.parser")
+        card = find_one(soup, "div.bf-profile__card")
+        rows = card.select(".bf-profile__stat-row")
+        return {find_one(row, "dt").get_text(): find_one(row, "dd").get_text() for row in rows}
+
+    def test_renders_with_min_max_and_infinite_count(self):
+        df = pd.DataFrame({"x": [1.0, 2.0, float("inf"), float("-inf"), 3.0, None]})
+        stats = self._stats(render_profile(DataProfile(df)))
+        assert stats["min"] == "-inf" and stats["max"] == "inf"
+        assert stats["infinite"] == "2"
+
+    def test_no_infinite_row_for_finite_columns(self):
+        assert "infinite" not in self._stats(render_profile(DataProfile(pd.DataFrame({"x": [1.0, 2.0]}))))
+
+    def test_histogram_uses_the_finite_values(self):
+        values = [float(i) for i in range(20)] + [float("inf")]
+        svg = _histogram_svg(pd.Series(values))
+        heights = [float(h) for h in re.findall(r'<rect[^>]*height="([0-9.]+)"', svg)]
+        # 20 evenly spread finite values fill every bin; with an infinite range they'd all land in bin 0
+        assert len(heights) == 20 and min(heights) > 0
+
+    def test_only_infinite_values(self):
+        df = pd.DataFrame({"x": [float("inf"), float("-inf")]})
+        stats = self._stats(render_profile(DataProfile(df)))
+        assert stats["infinite"] == "2"
