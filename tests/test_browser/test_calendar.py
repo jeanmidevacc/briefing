@@ -8,6 +8,9 @@ from playwright.sync_api import Page
 import briefing as bf
 from tests.test_browser.conftest import Viewer
 
+# The hour view is deprecated (#111) but still supported: its tests keep running without the warning.
+pytestmark = pytest.mark.filterwarnings("ignore:CalendarHeatmap. the hour view:DeprecationWarning")
+
 
 @pytest.mark.parametrize("theme", ["default", "dark"])
 def test_zero_no_data_and_below_target_are_visibly_different(viewer: Viewer, df_pipeline_log: pd.DataFrame,

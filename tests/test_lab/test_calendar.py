@@ -13,6 +13,9 @@ from briefing.lab import CalendarHeatmap
 from briefing.lab._render_calendar import GITHUB, _fmt, render_calendar
 from tests.html_helpers import attr, classes, find_one
 
+# The hour view is deprecated (#111) but still supported: its tests keep running without the warning.
+pytestmark = pytest.mark.filterwarnings("ignore:CalendarHeatmap. the hour view:DeprecationWarning")
+
 
 def _soup(block: CalendarHeatmap) -> BeautifulSoup:
     return BeautifulSoup(render_calendar(block), "html.parser")

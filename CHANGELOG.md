@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the window, and never prints. The browser's slower built-in tooltip no longer doubles up;
   without JavaScript it is still there (#109).
 
+### Deprecated
+
+- `lab.CalendarHeatmap`'s hour view, `views=("hours",)` or `("days", "hours")`, raises a
+  `DeprecationWarning`. It still works; a dedicated time-pattern heatmap (weekday × hour,
+  weekday × month, …) is planned to replace it, and the hour view will be removed in 0.4.0
+  at the earliest, never before that replacement ships (#111).
+
 ### Fixed
 
 - `lab.CalendarHeatmap` shows values exactly: a non-integer of 10,000 or more read

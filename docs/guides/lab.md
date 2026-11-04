@@ -63,9 +63,8 @@ different from days with a zero.
 - `expected=` flags days below a target: a number, a Series indexed by date, or a
   DataFrame with `date` and `expected` columns.
 - `events=` marks dates, or spans with a `start`, `end` and `label`.
-- `views=("days", "hours")` adds a 7 × 24 weekday-by-hour grid, with tabs between
-  the two; `tz=` converts timezone-aware timestamps first.
-- `on_click="rows"` lists the rows behind a day or an hour when it is clicked, up to
+- `tz=` converts timezone-aware timestamps before they are placed on a day.
+- `on_click="rows"` lists the rows behind a day when it is clicked, up to
   `CalendarHeatmap.ROWS_PER_CELL` per cell.
 - `center=` with three `colors` gives a diverging scale, for values that go negative.
 
@@ -94,11 +93,18 @@ report = bf.lab.CalendarHeatmap(
     value="rows",
     expected=900,
     events=pd.DataFrame({"start": ["2023-12-22"], "end": ["2024-01-02"], "label": ["Freeze"]}),
-    views=("days", "hours"),
     on_click="rows",
 )
 bf.save(report, "calendar.html", name="Pipeline runs")
 ```
+
+:::{note}
+The weekday-by-hour grid, `views=("days", "hours")`, is **deprecated since 0.2.2**:
+it still works, with a `DeprecationWarning`. A dedicated block for time patterns
+(weekday × hour, weekday × month, day of the month × month, …) is planned to replace
+it; follow [issue #111](https://github.com/jeanmidevacc/briefing/issues/111). The hour
+view will not be removed before 0.4.0, and never before its replacement ships.
+:::
 
 For values that go negative, such as a daily balance, `center=0` switches to a
 diverging scale. `colors` then takes three colours: below, at and above the centre.

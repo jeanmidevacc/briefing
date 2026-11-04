@@ -155,6 +155,15 @@ class DataDive(Block):
         self.max_rows = max_rows
 
 
+#: Shown once per CalendarHeatmap built with the hour view (#111).
+HOURS_VIEW_DEPRECATION = (
+    "CalendarHeatmap: the hour view (views=('hours',) or ('days', 'hours')) is deprecated since briefing "
+    "0.2.2. A dedicated time-pattern heatmap (weekday x hour, weekday x month, ...) will replace it, and the "
+    "hour view will be removed in 0.4.0 at the earliest, never before that replacement ships. Follow "
+    "https://github.com/jeanmidevacc/briefing/issues/111; use views=('days',) for the day calendar alone."
+)
+
+
 class CalendarHeatmap(Block):
     """GitHub-style calendar heatmap: one cell per day, weeks as columns.
 
@@ -174,7 +183,9 @@ class CalendarHeatmap(Block):
         group: Column to split by: one calendar per group, stacked, on one shared colour scale.
         views: ``("days",)``, ``("hours",)`` or ``("days", "hours")``: the day calendar
             and/or a 7 × 24 weekday-by-hour grid; with both, tabs switch between them.
-            The hour view needs timestamps with a time of day.
+            The hour view needs timestamps with a time of day. *Deprecated since
+            0.2.2:* the hour view raises a ``DeprecationWarning`` and will be replaced
+            by a dedicated time-pattern heatmap (issue #111).
         tz: A time zone such as ``"America/Montreal"``. Converts timezone-aware
             timestamps only; naive timestamps and plain dates are taken as already
             local, so a date at midnight never moves to the previous day.
@@ -242,6 +253,8 @@ class CalendarHeatmap(Block):
             )
         if tz is not None:
             _check_tz(tz)
+        if "hours" in views:
+            warnings.warn(HOURS_VIEW_DEPRECATION, DeprecationWarning, stacklevel=2)
         if "hours" in views and not _has_times(frame[date]):
             raise BriefingError(
                 f"CalendarHeatmap: the hour view needs a time of day, but {date!r} holds dates only. "
