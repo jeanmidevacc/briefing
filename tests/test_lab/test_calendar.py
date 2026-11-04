@@ -252,3 +252,52 @@ def test_hour_view_needs_times(df_timestamps_near_midnight: pd.DataFrame) -> Non
 def test_bad_views(df_pipeline_log: pd.DataFrame) -> None:
     with pytest.raises(bf.BriefingError, match="views"):
         CalendarHeatmap(df_pipeline_log, date="run_at", views=("weeks",))
+
+
+# ── on_click="rows" (part 3c) ─────────────────────────────────────────────────
+
+
+def _rows(soup: BeautifulSoup) -> dict[str, t.Any]:
+    import json
+
+    data: dict[str, t.Any] = json.loads(find_one(soup, 'script.bf-cal__rows[type="application/json"]').get_text())
+    return data
+
+
+def test_rows_data_only_with_on_click(df_pipeline_log: pd.DataFrame) -> None:
+    assert _soup(CalendarHeatmap(df_pipeline_log, date="run_at")).select("script.bf-cal__rows") == []
+    with pytest.raises(bf.BriefingError, match="on_click"):
+        CalendarHeatmap(df_pipeline_log, date="run_at", on_click="line")
+
+
+def test_rows_behind_each_day_and_hour(df_pipeline_log: pd.DataFrame) -> None:
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", views=("days", "hours"), on_click="rows"))
+    data = _rows(soup)
+    assert data["columns"] == ["run_at", "team", "rows"]
+    day = data["cells"]["d|2025-12-07"]  # two runs that day
+    assert day["total"] == 2 and len(day["rows"]) == 2
+    assert day["rows"][0][1] == "ingest"
+    assert data["cells"]["h|0-6"]["total"] > 0  # Mondays at 06:00
+    cell = soup.select_one('rect[data-date="2025-12-07"]')
+    assert cell is not None and attr(cell, "role") == "button" and attr(cell, "tabindex") == "0"
+
+
+def test_rows_per_cell_are_capped(df_pipeline_log: pd.DataFrame) -> None:
+    many = pd.DataFrame({"run_at": [pd.Timestamp("2026-01-05 09:00")] * 120, "n": range(120)})
+    data = _rows(_soup(CalendarHeatmap(many, date="run_at", on_click="rows")))
+    cell = data["cells"]["d|2026-01-05"]
+    assert cell["total"] == 120 and len(cell["rows"]) == CalendarHeatmap.ROWS_PER_CELL == 50
+
+
+def test_rows_are_keyed_by_group(df_pipeline_log: pd.DataFrame) -> None:
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", group="team", on_click="rows"))
+    data = _rows(soup)
+    assert data["cells"]["d|2025-12-07|export"]["total"] == 1
+    assert [attr(c, "data-group") for c in soup.select(".bf-cal__calendar")] == ["export", "ingest"]
+
+
+def test_rows_json_cannot_close_its_script(df_pipeline_log: pd.DataFrame) -> None:
+    df = pd.DataFrame({"run_at": [pd.Timestamp("2026-01-05")], "note": ["</script><img src=x onerror=y()>"]})
+    soup = _soup(CalendarHeatmap(df, date="run_at", on_click="rows"))
+    assert soup.find("img") is None and "<" not in find_one(soup, "script.bf-cal__rows").get_text()
+    assert _rows(soup)["cells"]["d|2026-01-05"]["rows"][0][1] == "</script><img src=x onerror=y()>"

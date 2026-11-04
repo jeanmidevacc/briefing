@@ -134,7 +134,7 @@ SCENARIOS: dict[str, Build] = {
     **{f"{kind}-infinite": _over_infinite(make) for kind, make in FRAME_BLOCKS.items()},
     "calendar": lambda df: bf.Briefing(bf.lab.CalendarHeatmap(
         df("df_pipeline_log"), date="run_at", value="rows", group="team", expected=500, events=df("df_events"),
-        views=("days", "hours"), tz="America/Montreal")),
+        views=("days", "hours"), tz="America/Montreal", on_click="rows")),
     "calendar-diverging": lambda df: bf.Briefing(
         bf.lab.CalendarHeatmap(df("df_signed"), date="day", value="balance", center=0,
                                colors=["#d73027", "#f7f7f7", "#1a9850"], week_start="sunday")),
@@ -243,7 +243,8 @@ ESCAPE_SCENARIOS: dict[str, Callable[[], tuple[bf.Briefing, str]]] = {
     "datadive": lambda: (bf.Briefing(bf.lab.DataDive(_payload_frame(), color=PAYLOAD)), "R"),
     "calendar": lambda: (bf.Briefing(bf.lab.CalendarHeatmap(
         pd.DataFrame({"day": pd.to_datetime(["2026-01-05", "2026-01-06"]), "who": [PAYLOAD, "b"]}),
-        date="day", group="who", events=pd.DataFrame({"start": ["2026-01-05"], "label": [PAYLOAD]}))), "R"),
+        date="day", group="who", events=pd.DataFrame({"start": ["2026-01-05"], "label": [PAYLOAD]}),
+        on_click="rows")), "R"),
 }
 
 

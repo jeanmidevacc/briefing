@@ -48,6 +48,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CalendarHeatmap(views=("days", "hours"))` adds a 7 × 24 weekday-by-hour grid, with
   tabs between the views, and `tz="America/Montreal"` converts timezone-aware timestamps
   (naive timestamps and plain dates are left on their own day) (#19).
+- `CalendarHeatmap(on_click="rows")`: clicking a day or an hour (or pressing Enter on
+  it) lists the rows behind it in a panel, shown as plain text, up to 50 per cell with a
+  note when there are more (#19).
 
 ## [0.1.2] - 2026-11-03
 
