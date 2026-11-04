@@ -12,7 +12,6 @@ import zlib
 from dataclasses import dataclass
 
 _OBJ = re.compile(rb"(\d+) 0 obj(.*?)endobj", re.S)
-_STREAM = re.compile(rb"stream\r?\n(.*?)\r?\nendstream", re.S)
 _REF = rb"(\d+) 0 R"
 
 
@@ -22,11 +21,16 @@ class Pdf:
     links: list[str]  # URI link targets, in order
 
 
-def _stream(body: bytes) -> bytes:
-    m = _STREAM.search(body)
-    if m is None:
+def _stream(body: bytes, objs: dict[int, bytes] | None = None) -> bytes:
+    """The decoded data of a stream object, read by its /Length (data may end in a newline)."""
+    start = re.search(rb"stream\r?\n", body)
+    length = re.search(rb"/Length\s+(\d+)(\s+0\s+R)?", body)
+    if start is None or length is None:
         return b""
-    data = m.group(1)
+    n = int(length.group(1))
+    if length.group(2) and objs is not None:  # an indirect length: "/Length 12 0 R"
+        n = int(objs[n].strip())
+    data = body[start.end():start.end() + n]
     return zlib.decompress(data) if b"/FlateDecode" in body else data
 
 
@@ -59,11 +63,11 @@ def read_pdf(pdf: bytes) -> Pdf:
                    else (font_dict.group(2) if font_dict else b""))
         for name, ref in re.findall(rb"/(\w+)\s+" + _REF, entries):
             to_unicode = re.search(rb"/ToUnicode\s+" + _REF, objs[int(ref)])
-            fonts[name] = _cmap(_stream(objs[int(to_unicode.group(1))])) if to_unicode else {}
+            fonts[name] = _cmap(_stream(objs[int(to_unicode.group(1))], objs)) if to_unicode else {}
         contents = re.search(rb"/Contents\s*(?:\[(.*?)\]|" + _REF + rb")", page, re.S)
         refs = re.findall(_REF, contents.group(1)) if contents and contents.group(1) else (
             [contents.group(2)] if contents else [])
-        content = b"\n".join(_stream(objs[int(r)]) for r in refs)
+        content = b"\n".join(_stream(objs[int(r)], objs) for r in refs)
         texts.append(_decode_text(content, fonts))
     links = [u.decode() for u in re.findall(rb"/URI\s*\(([^)]*)\)", pdf)]
     return Pdf(pages=texts, links=links)
