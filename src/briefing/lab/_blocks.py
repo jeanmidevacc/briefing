@@ -194,7 +194,8 @@ class CalendarHeatmap(Block):
     Example::
 
         bf.lab.CalendarHeatmap(runs, date="run_at", value="rows", expected=1000)
-        bf.lab.CalendarHeatmap(ledger, date="day", value="balance", center=0)
+        bf.lab.CalendarHeatmap(ledger, date="day", value="balance",
+                               center=0, colors=["#dc2626", "#f3f4f6", "#16a34a"])
     """
 
     AGGS: t.ClassVar[tuple[str, ...]] = ("sum", "mean", "median", "min", "max", "count")

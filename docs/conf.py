@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "_ext"))
 
 from briefing import __version__  # noqa: E402
 
@@ -19,10 +20,11 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "myst_parser",
+    "briefing_example",  # docs/_ext: live report examples
 ]
 
 source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
-exclude_patterns = ["_build"]
+exclude_patterns = ["_build", "_ext"]
 
 # Autodoc: document what each page lists, in source order, with base classes.
 autodoc_member_order = "bysource"
@@ -38,3 +40,4 @@ myst_enable_extensions = ["colon_fence"]
 
 html_theme = "furo"
 html_title = f"briefing {release}"
+html_static_path = ["_static"]

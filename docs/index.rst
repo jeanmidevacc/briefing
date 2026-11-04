@@ -23,6 +23,23 @@ coding agents both write. Reports work offline forever: no CDN, no server.
 
 .. toctree::
    :maxdepth: 2
+   :caption: Guides
+
+   quickstart
+   guides/text
+   guides/tables
+   guides/charts
+   guides/layout
+   guides/banner
+   guides/assets
+   guides/theming
+   guides/notebooks
+   guides/export
+   guides/lab
+   recipes
+
+.. toctree::
+   :maxdepth: 2
    :caption: API reference
 
    api/blocks
@@ -30,3 +47,10 @@ coding agents both write. Reports work offline forever: no CDN, no server.
    api/formatting
    api/output
    api/lab
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Project
+
+   changelog
+   GitHub <https://github.com/jeanmidevacc/briefing>
