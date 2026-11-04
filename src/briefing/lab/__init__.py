@@ -49,8 +49,8 @@ register_renderer(DataProfile, _render_profile_block)
 register_renderer(DataDive, _render_datadive_block, js_asset=_LAB_JS)
 
 
-def _render_calendar_block(block: CalendarHeatmap, _: IdGen) -> str:
-    return render_calendar(block)
+def _render_calendar_block(block: CalendarHeatmap, idgen: IdGen) -> str:
+    return render_calendar(block, idgen)
 
 
 register_renderer(CalendarHeatmap, _render_calendar_block)

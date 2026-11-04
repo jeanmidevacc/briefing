@@ -122,3 +122,19 @@ def df_events() -> pd.DataFrame:
         "end": pd.to_datetime(pd.Series(["2026-01-02", "2026-01-28", None])),
         "label": ["Holiday freeze", "Migration", "Incident"],
     })
+
+
+@pytest.fixture
+def df_timestamps_near_midnight() -> pd.DataFrame:
+    """The same instants as UTC-aware timestamps, plus naive timestamps and plain dates.
+
+    2026-01-10 03:30 UTC is 2026-01-09 22:30 in Montréal (UTC-5); 2026-01-10 12:00 UTC is
+    07:00 the same day. Naive values and plain dates are taken as already local.
+    """
+    import datetime as dt
+
+    return pd.DataFrame({
+        "aware": pd.to_datetime(["2026-01-10 03:30", "2026-01-10 12:00", "2026-01-12 04:59"]).tz_localize("UTC"),
+        "naive": pd.to_datetime(["2026-01-10 00:00", "2026-01-10 23:59", "2026-01-12 00:30"]),
+        "plain": [dt.date(2026, 1, 10), dt.date(2026, 1, 10), dt.date(2026, 1, 12)],
+    })

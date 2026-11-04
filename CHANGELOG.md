@@ -45,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   GitHub greens and `center=` gives a diverging scale; `expected=` (a number, a
   date-indexed Series or a DataFrame) flags days below target; `events=` marks single
   days and multi-day spans; each day has a tooltip (#19).
+- `CalendarHeatmap(views=("days", "hours"))` adds a 7 × 24 weekday-by-hour grid, with
+  tabs between the views, and `tz="America/Montreal"` converts timezone-aware timestamps
+  (naive timestamps and plain dates are left on their own day) (#19).
 
 ## [0.1.2] - 2026-11-03
 

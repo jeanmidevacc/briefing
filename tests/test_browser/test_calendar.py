@@ -32,3 +32,18 @@ def test_the_calendar_fits_its_cells(viewer: Viewer, df_pipeline_log: pd.DataFra
     page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at")))
     box = page.locator('rect[data-date="2026-01-05"]').bounding_box()
     assert box is not None and box["width"] == pytest.approx(11, abs=0.5)
+
+
+def test_a_tab_switches_between_the_day_and_hour_views(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", views=("days", "hours"))))
+    days, hours = page.locator("svg.bf-cal__days"), page.locator("svg.bf-cal__hours")
+    assert days.is_visible() and not hours.is_visible()
+    page.get_by_role("tab", name="Hours").click()
+    assert hours.is_visible() and not days.is_visible()
+    assert page.locator("rect.bf-cal__hour").count() == 7 * 24
+
+
+def test_hour_view_labels_are_small(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", views=("hours",))))
+    size = page.locator("svg.bf-cal__hours text").first.evaluate("e => getComputedStyle(e).fontSize")
+    assert size == "9px"

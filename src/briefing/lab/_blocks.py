@@ -148,6 +148,12 @@ class CalendarHeatmap(Block):
         agg: How to aggregate ``value``: ``"sum"``, ``"mean"``, ``"median"``,
             ``"min"``, ``"max"`` or ``"count"``.
         group: Column to split by: one calendar per group, stacked, on one shared colour scale.
+        views: ``("days",)``, ``("hours",)`` or ``("days", "hours")``: the day calendar
+            and/or a 7 × 24 weekday-by-hour grid; with both, tabs switch between them.
+            The hour view needs timestamps with a time of day.
+        tz: A time zone such as ``"America/Montreal"``. Converts timezone-aware
+            timestamps only; naive timestamps and plain dates are taken as already
+            local, so a date at midnight never moves to the previous day.
         colors: ``"github"`` (GitHub's green scale) or a list of CSS colours, low to high.
         center: A midpoint for a diverging scale (e.g. ``0`` for values that go
             negative); ``colors`` is then three hex colours: below, at and above it.
@@ -176,6 +182,8 @@ class CalendarHeatmap(Block):
         value: str | None = None,
         agg: str = "sum",
         group: str | None = None,
+        views: tuple[str, ...] | list[str] = ("days",),
+        tz: str | None = None,
         colors: str | list[str] = "github",
         center: float | None = None,
         week_start: str = "monday",
@@ -194,17 +202,51 @@ class CalendarHeatmap(Block):
                 )
         if agg not in self.AGGS:
             raise BriefingError(f"CalendarHeatmap: agg must be one of {', '.join(self.AGGS)}, not {agg!r}.")
+        views = tuple(views)
+        if not views or any(v not in ("days", "hours") for v in views) or len(set(views)) != len(views):
+            raise BriefingError(
+                f"CalendarHeatmap: views must be ('days',), ('hours',) or ('days', 'hours'), not {views!r}."
+            )
+        if tz is not None:
+            _check_tz(tz)
+        if "hours" in views and not _has_times(frame[date]):
+            raise BriefingError(
+                f"CalendarHeatmap: the hour view needs a time of day, but {date!r} holds dates only. "
+                "Pass timestamps, or views=('days',)."
+            )
         if week_start not in ("monday", "sunday"):
             raise BriefingError(f"CalendarHeatmap: week_start must be 'monday' or 'sunday', not {week_start!r}.")
         self.colors = _check_colors(colors, center)
         self.df = frame
         self.date, self.value, self.agg, self.group = date, value, agg, group
         self.center, self.week_start = center, week_start
+        self.views, self.tz = views, tz
         self.expected = _check_expected(expected, date, group)
         self.events = _check_events(events)
 
 
 _HEX = re.compile(r"^#(?:[0-9a-fA-F]{3}){1,2}$")
+
+
+def _check_tz(tz: str) -> None:
+    import zoneinfo
+
+    try:
+        zoneinfo.ZoneInfo(tz)
+    except (zoneinfo.ZoneInfoNotFoundError, ValueError) as exc:
+        raise BriefingError(
+            f"CalendarHeatmap: unknown time zone {tz!r}; use an IANA name such as 'Europe/Paris'."
+        ) from exc
+
+
+def _has_times(column: t.Any) -> bool:
+    """Whether a column holds timestamps with a time of day (not dates only)."""
+    import pandas as pd
+
+    if not (pd.api.types.is_datetime64_any_dtype(column) or pd.api.types.is_string_dtype(column)):
+        return False
+    stamps = pd.to_datetime(column, errors="coerce").dropna()
+    return bool(len(stamps)) and bool((stamps.dt.normalize() != stamps).any())
 
 
 def _check_colors(colors: str | list[str], center: float | None) -> str | list[str]:
