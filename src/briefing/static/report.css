@@ -684,3 +684,40 @@ body {
   .bf-bignumber__value { font-size: 1.5rem; }
   .bf-report__header { flex-direction: column; gap: 0.25rem; }
 }
+
+/* ── Print ────────────────────────────────────────────────────────────────── */
+/* report.js adds html.bf-printing on beforeprint and removes it on afterprint. It
+   applies on screen too while the print dialog is open, so charts that were
+   hidden can be measured and resized to the paper's width. */
+.bf-print-label { display: none; }
+html.bf-printing .bf-report { width: 180mm; max-width: 180mm; }
+html.bf-printing .bf-select__tablist,
+html.bf-printing .bf-select__select,
+html.bf-printing .bf-dt__toolbar,
+html.bf-printing .bf-dt__footer,
+html.bf-printing .bf-dd__controls,
+html.bf-printing .bf-toggle__icon { display: none !important; }
+html.bf-printing .bf-select__panel[hidden],
+html.bf-printing .bf-toggle__body[hidden] { display: block !important; }
+html.bf-printing .bf-print-label {
+  display: block;
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--bf-text);
+  break-after: avoid;
+}
+.bf-dt__print-note { margin-top: 0.4rem; font-size: 0.8rem; color: var(--bf-muted); }
+
+@page { margin: 12mm; }
+
+@media print {
+  html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { padding: 0; }
+  .bf-report { margin: 0; }
+  a { text-decoration: underline; }
+  /* Top-level pages (one Select at the root) each start a new sheet. */
+  .bf-blocks > .bf-select:only-child > .bf-select__panel + .bf-print-label { break-before: page; }
+  .bf-plot, .bf-alert, .bf-bignumber, .bf-formula, .bf-code, .bf-profile__card,
+  .bf-group:has(> .bf-bignumber) { break-inside: avoid; }
+}
