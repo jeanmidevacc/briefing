@@ -51,6 +51,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CalendarHeatmap(on_click="rows")`: clicking a day or an hour (or pressing Enter on
   it) lists the rows behind it in a panel, shown as plain text, up to 50 per cell with a
   note when there are more (#19).
+- `bf.Banner(md, image=..., text_position=50, opacity=80, side="right", fade=True)`: markdown
+  text over a background image, as a report cover or section opener. The text sits on a
+  veil of the theme background that eases in over 20 % of the width; `height`, `focus`
+  and `alt` are optional; at phone width the image stacks above the text. The image (a
+  path or bytes) is embedded once; files over 2 MB warn. `Formatting` gains a
+  `--bf-bg-rgb` token for the veil (#50).
 
 ## [0.1.2] - 2026-11-03
 

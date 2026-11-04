@@ -17,6 +17,7 @@ from bs4 import BeautifulSoup
 import briefing as bf
 from briefing.blocks.base import Block
 from briefing.renderers.registry import iter_blocks
+from tests.banner_images import RED_SVG
 from tests.contract import (
     MARKER,
     PAYLOAD,
@@ -138,6 +139,10 @@ SCENARIOS: dict[str, Build] = {
     "calendar-diverging": lambda df: bf.Briefing(
         bf.lab.CalendarHeatmap(df("df_signed"), date="day", value="balance", center=0,
                                colors=["#d73027", "#f7f7f7", "#1a9850"], week_start="sunday")),
+    "banner": lambda _: bf.Briefing(
+        bf.Banner("# Cover\n\nA **subtitle**.", image=RED_SVG, text_position=55, opacity=80),
+        bf.Banner("## Left", image=RED_SVG, side="left", text_position=40, focus=(20, 80), alt="A red field"),
+    ),
     "export-menu": lambda _: bf.Briefing(
         bf.Page(bf.Text("# One"), title="One"), bf.Page(bf.Text("# Two"), title="Two"), export=("png", "pdf")
     ),
@@ -241,6 +246,8 @@ ESCAPE_SCENARIOS: dict[str, Callable[[], tuple[bf.Briefing, str]]] = {
     "datatable": lambda: (bf.Briefing(bf.DataTable(_payload_frame(), caption=PAYLOAD)), "R"),
     "dataprofile": lambda: (bf.Briefing(bf.lab.DataProfile(_payload_frame())), "R"),
     "datadive": lambda: (bf.Briefing(bf.lab.DataDive(_payload_frame(), color=PAYLOAD)), "R"),
+    "banner-alt": lambda: (bf.Briefing(_tabs(bf.Banner("x", image=RED_SVG, alt=PAYLOAD, label=PAYLOAD),
+                                             bf.Text("b", label="B"))), "R"),
     "calendar": lambda: (bf.Briefing(bf.lab.CalendarHeatmap(
         pd.DataFrame({"day": pd.to_datetime(["2026-01-05", "2026-01-06"]), "who": [PAYLOAD, "b"]}),
         date="day", group="who", events=pd.DataFrame({"start": ["2026-01-05"], "label": [PAYLOAD]}),

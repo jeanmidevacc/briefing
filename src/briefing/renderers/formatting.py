@@ -25,6 +25,24 @@ _WIDTH_CSS: dict[Width, str] = {
 }
 
 
+def _rgb_triplet(color: str) -> str:
+    """``"#0f172a"`` → ``"15, 23, 42"``, for ``rgba(var(--bf-bg-rgb), a)`` veils (Banner)."""
+    import re
+    import warnings
+
+    c = color.strip()
+    hexes = re.fullmatch(r"#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})", c)
+    if hexes:
+        h = hexes.group(1)
+        h = "".join(ch * 2 for ch in h) if len(h) == 3 else h
+        return f"{int(h[0:2], 16)}, {int(h[2:4], 16)}, {int(h[4:6], 16)}"
+    rgb = re.fullmatch(r"rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+).*\)", c)
+    if rgb:
+        return ", ".join(rgb.groups())
+    warnings.warn(f"Formatting: bg_color {color!r} isn't a hex or rgb() colour; banner veils use white.", stacklevel=3)
+    return "255, 255, 255"
+
+
 @dataclass
 class Formatting:
     """Controls the visual theme of a briefing report.
@@ -102,6 +120,7 @@ class Formatting:
         return (
             ":root {\n"
             f"  --bf-bg:         {self.bg_color};\n"
+            f"  --bf-bg-rgb:     {_rgb_triplet(self.bg_color)};\n"
             f"  --bf-accent:     {self.accent_color};\n"
             f"  --bf-font:       {self.font};\n"
             f"  --bf-max-width:  {w};\n"
