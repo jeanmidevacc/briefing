@@ -145,3 +145,83 @@ def test_capped_cells_say_so_and_values_stay_text(viewer: Viewer) -> None:
     assert panel.locator("tbody tr").count() == 50
     assert "first 50 of 120 rows" in panel.inner_text()
     assert panel.locator("img").count() == 0 and page.evaluate("() => window.__hit") is None
+
+
+# ── hover tooltip (#109) ──────────────────────────────────────────────────────
+
+
+def _tip_box(page: Page) -> dict[str, float]:
+    tip = page.locator(".bf-cal__tip")
+    assert tip.is_visible()
+    box = tip.bounding_box()
+    assert box is not None
+    return {"x": box["x"], "y": box["y"], "width": box["width"], "height": box["height"]}
+
+
+def test_hovering_a_day_shows_its_exact_value_at_once(viewer: Viewer) -> None:
+    df = pd.DataFrame({"day": pd.to_datetime(["2026-01-05", "2026-01-06"]), "amount": [12345.67, 3.0]})
+    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df, date="day", value="amount")))
+    tip = page.locator(".bf-cal__tip")
+    assert not tip.is_visible()
+    cell = page.locator('rect[data-date="2026-01-05"]')
+    cell.hover()
+    assert tip.is_visible()  # no delay: visible as soon as the pointer is over the cell
+    assert tip.locator("strong").inner_text() == "Mon 2026-01-05"
+    assert "12,345.67 amount" in tip.inner_text()
+    cell_box, box = cell.bounding_box(), _tip_box(page)
+    assert cell_box is not None and box["y"] + box["height"] <= cell_box["y"]  # above the cell
+    page.mouse.move(0, 0)
+    assert not tip.is_visible()
+
+
+def test_the_native_tooltip_no_longer_doubles_up(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", views=("days", "hours"))))
+    assert page.locator(".bf-calendar svg title").count() == 0
+    assert page.locator("rect.bf-cal__hour[data-tip]").count() == 7 * 24
+
+
+def test_hour_cells_and_event_bands_have_tooltips(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
+    events = pd.DataFrame({"start": ["2025-12-22"], "end": ["2026-01-02"], "label": ["Freeze"]})
+    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", events=events,
+                                                          views=("days", "hours"))))
+    page.locator("g.bf-cal__event").first.hover()
+    assert "Freeze" in page.locator(".bf-cal__tip").inner_text()
+    page.get_by_role("tab", name="Hours").click()
+    page.locator('rect[data-hour="0-6"]').hover()
+    assert page.locator(".bf-cal__tip strong").inner_text().startswith("Mon 06:00")
+
+
+def test_keyboard_focus_and_tap_show_the_tooltip(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", on_click="rows")))
+    cell = page.locator('rect[data-date="2025-12-07"]')
+    cell.focus()
+    assert page.locator(".bf-cal__tip strong").inner_text() == "Sun 2025-12-07"
+    assert cell.get_attribute("aria-label") is not None  # clickable cells keep their name
+    page.keyboard.press("Escape")
+    assert not page.locator(".bf-cal__tip").is_visible()
+    other = page.locator('rect[data-date="2025-12-08"]')
+    other.dispatch_event("pointerdown", {"pointerType": "touch", "bubbles": True})
+    assert page.locator(".bf-cal__tip strong").inner_text() == "Mon 2025-12-08"
+    cell.click()  # the rows panel still opens, titled from the same text
+    assert "2025-12-07" in page.locator(".bf-cal__panel-title").inner_text()
+
+
+def test_the_tooltip_stays_inside_the_window(viewer: Viewer) -> None:
+    viewer.page.set_viewport_size({"width": 375, "height": 800})
+    days = pd.date_range("2025-01-01", "2025-12-31", freq="D")
+    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(pd.DataFrame({"run_at": days}), date="run_at")))
+    page.locator('rect[data-date="2025-01-06"]').scroll_into_view_if_needed()
+    page.evaluate("() => window.scrollTo(0, document.querySelector('svg.bf-cal__days').getBoundingClientRect().top"
+                  " + window.scrollY - 30)")  # the first row sits right under the top of the window
+    cell = page.locator('rect[data-date="2025-01-06"]')
+    cell.hover()
+    cell_box, box = cell.bounding_box(), _tip_box(page)
+    assert cell_box is not None and box["y"] >= cell_box["y"] + cell_box["height"]  # flipped below the cell
+    assert box["x"] >= 0 and box["x"] + box["width"] <= 375
+
+
+def test_the_tooltip_never_prints(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at")))
+    page.locator('rect[data-date="2025-12-07"]').hover()
+    page.emulate_media(media="print")
+    assert not page.locator(".bf-cal__tip").is_visible()

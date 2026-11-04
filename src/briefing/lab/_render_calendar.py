@@ -188,7 +188,18 @@ def _group_attr(block: CalendarHeatmap, group: str | None) -> str:
 
 
 def _fmt(v: float) -> str:
-    return f"{int(v):,}" if float(v).is_integer() else f"{v:,.4g}"
+    """A value as the reader should see it, in the tooltip and the legend (#109).
+
+    Whole numbers get thousands separators; other values of 1 or more are rounded to
+    2 decimals (trailing zeros dropped) and never use scientific notation; values
+    below 1 keep 4 significant digits, and only those below 0.0001 use an exponent.
+    """
+    v = float(v)
+    if v.is_integer():
+        return f"{int(v):,}"
+    if abs(v) >= 1:
+        return f"{v:,.2f}".rstrip("0").rstrip(".")
+    return f"{v:.4g}" if abs(v) >= 1e-4 else f"{v:.2e}"
 
 
 def _what(block: CalendarHeatmap) -> str:
@@ -256,16 +267,17 @@ def _days_svg(
         col, row = pos(day)
         x, y = _LEFT + col * _STEP, _TOP + row * _STEP
         value, goal = data.get(day), target(day)
+        when = f"{_WEEKDAYS[day.weekday()]} {day.isoformat()}"
         cls = ["bf-cal__day"]
         fill = ""
         if value is None:
             cls.append("bf-cal__day--empty")
-            tip = f"{day.isoformat()} · no data"
+            tip = f"{when} · no data"
         else:
             fill, extra = colour(value)
             if extra:
                 cls.append(extra)
-            tip = f"{day.isoformat()} · {_fmt(value)} {what}"
+            tip = f"{when} · {_fmt(value)} {what}"
         # No data falls short of a positive target only: nothing is below a target of 0.
         if goal is not None and ((value is None and goal > 0) or (value is not None and value < goal)):
             cls.append("bf-cal__day--below")

@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup, Tag
 
 import briefing as bf
 from briefing.lab import CalendarHeatmap
-from briefing.lab._render_calendar import GITHUB, render_calendar
+from briefing.lab._render_calendar import GITHUB, _fmt, render_calendar
 from tests.html_helpers import attr, classes, find_one
 
 
@@ -169,7 +169,7 @@ def test_week_start(df_pipeline_log: pd.DataFrame, week_start: str, weekday: int
 def test_tooltips_show_date_and_value(df_pipeline_log: pd.DataFrame) -> None:
     cells = _cells(_soup(CalendarHeatmap(df_pipeline_log, date="run_at", value="rows", agg="sum")))
     title = find_one(cells["2025-12-07"], "title").get_text()
-    assert title.startswith("2025-12-07") and "rows" in title
+    assert title.startswith("Sun 2025-12-07 · ") and "rows" in title  # weekday first, for the tooltip (#109)
 
 
 def test_labels_are_escaped(df_pipeline_log: pd.DataFrame) -> None:
@@ -301,3 +301,23 @@ def test_rows_json_cannot_close_its_script(df_pipeline_log: pd.DataFrame) -> Non
     soup = _soup(CalendarHeatmap(df, date="run_at", on_click="rows"))
     assert soup.find("img") is None and "<" not in find_one(soup, "script.bf-cal__rows").get_text()
     assert _rows(soup)["cells"]["d|2026-01-05"]["rows"][0][1] == "</script><img src=x onerror=y()>"
+
+
+# ── exact values in tooltips and the legend (#109) ────────────────────────────
+
+
+@pytest.mark.parametrize(("value", "shown"), [
+    (3, "3"), (1234, "1,234"), (12345.67, "12,345.67"), (-12345.678, "-12,345.68"), (1234.5, "1,234.5"),
+    (10_000_000.5, "10,000,000.5"), (0.12345, "0.1235"), (-0.5, "-0.5"), (0.00001234, "1.23e-05"),
+])
+def test_values_are_shown_exactly(value: float, shown: str) -> None:
+    assert _fmt(value) == shown
+
+
+def test_a_large_fractional_value_has_no_exponent_in_tooltip_or_legend() -> None:
+    df = pd.DataFrame({"day": pd.to_datetime(["2026-01-05", "2026-01-06"]), "amount": [12345.67, 20000.25]})
+    soup = _soup(CalendarHeatmap(df, date="day", value="amount", colors=["#eee", "#333"]))
+    tip = find_one(find_one(soup, 'rect[data-date="2026-01-05"]'), "title").get_text()
+    assert tip == "Mon 2026-01-05 · 12,345.67 amount"
+    legend = find_one(soup, ".bf-cal__legend").get_text()
+    assert "e+0" not in legend and "12,345.67" in legend
