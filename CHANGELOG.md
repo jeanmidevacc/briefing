@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-03
+
+Bug fixes after 0.1.1, plus one rendering change: a `BigNumber` change with no
+direction is now shown neutral.
+
 ### Changed
 
 - `BigNumber`: a `change` without `is_upward_change` is now shown neutral (no arrow, muted
@@ -131,6 +136,7 @@ First public release.
   inherits its base's renderer.
 - Ships inline type hints (`py.typed`). Python 3.11+.
 
-[Unreleased]: https://github.com/jeanmidevacc/briefing/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/jeanmidevacc/briefing/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/jeanmidevacc/briefing/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/jeanmidevacc/briefing/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/jeanmidevacc/briefing/releases/tag/v0.1.0
