@@ -29,3 +29,18 @@ def test_without_the_flag_colour_follows_the_arrow(viewer: Viewer) -> None:
     )
     changes = viewer.open(report).locator(".bf-bignumber__change")
     assert [changes.nth(i).evaluate("e => getComputedStyle(e).color") for i in range(2)] == [GREEN, RED]
+
+
+def test_change_without_direction_is_neutral(viewer: Viewer) -> None:
+    report = bf.Briefing(
+        bf.BigNumber("Users", "142K", change="+3%"),
+        bf.BigNumber("NPS", 41, change="+2", is_positive_intent=True),
+    )
+    page = viewer.open(report)
+    changes = page.locator(".bf-bignumber__change")
+    muted = page.evaluate("() => getComputedStyle(document.documentElement).getPropertyValue('--bf-muted').trim()")
+    assert muted == "#6b7280"
+    first = (changes.nth(0).inner_text(), changes.nth(0).evaluate("e => getComputedStyle(e).color"))
+    second = (changes.nth(1).inner_text(), changes.nth(1).evaluate("e => getComputedStyle(e).color"))
+    assert first == ("+3%", "rgb(107, 114, 128)")  # muted, no arrow
+    assert second == ("+2", GREEN)  # colour only, no arrow

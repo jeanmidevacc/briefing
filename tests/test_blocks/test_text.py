@@ -155,11 +155,11 @@ class TestBigNumber:
         b = BigNumber("Churn", "12%", change="+0.5pp", is_upward_change=False)
         assert b.is_upward_change is False
 
-    def test_change_without_direction_warns(self):
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
+    def test_change_without_direction_does_not_warn(self):
+        # A change without a verdict is normal use: it renders neutral (#71).
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             BigNumber("x", 1, change="+5%")
-        assert any("is_upward_change" in str(w.message) for w in caught)
 
     def test_no_change_no_warning(self):
         with warnings.catch_warnings(record=True) as caught:

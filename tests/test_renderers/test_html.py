@@ -217,6 +217,19 @@ class TestBigNumberColour:
             '<div class="bf-bignumber__change bf-bignumber__change--up">▲ +3%</div></div>'
         )
 
+    def test_change_without_direction_is_neutral(self):
+        soup = render(blocks(BigNumber("Users", "142K", change="+3%")))
+        change = find_one(soup, ".bf-bignumber__change")
+        assert change.get_text() == "+3%"  # no arrow
+        assert classes(change) == ["bf-bignumber__change", "bf-bignumber__change--neutral"]
+
+    @pytest.mark.parametrize(("positive", "tone"), [(True, "good"), (False, "bad")])
+    def test_colour_without_direction(self, positive, tone):
+        soup = render(blocks(BigNumber("NPS", 41, change="+2", is_positive_intent=positive)))
+        change = find_one(soup, ".bf-bignumber__change")
+        assert change.get_text() == "+2"
+        assert classes(change) == ["bf-bignumber__change", f"bf-bignumber__change--{tone}"]
+
     @pytest.mark.parametrize(
         ("upward", "positive", "arrow", "tone"),
         [

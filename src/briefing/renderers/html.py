@@ -148,17 +148,18 @@ def _render_bignumber(block: BigNumber, _: _IdGen) -> str:
 
     change_html = ""
     if block.change is not None:
-        direction = "up" if block.is_upward_change else "down"
-        arrow = "▲" if block.is_upward_change else "▼"
-        # Without is_positive_intent the colour follows the arrow (the --up/--down class).
-        tone = ""
+        # The arrow comes from is_upward_change, the colour from is_positive_intent
+        # (falling back to the arrow's --up/--down colour); neither → neutral (#71).
+        cls = ["bf-bignumber__change"]
+        arrow = ""
+        if block.is_upward_change is not None:
+            cls.append("bf-bignumber__change--up" if block.is_upward_change else "bf-bignumber__change--down")
+            arrow = "▲ " if block.is_upward_change else "▼ "
         if block.is_positive_intent is not None:
-            tone = " bf-bignumber__change--good" if block.is_positive_intent else " bf-bignumber__change--bad"
-        change_html = (
-            f'<div class="bf-bignumber__change bf-bignumber__change--{direction}{tone}">'
-            f"{arrow} {_html.escape(block.change)}"
-            f"</div>"
-        )
+            cls.append("bf-bignumber__change--good" if block.is_positive_intent else "bf-bignumber__change--bad")
+        if len(cls) == 1:
+            cls.append("bf-bignumber__change--neutral")
+        change_html = f'<div class="{" ".join(cls)}">{arrow}{_html.escape(block.change)}</div>'
 
     return (
         f'<div class="bf-block bf-bignumber">'

@@ -211,12 +211,10 @@ bf.BigNumber("Accuracy", 0.924)   # no change indicator
 | `heading` | `str` | required | Metric label |
 | `value` | `str \| int \| float` | required | Headline value |
 | `change` | `str` | `None` | Delta string, e.g. `"+3.1%"` |
-| `is_upward_change` | `bool` | `None` | The arrow: `True` = ▲, `False` = ▼. Required if `change` is set. |
-| `is_positive_intent` | `bool` | `None` | The colour, when it shouldn't follow the arrow: `True` = green, `False` = red. `None`: ▲ green, ▼ red. |
+| `is_upward_change` | `bool` | `None` | The arrow: `True` = ▲, `False` = ▼, `None` = no arrow |
+| `is_positive_intent` | `bool` | `None` | The colour: `True` = green, `False` = red. `None`: follows the arrow (▲ green, ▼ red), or neutral without one |
 
-> If `change` is provided without `is_upward_change`, a warning is issued and the change
-> shows with a red ▼ ([#71](https://github.com/jeanmidevacc/briefing/issues/71) decides
-> what it should do). Pass `is_upward_change` whenever you pass `change`.
+> A `change` with neither flag is shown neutral: no arrow, in the theme's muted colour.
 
 ---
 
