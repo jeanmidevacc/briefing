@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with a note giving the total; charts are resized to the paper's width and KPI
   groups, charts and alerts avoid splitting across sheets; colours print. The
   screen layout is restored afterwards (#37).
+- `bf.save_image(report, "q1.png", page="all")` renders report pages as PNG, JPEG or
+  WebP in headless Chromium, offline: one image per top-level `Page` (named after it),
+  or one page by title, `name` or index; `width` and `scale` set the pixel size;
+  `size="og" | "square" | "portrait"` shrinks the page to fit a social-card size
+  without cropping; `expand=True` opens toggles first. Accepts a `Briefing` or a saved
+  `.html`. New extra: `pip install "briefing[image]"` (Playwright), then
+  `playwright install chromium` (#49).
 
 ## [0.1.2] - 2026-11-03
 
