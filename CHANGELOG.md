@@ -57,6 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `alt` are optional; at phone width the image stacks above the text. The image (a
   path or bytes) is embedded once; files over 2 MB warn. `Formatting` gains a
   `--bf-bg-rgb` token for the veil (#50).
+- `bf.Banner(..., fade=False)`: one uniform veil at `opacity` over the whole image, for
+  full-width backgrounds and textures; the text still follows `text_position` (#50).
 
 ## [0.1.2] - 2026-11-03
 

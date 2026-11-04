@@ -117,3 +117,18 @@ def test_a_page_that_starts_with_a_banner_is_a_social_card(tmp_path: object) -> 
                                  bf.Text("Details follow."), title="Cover"))
     (card,) = bf.save_image(report, Path(str(tmp_path)) / "card.png", page="Cover", size="og", scale=1)
     assert png_size(card) == (1200, 630)
+
+
+@pytest.mark.parametrize("theme", ["default", "dark"])
+@pytest.mark.parametrize("side", ["right", "left"])
+def test_uniform_veil_has_one_opacity_everywhere(viewer: Viewer, theme: str, side: str) -> None:
+    page = _open(viewer, theme, text_position=35, opacity=60, side=side, fade=False)
+    start, end = _text_edges(page)
+    assert start == pytest.approx(0.35, abs=0.01) and end == pytest.approx(1.0, abs=0.01)  # side is ignored
+    image = PIL.open(io.BytesIO(page.locator(".bf-banner").screenshot())).convert("RGB")
+    bg = _THEMES[theme][1]
+    y = image.height - 4
+    samples = [image.getpixel((round(f * image.width), y)) for f in (0.05, 0.25, 0.5, 0.75, 0.95)]
+    expected = tuple(round(255 * 0.4 + c * 0.6) if i == 0 else round(c * 0.6) for i, c in enumerate(bg))
+    for pixel in samples:  # red under a 60 % veil of the theme background, the same at every x
+        assert pixel == pytest.approx(expected, abs=3)

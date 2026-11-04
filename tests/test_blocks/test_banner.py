@@ -99,3 +99,17 @@ def test_theme_background_as_rgb(preset: bf.Formatting, rgb: str) -> None:
 
 def test_deterministic() -> None:
     assert _html() == _html()
+
+
+# ── fade=False: one uniform veil (part 4b) ────────────────────────────────────
+
+
+def test_uniform_veil_markup() -> None:
+    banner = find_one(parse(_html(fade=False, opacity=60, side="left")), ".bf-banner")
+    assert "bf-banner--uniform" in (banner.get("class") or []) and "bf-banner--left" not in (banner.get("class") or [])
+    assert attr(find_one(banner, ".bf-banner__veil"), "style") == "background: rgba(var(--bf-bg-rgb), 0.6)"
+
+
+def test_fade_and_uniform_differ_only_in_the_veil() -> None:
+    fade, uniform = _html(fade=True), _html(fade=False)
+    assert "linear-gradient" in fade and "linear-gradient" not in uniform.split("bf-banner__veil", 1)[1][:200]
