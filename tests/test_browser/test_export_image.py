@@ -136,3 +136,23 @@ def test_works_inside_a_running_event_loop(tmp_path: Path) -> None:
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
         (path,) = pool.submit(asyncio.run, notebook_cell()).result()
     assert png_size(path)[0] == 1200
+
+
+def _with_menu(export: tuple[str, ...]) -> bf.Briefing:
+    return bf.Briefing(bf.Text("# Q1"), bf.BigNumber("Revenue", "$1M"), export=export)
+
+
+def test_export_menu_is_hidden_while_exporting() -> None:
+    def check() -> None:
+        with open_report(_with_menu(("png", "pdf")), width=800, scale=1, name="Q1") as session:
+            assert session.page.locator(".bf-export").count() == 1
+            assert not session.page.locator(".bf-export").is_visible()
+
+    outside_event_loop(check)
+
+
+def test_images_leave_the_export_menu_out(tmp_path: Path) -> None:
+    """#100: a report with export= exports the same image as one without it."""
+    with_menu = bf.save_image(_with_menu(("png", "pdf")), tmp_path / "menu.png", width=800, scale=1, name="Q1")
+    without = bf.save_image(_with_menu(()), tmp_path / "plain.png", width=800, scale=1, name="Q1")
+    assert with_menu[0].read_bytes() == without[0].read_bytes()

@@ -48,8 +48,11 @@ _PAGES_JS = """() => {
   return sel ? [...sel.querySelectorAll(':scope > .bf-select__tablist > .bf-select__tab')].map(t => t.textContent) : [];
 }"""
 
-# While exporting one page, the root tab bar is noise.
-_EXPORT_CSS = ".bf-blocks > .bf-select:only-child > .bf-select__tablist { display: none !important; }"
+# While exporting, the root tab bar (one page is shown at a time) and the in-report
+# export menu (#100) are controls, not content.
+_EXPORT_CSS = (
+    ".bf-blocks > .bf-select:only-child > .bf-select__tablist, .bf-export { display: none !important; }"
+)
 
 
 @dataclass(frozen=True)
