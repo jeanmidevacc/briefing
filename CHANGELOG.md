@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the window, and never prints. The browser's slower built-in tooltip no longer doubles up;
   without JavaScript it is still there (#109).
 
+### Changed
+
+- `lab.CalendarHeatmap` names every weekday row of the day calendar, not just Mon, Wed
+  and Fri (#113).
+
 ### Deprecated
 
 - `lab.CalendarHeatmap`'s hour view, `views=("hours",)` or `("days", "hours")`, raises a
@@ -27,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `lab.CalendarHeatmap(week_start="sunday")` put each weekday label one row off ("Sun"
+  on the Monday row); every label now sits on its own row (#113).
 - `lab.CalendarHeatmap` shows values exactly: a non-integer of 10,000 or more read
   `1.235e+04` in the tooltip and the legend; it now reads `12,345.67` (#109).
 

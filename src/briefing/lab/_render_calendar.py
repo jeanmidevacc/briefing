@@ -238,9 +238,8 @@ def _days_svg(
     height = _TOP + grid_h + (len(lanes) * _LANE + 6 if lanes else 0)
     parts = [_svg_open("bf-cal__days", width, height, "Calendar heatmap")]
 
-    for row in (0, 2, 4):  # Mon, Wed, Fri
-        name = _WEEKDAYS[(row - shift) % 7]
-        y = _TOP + ((row + shift) % 7) * _STEP + _CELL - 1
+    for weekday, name in enumerate(_WEEKDAYS):  # every row named, on its own row (#113)
+        y = _TOP + ((weekday + shift) % 7) * _STEP + _CELL - 1
         parts.append(f'<text class="bf-cal__weekday" x="0" y="{y}">{name}</text>')
 
     year_shown: int | None = None
