@@ -1,0 +1,192 @@
+"""lab.CalendarHeatmap, day view (#19)."""
+from __future__ import annotations
+
+import datetime as dt
+import typing as t
+
+import pandas as pd
+import pytest
+from bs4 import BeautifulSoup, Tag
+
+import briefing as bf
+from briefing.lab import CalendarHeatmap
+from briefing.lab._render_calendar import GITHUB, render_calendar
+from tests.html_helpers import attr, classes, find_one
+
+
+def _soup(block: CalendarHeatmap) -> BeautifulSoup:
+    return BeautifulSoup(render_calendar(block), "html.parser")
+
+
+def _cells(soup: BeautifulSoup) -> dict[str, Tag]:
+    return {attr(c, "data-date"): c for c in soup.select("rect.bf-cal__day")}
+
+
+# ── input checks ───────────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"date": "nope"}, "column 'nope'"),
+        ({"value": "nope"}, "column 'nope'"),
+        ({"agg": "mode"}, "agg"),
+        ({"week_start": "friday"}, "week_start"),
+        ({"colors": "viridis"}, "colors"),
+        ({"colors": ["#000"]}, "colors"),
+        ({"center": 0, "colors": ["#ff0000", "#00ff00"]}, "three"),
+        ({"center": 0, "colors": ["red", "white", "blue"]}, "hex"),
+        ({"group": "nope"}, "column 'nope'"),
+    ],
+)
+def test_bad_arguments(df_pipeline_log: pd.DataFrame, kwargs: dict[str, object], match: str) -> None:
+    args: dict[str, object] = {"date": "run_at", **kwargs}
+    with pytest.raises(bf.BriefingError, match=match):
+        CalendarHeatmap(df_pipeline_log, **args)  # type: ignore[arg-type]
+
+
+def test_bad_expected_and_events(df_pipeline_log: pd.DataFrame) -> None:
+    with pytest.raises(bf.BriefingError, match="expected"):
+        CalendarHeatmap(df_pipeline_log, date="run_at", expected=pd.DataFrame({"x": [1]}))
+    with pytest.raises(bf.BriefingError, match="events"):
+        CalendarHeatmap(df_pipeline_log, date="run_at", events=pd.DataFrame({"when": ["2026-01-01"]}))
+
+
+# ── day view ──────────────────────────────────────────────────────────────────
+
+
+def test_one_cell_per_day_in_github_green(df_pipeline_log: pd.DataFrame) -> None:
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at"))
+    cells = _cells(soup)
+    first, last = dt.date(2025, 11, 17), dt.date(2026, 2, 15)
+    assert len(cells) == (last - first).days + 1
+    assert min(cells) == first.isoformat() and max(cells) == last.isoformat()
+    fills = {attr(c, "fill") for c in cells.values() if "bf-cal__day--empty" not in classes(c)}
+    assert fills <= set(GITHUB)  # counts of 1 or 2 runs, in GitHub's green levels
+
+
+def test_colors_replace_the_scale(df_pipeline_log: pd.DataFrame) -> None:
+    palette = ["#eeeeee", "#999999", "#333333"]
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", value="rows", colors=palette))
+    fills = {attr(c, "fill") for c in soup.select("rect.bf-cal__day:not(.bf-cal__day--empty)")}
+    assert fills <= set(palette) and len(fills) > 1
+
+
+def test_no_data_looks_different_from_zero(df_pipeline_log: pd.DataFrame) -> None:
+    cells = _cells(_soup(CalendarHeatmap(df_pipeline_log, date="run_at", value="rows")))
+    empty, zero = cells["2025-12-25"], cells["2025-12-03"]  # no run; a failed run (rows == 0)
+    assert "bf-cal__day--empty" in classes(empty) and "bf-cal__day--zero" not in classes(empty)
+    assert "bf-cal__day--zero" in classes(zero) and "bf-cal__day--empty" not in classes(zero)
+    assert "no data" in find_one(empty, "title").get_text()
+    assert "0" in find_one(zero, "title").get_text()
+
+
+@pytest.mark.parametrize("form", ["number", "series", "frame"])
+def test_days_below_expected_are_flagged(df_pipeline_log: pd.DataFrame, form: str) -> None:
+    days = pd.date_range("2025-11-17", "2026-02-15", freq="D")
+    expected: t.Any = {
+        "number": 500,
+        "series": pd.Series(500, index=days),
+        "frame": pd.DataFrame({"run_at": days, "expected": 500}),
+    }[form]
+    cells = _cells(_soup(CalendarHeatmap(df_pipeline_log, date="run_at", value="rows", expected=expected)))
+    below = {d for d, c in cells.items() if "bf-cal__day--below" in classes(c)}
+    assert {"2025-12-03", "2026-01-03", "2026-02-03"} <= below  # days whose only run failed
+    assert {"2025-12-25", "2026-01-01", "2026-01-17"} <= below  # no run at all
+    assert "2025-12-04" not in below and "below target 500" in find_one(cells["2025-12-03"], "title").get_text()
+
+
+def test_expected_frame_per_group(df_pipeline_log: pd.DataFrame) -> None:
+    days = pd.date_range("2025-11-17", "2026-02-15", freq="D")
+    targets = pd.concat([pd.DataFrame({"run_at": days, "team": "ingest", "expected": 900}),
+                         pd.DataFrame({"run_at": days, "team": "export", "expected": 0})])
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", value="rows", group="team", expected=targets))
+    export, ingest = soup.select("svg.bf-cal__days")  # groups are sorted
+    assert ingest.select("rect.bf-cal__day--below") and not export.select("rect.bf-cal__day--below")
+
+
+def test_single_and_multi_day_events(df_pipeline_log: pd.DataFrame, df_events: pd.DataFrame) -> None:
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", events=df_events))
+    bands = soup.select(".bf-cal__event--span")
+    markers = soup.select(".bf-cal__event--day")
+    assert len(bands) == 2 and len(markers) == 1
+    assert "Incident" in find_one(markers[0], "title").get_text()
+    legend = find_one(soup, ".bf-cal__legend").get_text(" ")
+    assert "Holiday freeze (2025-12-22 to 2026-01-02)" in legend and "Incident (2026-02-03)" in legend
+    cells = _cells(soup)
+    assert "bf-cal__day--event" in classes(cells["2025-12-30"]) and "bf-cal__day--event" in classes(cells["2026-02-03"])
+    assert "bf-cal__day--event" not in classes(cells["2026-02-10"])
+
+
+def test_events_as_single_dates(df_pipeline_log: pd.DataFrame) -> None:
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", events=["2026-01-05", dt.date(2026, 1, 9)]))
+    assert len(soup.select(".bf-cal__event--day")) == 2
+
+
+def test_center_gives_a_diverging_scale(df_signed: pd.DataFrame) -> None:
+    df = pd.concat([df_signed, pd.DataFrame({"day": [pd.Timestamp("2026-05-01")], "balance": [0.0]})])
+    soup = _soup(CalendarHeatmap(df, date="day", value="balance", center=0,
+                                 colors=["#ff0000", "#ffffff", "#0000ff"]))
+    cells = _cells(soup)
+    def rgb(cell: Tag) -> tuple[int, int, int]:
+        h = attr(cell, "fill").lstrip("#")
+        return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    values = df.set_index(df["day"].dt.date.astype(str))["balance"]
+    assert attr(cells["2026-05-01"], "fill") == "#ffffff"  # zero sits at the midpoint
+    for day, value in values.items():
+        r, g, b = rgb(cells[str(day)])
+        if value < 0:
+            assert r >= b, day
+        elif value > 0:
+            assert b >= r, day
+
+
+def test_year_boundary_is_one_continuous_grid(df_pipeline_log: pd.DataFrame) -> None:
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at"))
+    assert len(soup.select("svg.bf-cal__days")) == 1
+    years = [t.get_text() for t in soup.select(".bf-cal__year")]
+    assert years == ["2025", "2026"]
+    xs = sorted({float(attr(c, "x")) for c in soup.select("rect.bf-cal__day")})
+    steps = {round(b - a, 3) for a, b in zip(xs, xs[1:], strict=False)}
+    assert len(steps) == 1  # weeks follow each other with no gap at the new year
+    assert [t.get_text() for t in soup.select(".bf-cal__month")][:4] == ["Nov", "Dec", "Jan", "Feb"]
+
+
+def test_groups_stack_and_share_one_scale(df_pipeline_log: pd.DataFrame) -> None:
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", group="team"))
+    assert [g.get_text() for g in soup.select(".bf-cal__group")] == ["export", "ingest"]
+    assert len(soup.select("svg.bf-cal__days")) == 2
+
+
+@pytest.mark.parametrize(("week_start", "weekday"), [("monday", 0), ("sunday", 6)])
+def test_week_start(df_pipeline_log: pd.DataFrame, week_start: str, weekday: int) -> None:
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", week_start=week_start))
+    top_row = [c for c in soup.select("rect.bf-cal__day") if float(attr(c, "y")) == min(
+        float(attr(x, "y")) for x in soup.select("rect.bf-cal__day"))]
+    assert {dt.date.fromisoformat(attr(c, "data-date")).weekday() for c in top_row} == {weekday}
+
+
+def test_tooltips_show_date_and_value(df_pipeline_log: pd.DataFrame) -> None:
+    cells = _cells(_soup(CalendarHeatmap(df_pipeline_log, date="run_at", value="rows", agg="sum")))
+    title = find_one(cells["2025-12-07"], "title").get_text()
+    assert title.startswith("2025-12-07") and "rows" in title
+
+
+def test_labels_are_escaped(df_pipeline_log: pd.DataFrame) -> None:
+    df = df_pipeline_log.assign(team="<script>x()</script>")
+    events = pd.DataFrame({"start": ["2026-01-05"], "label": ["<img src=x onerror=y()>"]})
+    soup = _soup(CalendarHeatmap(df, date="run_at", group="team", events=events))
+    assert soup.find("script") is None and soup.find("img") is None
+
+
+def test_in_a_report(df_pipeline_log: pd.DataFrame) -> None:
+    html = bf.stringify(bf.Briefing(CalendarHeatmap(df_pipeline_log, date="run_at")))
+    assert "bf-cal__days" in html
+
+
+def test_event_labels_only_go_inside_bands_that_fit_them(df_pipeline_log: pd.DataFrame) -> None:
+    events = pd.DataFrame({"start": ["2025-12-01", "2026-01-26"], "end": ["2026-02-15", "2026-01-28"],
+                           "label": ["Long migration window", "A label far too long for three days"]})
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", events=events))
+    wide, narrow = soup.select(".bf-cal__event--span")
+    assert wide.find("text") is not None and narrow.find("text") is None

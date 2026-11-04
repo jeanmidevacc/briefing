@@ -5,6 +5,7 @@ so it stays small and dependency-free:
 
 * :class:`DataProfile` — per-column statistics with inline SVG mini-charts.
 * :class:`DataDive` — Facets Dive-style interactive dot explorer.
+* :class:`CalendarHeatmap` — GitHub-style calendar of daily activity.
 
 Install with ``pip install briefing[lab]``. Importing this module registers the
 blocks with the renderer, so ``briefing.stringify``/``briefing.save`` can render
@@ -27,7 +28,8 @@ from __future__ import annotations
 
 from importlib.resources import files
 
-from briefing.lab._blocks import DataDive, DataProfile
+from briefing.lab._blocks import CalendarHeatmap, DataDive, DataProfile
+from briefing.lab._render_calendar import render_calendar
 from briefing.lab._render_datadive import render_datadive
 from briefing.lab._render_profile import render_profile
 from briefing.renderers.registry import IdGen, register_renderer
@@ -46,4 +48,11 @@ def _render_datadive_block(block: DataDive, _: IdGen) -> str:
 register_renderer(DataProfile, _render_profile_block)
 register_renderer(DataDive, _render_datadive_block, js_asset=_LAB_JS)
 
-__all__ = ["DataDive", "DataProfile"]
+
+def _render_calendar_block(block: CalendarHeatmap, _: IdGen) -> str:
+    return render_calendar(block)
+
+
+register_renderer(CalendarHeatmap, _render_calendar_block)
+
+__all__ = ["CalendarHeatmap", "DataDive", "DataProfile"]

@@ -9,6 +9,7 @@ lives in ``briefing/lab/_render_profile.py`` and ``briefing/lab/_render_datadive
 """
 from __future__ import annotations
 
+import re
 import typing as t
 import warnings
 
@@ -133,6 +134,135 @@ class DataDive(Block):
         self.max_rows = max_rows
 
 
+class CalendarHeatmap(Block):
+    """GitHub-style calendar heatmap: one cell per day, weeks as columns.
+
+    Counts the rows per day, or aggregates a value column, and colours each day.
+    Days without data look different from days with a zero; the grid runs
+    continuously across a year boundary, with month labels and a year marker.
+
+    Args:
+        df: The data, as any dataframe briefing accepts (pandas, polars, pyarrow…).
+        date: Column holding the date or timestamp of each row.
+        value: Column to aggregate per day; ``None`` counts the rows.
+        agg: How to aggregate ``value``: ``"sum"``, ``"mean"``, ``"median"``,
+            ``"min"``, ``"max"`` or ``"count"``.
+        group: Column to split by: one calendar per group, stacked, on one shared colour scale.
+        colors: ``"github"`` (GitHub's green scale) or a list of CSS colours, low to high.
+        center: A midpoint for a diverging scale (e.g. ``0`` for values that go
+            negative); ``colors`` is then three hex colours: below, at and above it.
+        week_start: ``"monday"`` or ``"sunday"``: the first row of the grid.
+        expected: A target per day, flagged when a day is below it (days with no
+            data count as below): a number, a Series indexed by date, or a
+            DataFrame with the ``date`` column, an ``expected`` column and, with
+            ``group``, the group column.
+        events: Dates to mark: a list of dates, or a DataFrame with ``start``,
+            optional ``end`` and ``label`` columns; spans draw as bands.
+        name: Stable block id.
+        label: Tab or dropdown label when the block is inside a ``Select``.
+
+    Example::
+
+        bf.lab.CalendarHeatmap(runs, date="run_at", value="rows", expected=1000)
+        bf.lab.CalendarHeatmap(ledger, date="day", value="balance", center=0)
+    """
+
+    AGGS: t.ClassVar[tuple[str, ...]] = ("sum", "mean", "median", "min", "max", "count")
+
+    def __init__(
+        self,
+        df: pd.DataFrame | t.Any,
+        date: str,
+        value: str | None = None,
+        agg: str = "sum",
+        group: str | None = None,
+        colors: str | list[str] = "github",
+        center: float | None = None,
+        week_start: str = "monday",
+        expected: float | pd.Series | pd.DataFrame | None = None,
+        events: t.Any = None,
+        name: BlockId | None = None,
+        label: str | None = None,
+    ) -> None:
+        super().__init__(name=name, label=label)
+        frame = to_pandas(df, block="CalendarHeatmap")
+        for role, column in (("date", date), ("value", value), ("group", group)):
+            if column is not None and column not in frame.columns:
+                raise BriefingError(
+                    f"CalendarHeatmap: column {column!r} (passed as {role}=) not found. "
+                    f"Available: {list(frame.columns)}"
+                )
+        if agg not in self.AGGS:
+            raise BriefingError(f"CalendarHeatmap: agg must be one of {', '.join(self.AGGS)}, not {agg!r}.")
+        if week_start not in ("monday", "sunday"):
+            raise BriefingError(f"CalendarHeatmap: week_start must be 'monday' or 'sunday', not {week_start!r}.")
+        self.colors = _check_colors(colors, center)
+        self.df = frame
+        self.date, self.value, self.agg, self.group = date, value, agg, group
+        self.center, self.week_start = center, week_start
+        self.expected = _check_expected(expected, date, group)
+        self.events = _check_events(events)
+
+
+_HEX = re.compile(r"^#(?:[0-9a-fA-F]{3}){1,2}$")
+
+
+def _check_colors(colors: str | list[str], center: float | None) -> str | list[str]:
+    if colors == "github":
+        if center is not None:
+            raise BriefingError("CalendarHeatmap: center= needs colors= as three hex colours: below, at and above it.")
+        return colors
+    if isinstance(colors, str) or not isinstance(colors, list | tuple) or len(colors) < 2:
+        raise BriefingError(
+            f"CalendarHeatmap: colors must be 'github' or a list of at least two colours, not {colors!r}."
+        )
+    if center is not None:
+        if len(colors) != 3:
+            raise BriefingError(
+                "CalendarHeatmap: with center=, colors must be exactly three colours: below, at, above."
+            )
+        if not all(isinstance(c, str) and _HEX.match(c) for c in colors):
+            raise BriefingError("CalendarHeatmap: with center=, colors must be hex colours such as '#d73027'.")
+    return [str(c) for c in colors]
+
+
+def _check_expected(expected: t.Any, date: str, group: str | None) -> t.Any:
+    import pandas as pd
+
+    if expected is None or isinstance(expected, int | float | pd.Series):
+        return expected
+    if isinstance(expected, pd.DataFrame):
+        needed = [date, "expected", *([group] if group else [])]
+        missing = [c for c in needed if c not in expected.columns]
+        if missing:
+            raise BriefingError(
+                f"CalendarHeatmap: the expected DataFrame needs the columns {needed}; missing {missing}."
+            )
+        return expected
+    raise BriefingError(
+        "CalendarHeatmap: expected must be a number, a Series indexed by date, or a DataFrame "
+        f"with the date column and an 'expected' column; got {type(expected).__name__}."
+    )
+
+
+def _check_events(events: t.Any) -> t.Any:
+    import pandas as pd
+
+    if events is None:
+        return None
+    if isinstance(events, pd.DataFrame):
+        if "start" not in events.columns:
+            raise BriefingError(
+                "CalendarHeatmap: an events DataFrame needs a 'start' column (and optional 'end', 'label')."
+            )
+        return events
+    try:
+        starts = pd.to_datetime(list(events))
+    except (TypeError, ValueError) as exc:
+        raise BriefingError("CalendarHeatmap: events must be a list of dates or a DataFrame with 'start'.") from exc
+    return pd.DataFrame({"start": starts})
+
+
 # ── public re-exports ─────────────────────────────────────────────────────────
 
-__all__: list[str] = ["DataDive", "DataProfile"]
+__all__: list[str] = ["CalendarHeatmap", "DataDive", "DataProfile"]

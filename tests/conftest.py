@@ -76,3 +76,49 @@ def df_large() -> pd.DataFrame:
 def df_constant() -> pd.DataFrame:
     """DataFrame where every column has only one unique value (zero-variance)."""
     return pd.DataFrame({"x": [42] * 50, "y": ["same"] * 50})
+
+
+# ── calendar fixtures (lab.CalendarHeatmap, #19) ──────────────────────────────
+
+
+@pytest.fixture
+def df_pipeline_log() -> pd.DataFrame:
+    """A daily pipeline log from mid-November 2025 to mid-February 2026 (across a year boundary).
+
+    One row per run: most days run once, some twice; a few days have no run at all
+    (gaps) and some runs failed (``rows == 0``).
+    """
+    import numpy as np
+
+    rng = np.random.default_rng(19)
+    days = pd.date_range("2025-11-17", "2026-02-15", freq="D")
+    gaps = {pd.Timestamp("2025-12-25"), pd.Timestamp("2026-01-01"), pd.Timestamp("2026-01-17")}
+    rows = []
+    for day in days:
+        if day in gaps:
+            continue
+        for run in range(2 if day.day % 7 == 0 else 1):
+            failed = day.day in (3, 14) and run == 0
+            rows.append({"run_at": day + pd.Timedelta(hours=6 + run * 8), "team": "ingest" if run == 0 else "export",
+                         "rows": 0 if failed else int(rng.integers(800, 1200))})
+    return pd.DataFrame(rows)
+
+
+@pytest.fixture
+def df_signed() -> pd.DataFrame:
+    """Daily values that go negative and positive (a balance), 60 days from 2026-03-01."""
+    import numpy as np
+
+    rng = np.random.default_rng(5)
+    days = pd.date_range("2026-03-01", periods=60, freq="D")
+    return pd.DataFrame({"day": days, "balance": np.round(rng.normal(0, 40, len(days)), 1)})
+
+
+@pytest.fixture
+def df_events() -> pd.DataFrame:
+    """Events for the pipeline log: a multi-day freeze, a migration, and a single-day incident."""
+    return pd.DataFrame({
+        "start": pd.to_datetime(["2025-12-22", "2026-01-26", "2026-02-03"]),
+        "end": pd.to_datetime(pd.Series(["2026-01-02", "2026-01-28", None])),
+        "label": ["Holiday freeze", "Migration", "Incident"],
+    })

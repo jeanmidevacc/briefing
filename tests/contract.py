@@ -120,7 +120,8 @@ def check_markdown_rendered(soup: Tag) -> None:
 
 def check_document_head(soup: Tag) -> None:
     """The page has exactly one ``<title>`` and declares its language."""
-    titles = soup.find_all("title")
+    # SVG <title> elements are tooltips, not the document title.
+    titles = [t for t in soup.find_all("title") if t.find_parent("svg") is None]
     assert len(titles) == 1, f"expected one <title>, found {len(titles)}"
     html = soup.find("html")
     assert isinstance(html, Tag), "no <html> element"

@@ -37,6 +37,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   open page, drawn in the reader's browser at 2×, no library, no network) and "Print"
   to the report header. Reports without `export=` contain no export code. Best effort:
   Bokeh's iframe charts and WebGL Plotly traces come out blank in the PNG (#49).
+- `bf.lab.CalendarHeatmap(df, date="run_at", value=None, agg="sum")`: a GitHub-style
+  calendar, one cell per day and weeks as columns, drawn as SVG in Python. It counts
+  rows or aggregates a value per day; runs continuously across year boundaries with
+  month labels and a year marker; shows days without data differently from zeros;
+  `group=` stacks one calendar per group on a shared scale; `colors=` replaces the
+  GitHub greens and `center=` gives a diverging scale; `expected=` (a number, a
+  date-indexed Series or a DataFrame) flags days below target; `events=` marks single
+  days and multi-day spans; each day has a tooltip (#19).
 
 ## [0.1.2] - 2026-11-03
 
