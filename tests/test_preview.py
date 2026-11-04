@@ -81,3 +81,9 @@ def test_preview_is_ascii_so_any_host_encoding_works() -> None:
     assert html.isascii()
     inner = _inner(html)
     assert "▲ +1%" in inner and "€ 4" in inner and "Δ" in inner
+
+
+def test_preview_repr_is_readable_and_stable() -> None:
+    preview = bf.preview(bf.Briefing(bf.Text("x")), name="Q1")
+    assert repr(preview) == "Preview(Briefing(1 block(s)), name='Q1')"
+    assert repr(preview) == repr(bf.preview(bf.Briefing(bf.Text("x")), name="Q1"))
