@@ -53,6 +53,7 @@ def _render_calendar_block(block: CalendarHeatmap, idgen: IdGen) -> str:
     return render_calendar(block, idgen)
 
 
-register_renderer(CalendarHeatmap, _render_calendar_block)
+_CALENDAR_JS = (files("briefing.lab") / "static" / "calendar.js").read_text(encoding="utf-8")
+register_renderer(CalendarHeatmap, _render_calendar_block, js_asset=_CALENDAR_JS)
 
 __all__ = ["CalendarHeatmap", "DataDive", "DataProfile"]

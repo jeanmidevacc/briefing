@@ -708,6 +708,15 @@ body {
 .bf-cal__swatch--zero { background: var(--bf-border); }
 .bf-cal__swatch--empty { border: 1px dashed var(--bf-border); }
 .bf-cal__swatch--below { border: 1.5px solid #dc2626; }
+.bf-calendar rect[role="button"] { cursor: pointer; outline: none; }
+.bf-calendar rect[role="button"]:focus-visible { stroke: var(--bf-accent); stroke-width: 2; }
+.bf-cal__panel { margin-top: 0.75rem; border: 1px solid var(--bf-border); border-radius: var(--bf-radius);
+  padding: 0.6rem 0.75rem; }
+.bf-cal__panel[hidden] { display: none; }
+.bf-cal__panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;
+  font-weight: 600; font-size: 0.85rem; }
+.bf-cal__panel-close { border: none; background: none; color: var(--bf-muted); font-size: 1.1rem; cursor: pointer; }
+.bf-cal__panel-note { margin-top: 0.4rem; font-size: 0.75rem; color: var(--bf-muted); }
 .bf-cal__swatch--event-day { background: var(--bf-accent); border-radius: 50%; width: 8px; height: 8px; }
 .bf-cal__swatch--event-span { background: color-mix(in oklab, var(--bf-accent) 25%, transparent);
   border: 1px solid var(--bf-accent); width: 18px; }

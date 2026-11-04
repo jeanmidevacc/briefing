@@ -164,6 +164,9 @@ class CalendarHeatmap(Block):
             ``group``, the group column.
         events: Dates to mark: a list of dates, or a DataFrame with ``start``,
             optional ``end`` and ``label`` columns; spans draw as bands.
+        on_click: ``"rows"`` lists the rows behind a day or an hour in a panel
+            when it is clicked (up to ``ROWS_PER_CELL`` rows per cell, embedded in
+            the report); ``None`` (default) for no click action.
         name: Stable block id.
         label: Tab or dropdown label when the block is inside a ``Select``.
 
@@ -174,6 +177,8 @@ class CalendarHeatmap(Block):
     """
 
     AGGS: t.ClassVar[tuple[str, ...]] = ("sum", "mean", "median", "min", "max", "count")
+    #: Rows embedded per day or hour for on_click="rows"; the panel says when there are more.
+    ROWS_PER_CELL: t.ClassVar[int] = 50
 
     def __init__(
         self,
@@ -189,6 +194,7 @@ class CalendarHeatmap(Block):
         week_start: str = "monday",
         expected: float | pd.Series | pd.DataFrame | None = None,
         events: t.Any = None,
+        on_click: str | None = None,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
@@ -202,6 +208,8 @@ class CalendarHeatmap(Block):
                 )
         if agg not in self.AGGS:
             raise BriefingError(f"CalendarHeatmap: agg must be one of {', '.join(self.AGGS)}, not {agg!r}.")
+        if on_click not in (None, "rows"):
+            raise BriefingError(f"CalendarHeatmap: on_click must be 'rows' or None, not {on_click!r}.")
         views = tuple(views)
         if not views or any(v not in ("days", "hours") for v in views) or len(set(views)) != len(views):
             raise BriefingError(
@@ -221,6 +229,7 @@ class CalendarHeatmap(Block):
         self.date, self.value, self.agg, self.group = date, value, agg, group
         self.center, self.week_start = center, week_start
         self.views, self.tz = views, tz
+        self.on_click = on_click
         self.expected = _check_expected(expected, date, group)
         self.events = _check_events(events)
 
