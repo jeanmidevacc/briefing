@@ -106,7 +106,9 @@ def test_readme_example_runs_offline(code: str, offline_tmp: Path) -> None:
 
 
 def test_readme_has_examples() -> None:
-    assert len(_examples()) > 20
+    # The README is a pitch and a quick start; the long-form examples live in docs/ and
+    # run in tests/test_docs_gallery.py.
+    assert len(_examples()) >= 1
 
 
 def test_no_fl_prefix_left_in_docs() -> None:

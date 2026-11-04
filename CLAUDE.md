@@ -104,6 +104,11 @@ present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer
 - The backlog lives in GitHub issues, grouped by milestone. Read the issue's Problem, Proposal and
   "Done when" first; a "Decision" section is settled and not to be reopened. Issues
   labelled `needs spec` need a short agreed spec before code.
+- Documentation lives in `docs/` (Sphinx + MyST, built by `nox -s docs` with warnings as
+  errors; published on Read the Docs). A new public name needs an `Args:` docstring
+  (`tests/test_docstrings.py`), and a new block needs a live `briefing-example` in a guide
+  (`tests/test_docs_gallery.py` runs every example against the contract). Export samples in
+  `docs/_static/export/` are regenerated with `nox -s docs-assets`.
 - Every ```python block in the README runs in `tests/test_readme.py`, offline, with the
   names its intro promises (`df`, `fig`, …). Keep README claims true to the code.
 - Reference the issue in commits (`Fix DataTable sort order (#1)`) and keep one issue per
