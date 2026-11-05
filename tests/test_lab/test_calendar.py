@@ -324,3 +324,22 @@ def test_a_large_fractional_value_has_no_exponent_in_tooltip_or_legend() -> None
     assert tip == "Mon 2026-01-05 · 12,345.67 amount"
     legend = find_one(soup, ".bf-cal__legend").get_text()
     assert "e+0" not in legend and "12,345.67" in legend
+
+
+# ── weekday labels (#113) ─────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize("week_start", ["monday", "sunday"])
+def test_every_weekday_is_named_on_its_own_row(week_start: str) -> None:
+    df = pd.DataFrame({"d": pd.date_range("2026-01-05", "2026-01-18")})  # two full weeks from a Monday
+    soup = _soup(CalendarHeatmap(df, date="d", week_start=week_start))
+    row_of_day = {float(attr(r, "y")): pd.Timestamp(attr(r, "data-date")).strftime("%a")
+                  for r in soup.select("rect.bf-cal__day")}
+    labels = soup.select("svg.bf-cal__days text.bf-cal__weekday")
+    assert [t.get_text() for t in labels] == ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    for label in labels:  # a label's baseline sits inside its row: y = row top + cell - 1
+        row_top = float(attr(label, "y")) - 10
+        assert row_of_day[row_top] == label.get_text()
+    tops = sorted(float(attr(t, "y")) for t in labels)
+    first = "Sun" if week_start == "sunday" else "Mon"
+    assert next(t.get_text() for t in labels if float(attr(t, "y")) == tops[0]) == first

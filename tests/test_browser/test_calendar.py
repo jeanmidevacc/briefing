@@ -228,3 +228,15 @@ def test_the_tooltip_never_prints(viewer: Viewer, df_pipeline_log: pd.DataFrame)
     page.locator('rect[data-date="2025-12-07"]').hover()
     page.emulate_media(media="print")
     assert not page.locator(".bf-cal__tip").is_visible()
+
+
+def test_weekday_labels_do_not_overlap_when_shrunk(viewer: Viewer) -> None:
+    viewer.page.set_viewport_size({"width": 375, "height": 800})  # a year at the 0.6x floor (#113)
+    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(_year(), date="run_at")))
+    boxes = page.locator("svg.bf-cal__days text.bf-cal__weekday").evaluate_all(
+        "els => els.map(e => { const b = e.getBoundingClientRect(); return [b.top, b.height]; })")
+    assert len(boxes) == 7
+    boxes.sort()
+    # A text box includes line spacing (about 1.25x the glyphs); the glyphs stay apart when the
+    # rows are at least 0.8 of a box apart.
+    assert all(below[0] - above[0] >= 0.8 * above[1] for above, below in zip(boxes, boxes[1:], strict=False))
