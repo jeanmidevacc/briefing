@@ -134,7 +134,7 @@ def stringify(
     return render_report(wrapped, name=name, formatting=formatting, now=now)
 
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 __all__: list[str] = [
     # error
