@@ -36,8 +36,6 @@ BY_ID = {example.id: example for example in EXAMPLES}
 
 #: Rules every report fails today, as in tests/test_contract.py.
 KNOWN_FAILURES = {"generator_meta": "#23: no generator meta tag yet"}
-#: Examples whose output changes between runs today, by their ``:title:``.
-NOT_DETERMINISTIC = {"A styled Table": "#101: a pandas Styler gets a random uuid"}
 
 _reports: dict[str, str] = {}
 
@@ -67,16 +65,7 @@ def test_example_follows_rule(rule: str, example_id: str, tmp_path_factory: pyte
     RULES[rule](parse_report(_report(example_id, tmp_path_factory)))
 
 
-def _deterministic_cases() -> list[t.Any]:
-    cases = []
-    for ex in EXAMPLES:
-        reason = NOT_DETERMINISTIC.get(ex.options.get("title", ""))
-        marks = [pytest.mark.xfail(reason=reason, strict=True)] if reason else []
-        cases.append(pytest.param(ex.id, marks=marks, id=ex.id))
-    return cases
-
-
-@pytest.mark.parametrize("example_id", _deterministic_cases())
+@pytest.mark.parametrize("example_id", [ex.id for ex in EXAMPLES])
 def test_example_is_deterministic(example_id: str, tmp_path_factory: pytest.TempPathFactory) -> None:
     again = gallery.run_example(BY_ID[example_id].code, tmp_path_factory.mktemp("again"), where=example_id)
     assert again.read_text(encoding="utf-8") == _report(example_id, tmp_path_factory)

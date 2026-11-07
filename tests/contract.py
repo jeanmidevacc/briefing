@@ -150,7 +150,7 @@ RULES: dict[str, Callable[[Tag], None]] = {
 
 
 def check_deterministic(render: Callable[[], str]) -> None:
-    """Two renders of the same report are byte-identical (run with ``SOURCE_DATE_EPOCH`` set)."""
+    """Two calls to *render* give byte-identical output (run with ``SOURCE_DATE_EPOCH`` set)."""
     first, second = render(), render()
     if first != second:
         pairs = enumerate(zip(first, second, strict=False))

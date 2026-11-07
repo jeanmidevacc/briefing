@@ -19,6 +19,7 @@ HTML contains the full data set, so the table works offline forever.
 """
 from __future__ import annotations
 
+import copy
 import html as _html
 import math
 import numbers
@@ -26,6 +27,7 @@ import typing as t
 from datetime import date, timedelta
 
 from briefing._error import BriefingError
+from briefing.renderers.registry import IdGen
 
 if t.TYPE_CHECKING:
     from briefing.blocks.asset import DataTable, Table
@@ -100,7 +102,7 @@ def _use_index(df: t.Any) -> bool:
 # ── static Table ──────────────────────────────────────────────────────────────
 
 
-def render_table(block: Table) -> str:
+def render_table(block: Table, idgen: IdGen | None = None) -> str:
     """Render a :class:`~briefing.Table` block to a static HTML table fragment."""
     try:
         from pandas.io.formats.style import Styler
@@ -112,8 +114,9 @@ def render_table(block: Table) -> str:
     data = block.data
 
     if isinstance(data, Styler):
-        # Styler.to_html() returns a full <style>+<table> fragment; use it as-is.
-        table_html = data.to_html()
+        # A full <style>+<table> fragment, used as it is apart from the id: pandas puts a random
+        # uuid in every id and selector. The copy leaves the caller's Styler as it was.
+        table_html = copy.copy(data).set_uuid((idgen or IdGen()).next("table")).to_html()
     else:
         table_html = data.to_html(
             classes="bf-table__table",

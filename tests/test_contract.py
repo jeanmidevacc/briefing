@@ -130,6 +130,9 @@ SCENARIOS: dict[str, Build] = {
         bf.Plot(_matplotlib_figure("line")), bf.Plot(_matplotlib_figure("bar"))
     ),
     "table-styler": lambda df: bf.Briefing(bf.Table(df("df_constant").style.highlight_max(), caption="Styled")),
+    "two-table-stylers": lambda df: bf.Briefing(
+        bf.Table(df("df_constant").style.highlight_max()), bf.Table(df("df_constant").style.highlight_max())
+    ),
     **{
         f"{kind}-{fixture}": _over_frame(make, fixture)
         for kind, make in FRAME_BLOCKS.items()
@@ -208,8 +211,9 @@ def test_report_is_deterministic(
     rule: str, scenario: str, frames: Frames, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("SOURCE_DATE_EPOCH", "1700000000")
-    report = SCENARIOS[scenario](frames)
-    check_deterministic(lambda: bf.stringify(report, name=REPORT_NAME))
+    # Rebuild the report for each render: the promise is same input, same bytes. Rendering one
+    # object twice would miss randomness picked when a block or its data is created (#101).
+    check_deterministic(lambda: bf.stringify(SCENARIOS[scenario](frames), name=REPORT_NAME))
 
 
 def _all_block_types() -> set[type]:

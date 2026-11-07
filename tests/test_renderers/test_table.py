@@ -79,6 +79,18 @@ class TestRenderTable:
         html = render_table(Table(styler))
         assert "<table" in html
 
+    def test_equal_stylers_render_the_same_bytes(self, simple_df):
+        first, second = (render_table(Table(simple_df.style.highlight_max())) for _ in range(2))
+        assert first == second
+
+    def test_rendering_leaves_the_stylers_uuid_alone(self, simple_df):
+        styler = simple_df.style.highlight_max()
+        own_uuid = styler.uuid
+        html = render_table(Table(styler))
+        assert styler.uuid == own_uuid
+        assert own_uuid not in html
+        assert f"T_{own_uuid}" in styler.to_html()
+
     def test_rangeindex_hidden_by_default(self, simple_df):
         # Default RangeIndex should not appear as a column
         html = render_table(Table(simple_df))
