@@ -1,4 +1,7 @@
-"""Reports render the same <body> as 0.1.2: only shared CSS/JS and theme variables may grow."""
+"""Reports render the same <body> as 0.1.2, apart from the version footer (#23).
+
+Only shared CSS/JS and theme variables may grow.
+"""
 from __future__ import annotations
 
 from pathlib import Path

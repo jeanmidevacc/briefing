@@ -79,6 +79,34 @@ class TestDocumentStructure:
         soup = render(blocks(Text("hi")), name="X")
         assert soup.find("time") is not None
 
+
+class TestFooter:
+    MADE_WITH = f"Made with briefing {bf.__version__}"
+
+    def test_every_report_says_which_version_made_it(self):
+        soup = render(blocks(Text("hi")))
+        assert find_one(soup, "footer.bf-report__footer").get_text() == self.MADE_WITH
+
+    def test_the_footer_comes_after_the_content(self):
+        soup = render(blocks(Text("hi")))
+        assert find_one(soup, ".bf-report__body ~ .bf-report__footer")
+
+    def test_a_prefix_goes_before_the_version(self):
+        soup = render(Briefing(Text("hi"), footer="Analytics team"))
+        assert find_one(soup, ".bf-report__footer").get_text() == f"Analytics team · {self.MADE_WITH}"
+
+    @pytest.mark.parametrize("footer", [None, ""])
+    def test_no_value_turns_the_footer_off(self, footer):
+        soup = render(Briefing(Text("hi"), footer=footer))
+        assert find_one(soup, ".bf-report__footer").get_text() == self.MADE_WITH
+
+    def test_pages_have_one_footer(self):
+        soup = render(Briefing(bf.Page(Text("a"), title="A"), bf.Page(Text("b"), title="B"), footer="Team"))
+        assert len(soup.select(".bf-report__footer")) == 1
+
+    def test_a_block_passed_on_its_own_gets_the_footer_too(self):
+        assert self.MADE_WITH in bf.stringify(Text("hi"))
+
     def test_css_in_style_tag(self):
         soup = render(blocks(Text("hi")))
         styles = soup.find_all("style")
