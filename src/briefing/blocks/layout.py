@@ -9,7 +9,7 @@ from collections.abc import Sequence
 from enum import StrEnum
 
 from briefing._error import BriefingError
-from briefing.blocks.base import BlockId, BlockOrPrimitive, ContainerBlock
+from briefing.blocks.base import _MAX_CAPTION_LEN, BlockId, BlockOrPrimitive, ContainerBlock, _truncate
 
 # ── enums ─────────────────────────────────────────────────────────────────────
 
@@ -219,6 +219,9 @@ class Briefing(ContainerBlock):
             drawn in iframes (Bokeh) and WebGL Plotly traces come out blank, and
             fonts are whatever the reader's machine has. For exact, reproducible
             files use :func:`~briefing.save_image` / :func:`~briefing.save_pdf`.
+        footer: Text to put before the report's footer line, such as a team name. Every
+            report ends with "Made with briefing" and its version; that line can't be
+            turned off.
 
     Example::
 
@@ -226,6 +229,7 @@ class Briefing(ContainerBlock):
             bf.Text("# My report"),
             bf.Plot(fig),
             export=("png", "pdf"),
+            footer="Analytics team",  # "Analytics team · Made with briefing 0.3.0"
         )
         bf.save(report, "report.html")
     """
@@ -235,19 +239,25 @@ class Briefing(ContainerBlock):
     #: The actions export= accepts, in menu order.
     EXPORTS: t.ClassVar[tuple[str, ...]] = ("png", "pdf")
     export: tuple[str, ...]
+    footer: str | None
 
     def __init__(
         self,
         *arg_blocks: BlockOrPrimitive,
         blocks: Sequence[BlockOrPrimitive] | None = None,
         export: str | Sequence[str] = (),
+        footer: str | None = None,
     ) -> None:
         # Unwrap if a single Briefing is passed directly (avoids double-wrapping).
         if len(arg_blocks) == 1 and isinstance(arg_blocks[0], Briefing):
             export = export or arg_blocks[0].export
+            footer = footer or arg_blocks[0].footer
             arg_blocks = tuple(arg_blocks[0].blocks)
+        if footer is not None and not isinstance(footer, str):
+            raise BriefingError(f"Briefing 'footer' must be text such as 'Analytics team', not {footer!r}.")
         super().__init__(*arg_blocks, blocks=blocks)
         self.export = self._check_export(export)
+        self.footer = _truncate(footer, _MAX_CAPTION_LEN) if footer else None
 
     @classmethod
     def _check_export(cls, export: object) -> tuple[str, ...]:

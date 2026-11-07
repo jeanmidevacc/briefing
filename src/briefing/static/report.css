@@ -56,6 +56,15 @@ body {
   white-space: nowrap;
 }
 
+/* ── report footer ────────────────────────────────────────────────────────── */
+.bf-report__footer {
+  margin-top: 2.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--bf-border);
+  font-size: 0.75rem;
+  color: var(--bf-muted);
+}
+
 /* ── blocks root container ────────────────────────────────────────────────── */
 .bf-blocks {
   display: flex;

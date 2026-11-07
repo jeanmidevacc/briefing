@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="generator" content="briefing {{ version }}" />
   <title>{{ report_name }}</title>
   <style>
 {{ report_css }}
@@ -21,6 +22,7 @@
     <main class="bf-report__body">
       {{ content_html }}
     </main>
+    <footer class="bf-report__footer">{{ footer_text }}</footer>
   </div>
   <script>{{ report_js }}</script>
 </body>

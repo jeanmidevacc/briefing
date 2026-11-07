@@ -31,6 +31,7 @@ from pathlib import Path
 from briefing import lab
 from briefing._error import BriefingError
 from briefing._preview import Preview, preview
+from briefing._version import __version__
 
 # ── blocks ────────────────────────────────────────────────────────────────────
 from briefing.blocks import (
@@ -133,8 +134,6 @@ def stringify(
     wrapped = Briefing.wrap(blocks)
     return render_report(wrapped, name=name, formatting=formatting, now=now)
 
-
-__version__ = "0.2.3"
 
 __all__: list[str] = [
     # error

@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Every report says which version of briefing made it: a footer line, "Made with briefing
+  0.3.0", and `<meta name="generator">` in the page head. `Briefing(footer="Analytics team")`
+  puts text before that line; the line itself can't be turned off (#23).
+
 ## [0.2.3] - 2026-11-07
 
 ### Fixed

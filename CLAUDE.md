@@ -93,7 +93,7 @@ present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer
 
 ## Releases and changelog
 
-- The version lives in `src/briefing/__init__.py` (`__version__`); the publish workflow
+- The version lives in `src/briefing/_version.py` (`__version__`); the publish workflow
   fails if the release tag doesn't match it.
 - Add every user-visible change to `## [Unreleased]` in `CHANGELOG.md` (Keep a Changelog).
 - `hatchling` is pinned below 1.27 and `license` is a text table on purpose: both keep the

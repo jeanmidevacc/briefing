@@ -1,6 +1,7 @@
 """Tests for layout blocks: Group, Select, Toggle, Page, Briefing."""
 from __future__ import annotations
 
+import typing as t
 import warnings
 
 import numpy as np
@@ -18,6 +19,25 @@ def make_texts(n: int) -> list[Text]:
 
 
 # ── Group ─────────────────────────────────────────────────────────────────────
+
+
+class TestBriefingFooter:
+    def test_defaults_to_no_prefix(self):
+        assert Briefing(Text("a")).footer is None
+
+    @pytest.mark.parametrize("footer", [1, True, ["team"]])
+    def test_must_be_text(self, footer):
+        with pytest.raises(BriefingError, match="'footer' must be text"):
+            Briefing(Text("a"), footer=footer)
+
+    def test_long_text_is_shortened_like_a_caption(self):
+        assert len(t.cast(str, Briefing(Text("a"), footer="x" * 600).footer)) == 512
+
+    def test_wrapping_a_briefing_keeps_its_footer(self):
+        assert Briefing(Briefing(Text("a"), footer="Team")).footer == "Team"
+
+    def test_an_explicit_footer_replaces_the_wrapped_one(self):
+        assert Briefing(Briefing(Text("a"), footer="Team"), footer="Other").footer == "Other"
 
 
 class TestGroup:
