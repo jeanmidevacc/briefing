@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `Group` rejects a `columns` that isn't a whole number of 1 or more, and `widths` that
+  aren't positive numbers, with a `BriefingError`. They used to be accepted and wrote invalid
+  CSS, so the browser dropped the layout without saying so (#98).
+- `Table` with a pandas `Styler` gives the same bytes on every run: its ids and CSS selectors
+  come from the report instead of the random uuid pandas picks. The `Styler` you pass keeps
+  its own uuid (#101).
+
 ## [0.2.2] - 2026-11-04
 
 ### Added

@@ -1,6 +1,8 @@
 """Layout and container blocks: Group, Select, Toggle, Page, Briefing."""
 from __future__ import annotations
 
+import math
+import numbers
 import typing as t
 import warnings
 from collections.abc import Sequence
@@ -37,6 +39,12 @@ class VAlign(StrEnum):
     BOTTOM = "bottom"
 
 
+def _is_positive_number(value: object, *, whole: bool = False) -> bool:
+    """Whether *value* is a finite number above zero; ``True`` and ``False`` don't count."""
+    kind = numbers.Integral if whole else numbers.Real
+    return isinstance(value, kind) and not isinstance(value, bool) and 0 < float(value) < math.inf
+
+
 # ── layout blocks ─────────────────────────────────────────────────────────────
 
 
@@ -49,8 +57,8 @@ class Group(ContainerBlock):
     Args:
         *arg_blocks: The child blocks; strings become ``Text`` and dataframes ``DataTable``.
         blocks: The children as a list, instead of positional arguments.
-        columns: Number of grid columns.
-        widths: Relative column widths, one per column (e.g. ``[2, 1]``).
+        columns: Number of grid columns, a whole number of 1 or more.
+        widths: Relative column widths, positive numbers, one per column (e.g. ``[2, 1]``).
         valign: Vertical alignment of the cells: ``"top"``, ``"center"`` or ``"bottom"``.
         name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
         label: Tab or dropdown label when the block is inside a ``Select``.
@@ -73,12 +81,18 @@ class Group(ContainerBlock):
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
-        if widths is not None and len(widths) != columns:
-            raise BriefingError(
-                f"Group 'widths' length ({len(widths)}) must match 'columns' ({columns})."
-            )
+        if not _is_positive_number(columns, whole=True):
+            raise BriefingError(f"Group 'columns' must be a whole number of 1 or more, not {columns!r}.")
+        if widths is not None:
+            if len(widths) != columns:
+                raise BriefingError(
+                    f"Group 'widths' length ({len(widths)}) must match 'columns' ({columns})."
+                )
+            for width in widths:
+                if not _is_positive_number(width):
+                    raise BriefingError(f"Group 'widths' must be positive numbers such as [2, 1], not {width!r}.")
         super().__init__(*arg_blocks, blocks=blocks, name=name, label=label)
-        self.columns = columns
+        self.columns = int(columns)
         self.widths = widths
         self.valign = VAlign(valign)
 

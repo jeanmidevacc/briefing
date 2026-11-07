@@ -317,8 +317,8 @@ def _render_plot(block: Plot, idgen: _IdGen) -> str:
 
 
 @renderer_for(Table)
-def _render_table(block: Table, _: _IdGen) -> str:
-    return render_table(block)
+def _render_table(block: Table, idgen: _IdGen) -> str:
+    return render_table(block, idgen)
 
 
 @renderer_for(DataTable)

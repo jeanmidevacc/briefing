@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import warnings
 
+import numpy as np
 import pytest
 
 from briefing._error import BriefingError
@@ -33,6 +34,22 @@ class TestGroup:
         items = make_texts(2)
         g = Group(blocks=items, columns=2)
         assert len(g) == 2
+
+    @pytest.mark.parametrize("columns", [0, -1, 1.5, 2.0, True, "2", None])
+    def test_columns_must_be_a_whole_number_of_one_or_more(self, columns):
+        with pytest.raises(BriefingError, match="'columns' must be a whole number of 1 or more"):
+            Group(*make_texts(2), columns=columns)
+
+    @pytest.mark.parametrize("width", [0, -1, float("nan"), float("inf"), True, "1", None])
+    def test_widths_must_be_positive_numbers(self, width):
+        with pytest.raises(BriefingError, match="'widths' must be positive numbers"):
+            Group(*make_texts(2), columns=2, widths=[1, width])
+
+    @pytest.mark.parametrize(("columns", "widths"), [(np.int64(2), [np.int64(2), np.float64(1.5)])])
+    def test_numpy_numbers_work_like_python_ones(self, columns, widths):
+        g = Group(*make_texts(2), columns=columns, widths=widths)
+        assert g.columns == 2
+        assert type(g.columns) is int
 
     def test_widths_correct_length(self):
         g = Group(*make_texts(2), columns=2, widths=[2, 1])
