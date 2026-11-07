@@ -35,7 +35,7 @@ EXAMPLES = list(gallery.find_examples(DOCS))
 BY_ID = {example.id: example for example in EXAMPLES}
 
 #: Rules every report fails today, as in tests/test_contract.py.
-KNOWN_FAILURES = {"generator_meta": "#23: no generator meta tag yet"}
+KNOWN_FAILURES: dict[str, str] = {}
 
 _reports: dict[str, str] = {}
 

@@ -167,9 +167,7 @@ SCENARIOS: dict[str, Build] = {
 
 #: Cases expected to fail today, as {(rule, scenario): reason}. Remove an entry
 #: when its issue is fixed; strict xfail makes a stale entry fail.
-KNOWN_FAILURES: dict[tuple[str, str], str] = {
-    **{("generator_meta", s): "#23: no generator meta tag yet" for s in SCENARIOS},
-}
+KNOWN_FAILURES: dict[tuple[str, str], str] = {}
 
 
 @pytest.fixture
@@ -237,6 +235,7 @@ def _payload_frame() -> pd.DataFrame:
 #: raw markup by design (see CLAUDE.md), so only their labels are tested.
 ESCAPE_SCENARIOS: dict[str, Callable[[], tuple[bf.Briefing, str]]] = {
     "report-name": lambda: (bf.Briefing(bf.Text("x")), PAYLOAD),
+    "report-footer": lambda: (bf.Briefing(bf.Text("x"), footer=PAYLOAD), "R"),
     "select-tab-labels": lambda: (bf.Briefing(_tabs(bf.Text("a", label=PAYLOAD), bf.Text("b", label=PAYLOAD))), "R"),
     "select-dropdown-labels": lambda: (
         bf.Briefing(bf.Select(bf.Text("a", label=PAYLOAD), bf.HTML("<b>b</b>", label=PAYLOAD), type="dropdown")),

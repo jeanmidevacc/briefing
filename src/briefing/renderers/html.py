@@ -24,6 +24,7 @@ from importlib.resources import files
 
 from jinja2 import Environment, PackageLoader
 
+from briefing._version import __version__
 from briefing.blocks.asset import DataTable, Plot, Table
 from briefing.blocks.banner import Banner
 from briefing.blocks.base import Block
@@ -420,9 +421,17 @@ def render_report(
         head_scripts=head_scripts,
         content_html=content_html,
         show_header=name != "Report" or bool(export),
+        version=__version__,
+        footer_text=_footer_text(normalised.footer),
         export_html=_export_menu(export),
         export_css=_EXPORT_CSS if export else "",
     )
+
+
+def _footer_text(prefix: str | None) -> str:
+    """The report's last line: who made it, if the report says so, and with which version."""
+    made_with = f"Made with briefing {__version__}"
+    return f"{_html.escape(prefix)} · {made_with}" if prefix else made_with
 
 
 def _export_menu(export: tuple[str, ...]) -> str:

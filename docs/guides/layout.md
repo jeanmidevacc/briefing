@@ -88,3 +88,14 @@ bf.save(report, "pages.html", name="Q1 review")
 
 A page's `name` lets {func}`~briefing.save_image` and {func}`~briefing.save_pdf`
 pick it with `page="summary"`.
+
+## The report footer
+
+Every report ends with a line saying which version of briefing made it, and names the
+same version in a `<meta name="generator">` tag in the page head. `footer=` puts text
+before that line, such as a team name. The line itself can't be turned off.
+
+```python
+report = bf.Briefing(bf.Text("# Q1 review"), footer="Analytics team")
+# Analytics team · Made with briefing 0.3.0
+```
