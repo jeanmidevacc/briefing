@@ -144,7 +144,7 @@ def _with_menu(export: tuple[str, ...]) -> bf.Briefing:
 
 def test_export_menu_is_hidden_while_exporting() -> None:
     def check() -> None:
-        with open_report(_with_menu(("png", "pdf")), width=800, scale=1, name="Q1") as session:
+        with open_report(_with_menu(("png",)), width=800, scale=1, name="Q1") as session:
             assert session.page.locator(".bf-export").count() == 1
             assert not session.page.locator(".bf-export").is_visible()
 
@@ -153,6 +153,6 @@ def test_export_menu_is_hidden_while_exporting() -> None:
 
 def test_images_leave_the_export_menu_out(tmp_path: Path) -> None:
     """#100: a report with export= exports the same image as one without it."""
-    with_menu = bf.save_image(_with_menu(("png", "pdf")), tmp_path / "menu.png", width=800, scale=1, name="Q1")
+    with_menu = bf.save_image(_with_menu(("png",)), tmp_path / "menu.png", width=800, scale=1, name="Q1")
     without = bf.save_image(_with_menu(()), tmp_path / "plain.png", width=800, scale=1, name="Q1")
     assert with_menu[0].read_bytes() == without[0].read_bytes()

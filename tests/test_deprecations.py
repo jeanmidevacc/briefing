@@ -92,3 +92,29 @@ def test_the_day_calendar_alone_does_not_warn(df_pipeline_log: t.Any) -> None:
         warnings.simplefilter("error")
         bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at")
         bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", views=("days",))
+
+
+# ── Briefing(export="pdf"): the "Print" button ────────────────────────────────
+
+
+@pytest.mark.parametrize("export", ["pdf", ("png", "pdf"), ["pdf", "png", "pdf"]])
+def test_export_pdf_warns_once_and_adds_no_button(export: t.Any) -> None:
+    expected = r"export='pdf'.*deprecated.*Ctrl\+P.*bf\.save_pdf.*0\.4\.0"
+    with pytest.warns(DeprecationWarning, match=expected) as caught:
+        report = bf.Briefing(bf.Text("x"), export=export)
+    assert len(caught) == 1
+    assert caught[0].filename == __file__  # points at the caller's line (stacklevel=3)
+    assert "pdf" not in report.export
+
+
+def test_export_png_alone_does_not_warn() -> None:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        bf.Briefing(bf.Text("x"), export="png")
+
+
+def test_export_pdf_is_rejected_from_0_4() -> None:
+    # Fails from 0.4 on until "pdf" leaves Briefing.DEPRECATED_EXPORTS and raises BriefingError.
+    version = tuple(int(part) for part in bf.__version__.split(".")[:2])
+    if version >= (0, 4):
+        assert "pdf" not in bf.Briefing.DEPRECATED_EXPORTS

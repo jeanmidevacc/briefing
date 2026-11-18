@@ -10,6 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The export menu's "Save as PNG" keeps a 32 px margin of page background around the report,
+  so content no longer touches the edge of the image (#119).
+
+### Deprecated
+
+- `bf.Briefing(..., export="pdf")` no longer adds a "Print" button: it only opened the
+  browser's print dialog, which Ctrl+P / ⌘P opens with the same print layout. It still runs,
+  with a `DeprecationWarning`; from 0.4.0 it raises an error. Use `export="png"` for the
+  "Save as PNG" button, and `bf.save_pdf` for a PDF file (#119).
+
 ## [0.2.3] - 2026-11-07
 
 ### Fixed

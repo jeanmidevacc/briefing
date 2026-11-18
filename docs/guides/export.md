@@ -94,10 +94,15 @@ python -m briefing image --help                                # every option
 
 ## An export menu in the report
 
-`bf.Briefing(..., export=("png", "pdf"))` adds buttons to the report header, so
-readers can export it themselves. "Save as PNG" draws the open page in the reader's
-browser at 2× and downloads it; "Print" opens the print dialog. It is opt-in: a
-report without `export=` contains no export code.
+`bf.Briefing(..., export="png")` adds a "Save as PNG" button to the report header,
+so readers can save an image themselves. It draws the open page in the reader's
+browser at 2×, with a margin of page background around it, and downloads it. It is
+opt-in: a report without `export=` contains no export code.
+
+To print, readers use the browser's own print (Ctrl+P or ⌘P): it gets the full
+print layout described under Printing above. `export="pdf"` used to add a
+"Print" button that did the same; it is deprecated, warns and adds nothing, and from
+0.4.0 it raises an error.
 
 ```{briefing-example}
 :title: A report with the export menu
@@ -105,9 +110,9 @@ report without `export=` contains no export code.
 import briefing as bf
 
 report = bf.Briefing(
-    bf.Text("# Q1 review\n\nUse the buttons in the header to save this page."),
+    bf.Text("# Q1 review\n\nUse the button in the header to save this page as an image."),
     bf.Group(bf.BigNumber("Revenue", "$1.25M"), bf.BigNumber("Orders", "10,050"), columns=2),
-    export=("png", "pdf"),
+    export="png",
 )
 bf.save(report, "export-menu.html", name="Q1 review")
 ```
