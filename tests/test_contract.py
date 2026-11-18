@@ -150,7 +150,7 @@ SCENARIOS: dict[str, Build] = {
         bf.Banner("## Left", image=RED_SVG, side="left", text_position=40, focus=(20, 80), alt="A red field"),
     ),
     "export-menu": lambda _: bf.Briefing(
-        bf.Page(bf.Text("# One"), title="One"), bf.Page(bf.Text("# Two"), title="Two"), export=("png", "pdf")
+        bf.Page(bf.Text("# One"), title="One"), bf.Page(bf.Text("# Two"), title="Two"), export="png"
     ),
     "everything": lambda df: bf.Briefing(
         bf.Text("# Everything"),

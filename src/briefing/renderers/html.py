@@ -57,7 +57,7 @@ _CSS = _load_static("report.css")
 _JS = _load_static("report.js")
 _EXPORT_JS = _load_static("export.js")
 _EXPORT_CSS = _load_static("export.css")
-_EXPORT_LABELS = {"png": "Save as PNG", "pdf": "Print"}
+_EXPORT_LABELS = {"png": "Save as PNG"}
 
 _jinja_env = Environment(
     loader=PackageLoader("briefing", "templates"),

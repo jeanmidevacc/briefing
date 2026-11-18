@@ -204,6 +204,14 @@ class Page(ContainerBlock):
         self.title = title
 
 
+EXPORT_PDF_DEPRECATION = (
+    "Briefing(export='pdf') is deprecated and no longer adds a 'Print' button: it only opened the browser's "
+    "print dialog, which Ctrl+P (Cmd+P on a Mac) opens with the same print layout. For a PDF file, use "
+    "bf.save_pdf(report, 'report.pdf'). From 0.4.0, export='pdf' raises an error; pass export='png' for the "
+    "'Save as PNG' button, or leave export out."
+)
+
+
 class Briefing(ContainerBlock):
     """Root document container.
 
@@ -213,19 +221,22 @@ class Briefing(ContainerBlock):
         *arg_blocks: The report's blocks, in order.
         blocks: The blocks as a list, instead of positional arguments.
         export: Opt-in export menu in the report header: ``"png"`` adds "Save as
-            PNG" (the open page, drawn in the reader's browser at 2×) and ``"pdf"``
-            adds "Print" (the print dialog, which can save a PDF). Reports without
-            it contain no export code. "Save as PNG" is best effort: charts
-            drawn in iframes (Bokeh) and WebGL Plotly traces come out blank, and
-            fonts are whatever the reader's machine has. For exact, reproducible
-            files use :func:`~briefing.save_image` / :func:`~briefing.save_pdf`.
+            PNG" (the open page with a margin around it, drawn in the reader's
+            browser at 2×). Reports without it contain no export code. "Save as
+            PNG" is best effort: charts drawn in iframes (Bokeh) and WebGL Plotly
+            traces come out blank, and fonts are whatever the reader's machine
+            has. For exact, reproducible files use :func:`~briefing.save_image` /
+            :func:`~briefing.save_pdf`. To print, use the browser's own print
+            (Ctrl+P or ⌘P): it gets the same print layout. *Deprecated:*
+            ``"pdf"`` (the "Print" button) raises a ``DeprecationWarning`` and
+            adds nothing; it will be rejected from 0.4.0.
 
     Example::
 
         report = bf.Briefing(
             bf.Text("# My report"),
             bf.Plot(fig),
-            export=("png", "pdf"),
+            export="png",
         )
         bf.save(report, "report.html")
     """
@@ -233,7 +244,9 @@ class Briefing(ContainerBlock):
     min_blocks: t.ClassVar[int] = 1
 
     #: The actions export= accepts, in menu order.
-    EXPORTS: t.ClassVar[tuple[str, ...]] = ("png", "pdf")
+    EXPORTS: t.ClassVar[tuple[str, ...]] = ("png",)
+    #: Accepted with a DeprecationWarning, and dropped: they add no button.
+    DEPRECATED_EXPORTS: t.ClassVar[dict[str, str]] = {"pdf": EXPORT_PDF_DEPRECATION}
     export: tuple[str, ...]
 
     def __init__(
@@ -252,11 +265,16 @@ class Briefing(ContainerBlock):
     @classmethod
     def _check_export(cls, export: object) -> tuple[str, ...]:
         actions = (export,) if isinstance(export, str) else export
-        if not isinstance(actions, Sequence) or any(a not in cls.EXPORTS for a in actions):
-            raise BriefingError(
-                f"export accepts 'png' and/or 'pdf', for example export=('png', 'pdf'); got {export!r}."
-            )
-        return tuple(dict.fromkeys(t.cast("Sequence[str]", actions)))
+        if not isinstance(actions, Sequence) or any(
+            a not in cls.EXPORTS and a not in cls.DEPRECATED_EXPORTS for a in actions
+        ):
+            raise BriefingError(f"export accepts 'png', for example export='png'; got {export!r}.")
+        unique = tuple(dict.fromkeys(t.cast("Sequence[str]", actions)))
+        for action in unique:
+            if action in cls.DEPRECATED_EXPORTS:
+                # stacklevel 3: _check_export <- __init__ <- the caller's bf.Briefing(...)
+                warnings.warn(cls.DEPRECATED_EXPORTS[action], DeprecationWarning, stacklevel=3)
+        return tuple(a for a in unique if a in cls.EXPORTS)
 
     @classmethod
     def wrap(

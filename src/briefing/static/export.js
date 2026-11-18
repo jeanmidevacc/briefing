@@ -39,6 +39,10 @@
   }
 
   // Draw the report as it is on screen (the open page) into a canvas at 2x and download it.
+  // The image keeps this much of the page background around the report on every side
+  // (CSS px, the page's own top padding), so content never touches the image's edge.
+  var MARGIN = 32;
+
   function savePng() {
     var report = document.querySelector('.bf-report');
     var rect = report.getBoundingClientRect();
@@ -52,13 +56,13 @@
     var image = new Image();
     image.onload = function () {
       var canvas = document.createElement('canvas');
-      canvas.width = width * scale;
-      canvas.height = height * scale;
+      canvas.width = (width + 2 * MARGIN) * scale;
+      canvas.height = (height + 2 * MARGIN) * scale;
       var ctx = canvas.getContext('2d');
       ctx.fillStyle = background;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.scale(scale, scale);
-      ctx.drawImage(image, 0, 0);
+      ctx.drawImage(image, MARGIN, MARGIN);
       canvas.toBlob(function (blob) {
         var link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
@@ -72,10 +76,6 @@
     image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
 
-  menu.querySelectorAll('.bf-export__btn').forEach(function (button) {
-    button.addEventListener('click', function () {
-      if (button.getAttribute('data-export') === 'png') savePng();
-      else window.print();
-    });
-  });
+  var png = menu.querySelector('.bf-export__btn[data-export="png"]');
+  if (png) png.addEventListener('click', savePng);
 })();

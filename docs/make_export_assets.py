@@ -74,7 +74,9 @@ def main() -> None:
         session.page.screenshot(path=str(OUT / "print.png"), full_page=True)
 
     # The opt-in export menu in the report header.
-    with open_report(sample_report(export=("png", "pdf")), width=1000, scale=1, name=name) as session:
+    with open_report(sample_report(export=("png",)), width=1000, scale=1, name=name) as session:
+        # Exports hide the menu (#100); show it again, since it is the subject here.
+        session.page.add_style_tag(content="html .bf-report .bf-export { display: flex !important; }")
         session.page.locator(".bf-report__header").screenshot(path=str(OUT / "menu.png"))
 
     for path in sorted(OUT.iterdir()):
