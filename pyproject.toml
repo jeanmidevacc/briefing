@@ -5,7 +5,7 @@ requires = ["hatchling>=1.21,<1.27"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-path = "src/briefing/__init__.py"
+path = "src/briefing/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/briefing"]

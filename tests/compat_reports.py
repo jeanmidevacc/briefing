@@ -38,8 +38,9 @@ def reports() -> dict[str, object]:
 
 
 def body_markup(html: str) -> str:
-    """The <body> of a report without its trailing report script."""
+    """The <body> of a report without its trailing report script or its version footer (#23)."""
     body = html[html.index("<body>"):html.rindex("</body>")]
+    body = re.sub(r'\n\s*<footer class="bf-report__footer">.*?</footer>', "", body, count=1, flags=re.S)
     return re.sub(r"<script>(?:(?!</script>).)*</script>\s*$", "", body, flags=re.S)
 
 
