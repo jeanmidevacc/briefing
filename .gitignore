@@ -17,6 +17,7 @@ env/
 .coverage.*
 htmlcov/
 coverage.xml
+.hypothesis/
 
 # Tooling caches
 .mypy_cache/

@@ -46,7 +46,9 @@ bf.HTML(f'<img src="data:image/jpeg;base64,{data}" alt="..." style="max-width:10
 
 `bf.HTML` inserts markup as-is. Inline styles work, and so does any `<script>` it
 contains: it isn't sandboxed or sanitised, so only pass HTML you trust. Paragraphs,
-lists and headings in it get the same typography as `Text`.
+lists and headings in it get the same typography as `Text`. A comment, tag or
+`<script>`/`<style>` element left open at its end is closed there, so it can't hide
+the rest of the report.
 
 ## Report size
 

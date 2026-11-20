@@ -89,11 +89,13 @@ def _histogram_svg(series: t.Any) -> str:
         bar = f'<rect x="0" y="0" width="{_SVG_W}" height="{_SVG_H}" fill="var(--bf-accent)" fill-opacity="0.65"/>'
         return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {_SVG_W} {_SVG_H}">{bar}</svg>'
 
-    # Bucket counts without numpy
-    rng = mx - mn
+    # Bucket counts without numpy. A range wider than the largest float (-1e308 … 1e308)
+    # would overflow to inf, so such values are halved before subtracting.
+    scale = 1.0 if math.isfinite(mx - mn) else 0.5
+    low, span = mn * scale, mx * scale - mn * scale
     counts = [0] * _HIST_BINS
     for v in valid:
-        idx = min(int((float(v) - mn) / rng * _HIST_BINS), _HIST_BINS - 1)
+        idx = min(int((float(v) * scale - low) / span * _HIST_BINS), _HIST_BINS - 1)
         counts[idx] += 1
 
     max_count = max(counts)

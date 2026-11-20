@@ -48,8 +48,9 @@ present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer
 - **Deterministic output.** Same input + `SOURCE_DATE_EPOCH` (or `now=`) gives byte-identical
   HTML. DOM ids come from `IdGen`; never use `uuid`, `random` or the wall clock.
 - **Escape user text.** Every value from the user goes through `html.escape` unless it is
-  markdown in `Text` or raw markup in `HTML`. Embedded JSON goes in
-  `<script type="application/json">`, never inline JavaScript.
+  markdown in `Text` or raw markup in `HTML`; those go through `close_open_markup`
+  (`renderers/markup.py`), so nothing left open in them runs past their block. Embedded
+  JSON goes in `<script type="application/json">`, never inline JavaScript.
 - **Lab stays out of the core report.** A report without a `DataDive` must not contain
   `lab.js`; `tests/test_lab/test_lab_boundary.py` checks it.
 - **Errors and warnings.** Raise `BriefingError` (`_error.py`) for invalid input, with a
@@ -81,9 +82,21 @@ present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer
   `tests/html_helpers.py` (`parse`, `find_one`, `attr`, `classes`) or mypy fails.
 - `tests/contract.py` holds the rules every report must follow (offline, unique ids, valid
   embedded JSON, escaped user text, deterministic output, …); `tests/test_contract.py` runs
-  them over a scenario per block. A new block needs a scenario there, or
-  `test_every_block_type_is_covered` fails. Known failures are strict `xfail`s naming their
-  issue: remove the entry in `KNOWN_FAILURES` when you fix it.
+  them over the scenarios in `tests/scenarios.py`, at least one per block. A new block needs
+  a scenario there, or `test_every_block_type_is_covered` fails. Known failures are strict
+  `xfail`s naming their issue: remove the entry in `KNOWN_FAILURES` when you fix it.
+- **Golden snapshots** (`tests/test_golden.py`): every scenario must render byte for byte to
+  `tests/snapshots/golden/<scenario>.html`. `tests/golden.py` first swaps briefing's static
+  files for a hash line, chart libraries' output for a marker and the version for
+  `{version}`. Any change to report HTML fails until you run
+  `pytest tests/test_golden.py --snapshot-update` and commit the snapshots; read their diff
+  and check it shows only the change you meant. A new scenario needs that run once; delete
+  the file of a removed one.
+- **Property tests** (`tests/test_properties.py`): Hypothesis renders random strings and
+  dataframes in `Text`, `Table`, `DataTable`, `DataProfile` and `DataDive` and checks the
+  contract. CI uses the fixed `ci` profile from `conftest.py`;
+  `pytest --hypothesis-profile=thorough tests/test_properties.py` searches harder. A failure
+  is a bug: fix it and add a plain regression test, rather than narrowing the strategy.
 - Every bug fix comes with a test that fails without the fix.
 - JavaScript behaviour (sorting, tabs, toggles, DataDive) can't be verified from HTML alone.
   After changing `static/` or `lab/static/`, add or update a test in `tests/test_browser/`

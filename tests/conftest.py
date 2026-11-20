@@ -1,10 +1,32 @@
 """Shared pytest fixtures for the briefing test suite."""
 from __future__ import annotations
 
+import os
+import typing as t
+from collections.abc import Callable
+
 import pandas as pd
 import pytest
+from hypothesis import settings
+
+# ── Hypothesis profiles (tests/test_properties.py) ────────────────────────────
+# CI (which sets CI=true) draws the same examples on every run, so a red build can be
+# reproduced. Locally, examples are random and failures are replayed from .hypothesis/.
+# `pytest --hypothesis-profile=thorough tests/test_properties.py` hunts for new failures.
+
+settings.register_profile("ci", derandomize=True, database=None, deadline=None, max_examples=200, print_blob=True)
+settings.register_profile("dev", deadline=None, max_examples=100)
+settings.register_profile("thorough", deadline=None, max_examples=2000)
+settings.load_profile("ci" if os.environ.get("CI") else "dev")
 
 # ── DataFrame fixtures ────────────────────────────────────────────────────────
+
+
+@pytest.fixture
+def frames(request: pytest.FixtureRequest) -> Callable[[str], pd.DataFrame]:
+    """Look up a dataframe fixture by name, as the scenarios in ``tests/scenarios.py`` take it."""
+    return t.cast(Callable[[str], pd.DataFrame], request.getfixturevalue)
+
 
 
 @pytest.fixture
