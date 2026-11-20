@@ -44,6 +44,16 @@ and runs `twine check --strict`.
    adds a gzip copy of the untouched blocks (`fragment.copy_data`); `static/copy-embed.js`
    cuts a block out of it as a fragment. Reports without it must not change.
 
+**The JSON form** (#31, `src/briefing/spec/`): `bf.to_spec`, `bf.from_spec`, `bf.validate`
+and `bf.schema`. `spec/_model.py` reads each block's options from its constructor (names,
+type hints, defaults, `Args:` docstring); `_TYPES` lists the block types, and `_ATTRS`,
+`_KEYS`, `_CHOICES`, `_OVERRIDES` cover what a signature can't say. The JSON Schema built
+from it is checked in as `src/briefing/schema/v1.json`: after changing a block's
+parameters or their docstrings, run `python -m briefing.spec` and commit the file
+(`tests/test_spec/test_schema.py` fails until you do). A new block type goes in `_TYPES`.
+`validate` reads the JSON (`spec/_convert.py`), draws each block alone, then renders the
+report with an `IdGen` that records name clashes (`spec/_validate.py`); it never raises.
+
 `briefing.lab` (`DataProfile`, `DataDive`) plugs in the same way: `lab/__init__.py` calls
 `register_renderer(..., js_asset=...)`, so `lab.js` is inlined only when a lab block is
 present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer in
@@ -114,6 +124,11 @@ present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer
   contract. CI uses the fixed `ci` profile from `conftest.py`;
   `pytest --hypothesis-profile=thorough tests/test_properties.py` searches harder. A failure
   is a bug: fix it and add a plain regression test, rather than narrowing the strategy.
+- **The JSON form** (`tests/test_spec/`): every scenario must round-trip through
+  `from_spec(*to_spec(r))` byte for byte, by reference and inline, and `validate` must find
+  no error in it (`test_round_trip.py`). `test_spec_properties.py` writes random report
+  JSON, right and wrong, and checks that `validate` reports an error exactly when building
+  or rendering fails.
 - Every bug fix comes with a test that fails without the fix.
 - JavaScript behaviour (sorting, tabs, toggles, DataDive) can't be verified from HTML alone.
   After changing `static/` or `lab/static/`, add or update a test in `tests/test_browser/`

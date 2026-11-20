@@ -1,0 +1,1868 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "briefing report, format 1",
+  "description": "A briefing report as JSON: the same blocks and options as in Python. Render it with briefing.from_spec(spec, data) and check it with briefing.validate(spec, data).",
+  "type": "object",
+  "properties": {
+    "briefing": {
+      "description": "The format version of this JSON (not briefing's version): 1.",
+      "const": 1
+    },
+    "export": {
+      "description": "Opt-in export menu in the report header: `\"png\"` adds \"Save as PNG\" (the open page with a margin around it, drawn in the reader's browser at 2×). Reports without it contain no export code. \"Save as PNG\" is best effort: charts drawn in iframes (Bokeh) and WebGL Plotly traces come out blank, and fonts are whatever the reader's machine has. For exact, reproducible files use save_image / save_pdf. To print, use the browser's own print (Ctrl+P or ⌘P): it gets the same print layout. `\"embed\"` puts a `</>` button on each page, labelled group, chart, table, text, number, alert and banner: it copies that part as an embed fragment, as stringify makes with `full_html=False`, to paste into another page. *Deprecated:* `\"pdf\"` (the \"Print\" button) raises a `DeprecationWarning` and adds nothing; it will be rejected from 0.4.0.",
+      "anyOf": [
+        {
+          "enum": [
+            "png",
+            "embed"
+          ]
+        },
+        {
+          "type": "array",
+          "items": {
+            "enum": [
+              "png",
+              "embed"
+            ]
+          }
+        },
+        {
+          "$ref": "#/$defs/ref"
+        }
+      ],
+      "default": []
+    },
+    "footer": {
+      "description": "Text to put before the report's footer line, such as a team name. Every report ends with \"Made with briefing\" and its version; that line can't be turned off.",
+      "anyOf": [
+        {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "$ref": "#/$defs/ref"
+        }
+      ],
+      "default": null
+    },
+    "blocks": {
+      "description": "The report's blocks, in order: all of them Page blocks, or none.",
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Page"
+          },
+          "minItems": 1
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/block"
+          },
+          "minItems": 1
+        }
+      ]
+    }
+  },
+  "required": [
+    "briefing",
+    "blocks"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "block": {
+      "description": "Any block but a Page (pages only go at the top level).",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Text"
+        },
+        {
+          "$ref": "#/$defs/Group"
+        },
+        {
+          "$ref": "#/$defs/Select"
+        },
+        {
+          "$ref": "#/$defs/Toggle"
+        },
+        {
+          "$ref": "#/$defs/BigNumber"
+        },
+        {
+          "$ref": "#/$defs/Alert"
+        },
+        {
+          "$ref": "#/$defs/Banner"
+        },
+        {
+          "$ref": "#/$defs/Plot"
+        },
+        {
+          "$ref": "#/$defs/Table"
+        },
+        {
+          "$ref": "#/$defs/DataTable"
+        },
+        {
+          "$ref": "#/$defs/Code"
+        },
+        {
+          "$ref": "#/$defs/Formula"
+        },
+        {
+          "$ref": "#/$defs/HTML"
+        },
+        {
+          "$ref": "#/$defs/lab.DataProfile"
+        },
+        {
+          "$ref": "#/$defs/lab.DataDive"
+        },
+        {
+          "$ref": "#/$defs/lab.CalendarHeatmap"
+        }
+      ]
+    },
+    "Text": {
+      "description": "Markdown text block (CommonMark plus pipe tables).",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Text"
+        },
+        "text": {
+          "description": "Markdown; common leading indentation is removed.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "file": {
+          "description": "Path to a `.md` file to read instead of `text`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "text"
+          ]
+        },
+        {
+          "required": [
+            "file"
+          ]
+        }
+      ]
+    },
+    "Group": {
+      "description": "Grid layout container.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Group"
+        },
+        "columns": {
+          "description": "Number of grid columns, a whole number of 1 or more.",
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": 1
+        },
+        "widths": {
+          "description": "Relative column widths, positive numbers, one per column (e.g. `[2, 1]`).",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "valign": {
+          "description": "Vertical alignment of the cells: `\"top\"`, `\"center\"` or `\"bottom\"`.",
+          "anyOf": [
+            {
+              "enum": [
+                "top",
+                "center",
+                "bottom"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": "top"
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "blocks": {
+          "description": "The child blocks, in order.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/block"
+          }
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "Select": {
+      "description": "Tab or dropdown selector — shows one child block at a time.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Select"
+        },
+        "select_type": {
+          "description": "`\"tabs\"` (default) or `\"dropdown\"` (or a SelectType).",
+          "anyOf": [
+            {
+              "enum": [
+                "tabs",
+                "dropdown"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": "tabs"
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "blocks": {
+          "description": "The child blocks, in order.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/block"
+          }
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "Toggle": {
+      "description": "Collapsible container — hidden by default, expanded on click.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Toggle"
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "The clickable title (`\"Details\"` when omitted).",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "blocks": {
+          "description": "The child blocks, in order.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/block"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "type",
+        "blocks"
+      ],
+      "additionalProperties": false
+    },
+    "Page": {
+      "description": "Top-level page tab.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Page"
+        },
+        "title": {
+          "description": "The page's tab title.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable block id; `save_image` / `save_pdf` accept it as `page=`.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "blocks": {
+          "description": "The child blocks, in order.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/block"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "type",
+        "blocks"
+      ],
+      "additionalProperties": false
+    },
+    "BigNumber": {
+      "description": "KPI display block — shows a headline metric with optional change indicator.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "BigNumber"
+        },
+        "heading": {
+          "description": "The metric's name.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "value": {
+          "description": "The headline value.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "change": {
+          "description": "Optional change to show under the value, e.g. `\"+3%\"`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "is_upward_change": {
+          "description": "The arrow: `True` shows ▲, `False` shows ▼, `None` shows no arrow.",
+          "anyOf": [
+            {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "is_positive_intent": {
+          "description": "The colour: `True` is green (good news), `False` is red (bad news). Leave it `None` and the colour follows the arrow (▲ green, ▼ red); with neither flag the change is shown neutral, in the theme's muted colour.",
+          "anyOf": [
+            {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "heading",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "Alert": {
+      "description": "Styled callout / alert block.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Alert"
+        },
+        "message": {
+          "description": "The alert's text.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "level": {
+          "description": "`\"info\"`, `\"success\"`, `\"warning\"` or `\"error\"` (or an AlertLevel).",
+          "anyOf": [
+            {
+              "enum": [
+                "info",
+                "success",
+                "warning",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": "info"
+        },
+        "title": {
+          "description": "Optional bold title above the message.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "Banner": {
+      "description": "Markdown text over a background image: a report cover, a section opener or a social card.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Banner"
+        },
+        "text": {
+          "description": "Markdown, rendered exactly like Text.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "image": {
+          "description": "A file path, or the image bytes (PNG, JPEG, GIF, WebP or SVG).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/image"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "text_position": {
+          "description": "0–100: where the text column begins (`side=\"right\"`) or ends (`side=\"left\"`), in percent of the banner's width.",
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": 50
+        },
+        "opacity": {
+          "description": "0–100: how much the veil covers the image under the text: 100 is a plain text panel, around 80 leaves the image faintly visible. No readability warning is given at any value; that is your call.",
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": 80
+        },
+        "side": {
+          "description": "`\"right\"` (text on the right, image clear on the left) or `\"left\"`. Ignored when `fade=False`.",
+          "anyOf": [
+            {
+              "enum": [
+                "left",
+                "right"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": "right"
+        },
+        "fade": {
+          "description": "`True` fades the veil in over 20 % of the width before the text; `False` covers the whole image with one veil at `opacity`.",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": true
+        },
+        "height": {
+          "description": "CSS height such as `\"16rem\"` (default) or a number of pixels.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "integer"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": "16rem"
+        },
+        "focus": {
+          "description": "`(x, y)` in percent: the point of the image kept in view when it is cropped.",
+          "anyOf": [
+            {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": [
+            50,
+            50
+          ]
+        },
+        "alt": {
+          "description": "A description of the image; by default it is decorative.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "text",
+        "image"
+      ],
+      "additionalProperties": false
+    },
+    "Plot": {
+      "description": "Chart / figure block — library agnostic.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Plot"
+        },
+        "figure": {
+          "description": "A Plotly, Altair, Matplotlib (or Seaborn / Plotnine) or Bokeh figure.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/figure"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "caption": {
+          "description": "Optional caption shown below the chart.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "responsive": {
+          "description": "Let the chart fill the width of its container. Size the figure in its plotting library, e.g. Matplotlib's `figsize=(w, h)`.",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": true
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "figure"
+      ],
+      "additionalProperties": false
+    },
+    "Table": {
+      "description": "Static HTML table rendered from a dataframe or a pandas Styler.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Table"
+        },
+        "data": {
+          "description": "A dataframe (as for DataTable) or a pandas `Styler`, kept as-is.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/table"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "caption": {
+          "description": "Optional caption below the table.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "DataTable": {
+      "description": "Interactive, sortable and searchable table rendered from a pandas DataFrame.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "DataTable"
+        },
+        "df": {
+          "description": "The data: pandas, polars, pyarrow, anything with the dataframe interchange protocol, or a dict of columns.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/table"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "caption": {
+          "description": "Optional caption below the table.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "max_rows": {
+          "description": "Rows beyond this are dropped with a warning.",
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": 10000
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "df"
+      ],
+      "additionalProperties": false
+    },
+    "Code": {
+      "description": "Syntax-highlighted code block.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Code"
+        },
+        "code": {
+          "description": "The source code.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "language": {
+          "description": "Language for syntax highlighting (any Pygments lexer name, e.g. `\"python\"`, `\"sql\"`); an unknown language is shown as plain text.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": "python"
+        },
+        "caption": {
+          "description": "Optional caption below the block.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "code"
+      ],
+      "additionalProperties": false
+    },
+    "Formula": {
+      "description": "LaTeX formula block, converted to MathML when the report is rendered.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Formula"
+        },
+        "formula": {
+          "description": "A LaTeX expression, without `$` or `\\\\(` delimiters.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "caption": {
+          "description": "Optional caption below the formula.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "formula"
+      ],
+      "additionalProperties": false
+    },
+    "HTML": {
+      "description": "Raw HTML fragment block.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "HTML"
+        },
+        "html": {
+          "description": "The HTML fragment, inserted as-is.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "html"
+      ],
+      "additionalProperties": false
+    },
+    "lab.DataProfile": {
+      "description": "Per-column statistical profiling block.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "lab.DataProfile"
+        },
+        "df": {
+          "description": "The data, as any dataframe briefing accepts.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/table"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "missing_threshold": {
+          "description": "Share of missing values (0–1) above which a column's missing count is highlighted in red.",
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": 0.2
+        },
+        "max_categories": {
+          "description": "Most frequent values shown for categorical columns.",
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": 20
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "df"
+      ],
+      "additionalProperties": false
+    },
+    "lab.DataDive": {
+      "description": "Interactive dot explorer — similar to Google's Facets Dive.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "lab.DataDive"
+        },
+        "df": {
+          "description": "The data, as any dataframe briefing accepts.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/table"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "x": {
+          "description": "Column on the X axis at first (the viewer can change it).",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "y": {
+          "description": "Column on the Y axis at first.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "color": {
+          "description": "Column that colours the dots at first.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "facet_row": {
+          "description": "Accepted but not drawn yet (a warning says so); planned for DataDive v2.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "facet_col": {
+          "description": "Accepted but not drawn yet (a warning says so); planned for DataDive v2.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "layout": {
+          "description": "`\"scatter\"` (two axes) or `\"tile\"` (packed dots per cell).",
+          "anyOf": [
+            {
+              "enum": [
+                "scatter",
+                "tile"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": "scatter"
+        },
+        "max_rows": {
+          "description": "Larger frames are sampled down to this many rows, with a warning.",
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": 10000
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "df"
+      ],
+      "additionalProperties": false
+    },
+    "lab.CalendarHeatmap": {
+      "description": "GitHub-style calendar heatmap: one cell per day, weeks as columns.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "lab.CalendarHeatmap"
+        },
+        "df": {
+          "description": "The data, as any dataframe briefing accepts (pandas, polars, pyarrow…).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/table"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "date": {
+          "description": "Column holding the date or timestamp of each row.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "value": {
+          "description": "Column to aggregate per day; `None` counts the rows.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "agg": {
+          "description": "How to aggregate `value`: `\"sum\"`, `\"mean\"`, `\"median\"`, `\"min\"`, `\"max\"` or `\"count\"`.",
+          "anyOf": [
+            {
+              "enum": [
+                "sum",
+                "mean",
+                "median",
+                "min",
+                "max",
+                "count"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": "sum"
+        },
+        "group": {
+          "description": "Column to split by: one calendar per group, stacked, on one shared colour scale.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "views": {
+          "description": "`(\"days\",)`, `(\"hours\",)` or `(\"days\", \"hours\")`: the day calendar and/or a 7 × 24 weekday-by-hour grid; with both, tabs switch between them. The hour view needs timestamps with a time of day. *Deprecated since 0.2.2:* the hour view raises a `DeprecationWarning` and will be replaced by a dedicated time-pattern heatmap (issue #111).",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "days",
+                  "hours"
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": [
+            "days"
+          ]
+        },
+        "tz": {
+          "description": "A time zone such as `\"America/Montreal\"`. Converts timezone-aware timestamps only; naive timestamps and plain dates are taken as already local, so a date at midnight never moves to the previous day.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "colors": {
+          "description": "`\"github\"` (GitHub's green scale) or a list of CSS colours, low to high.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": "github"
+        },
+        "center": {
+          "description": "A midpoint for a diverging scale (e.g. `0` for values that go negative); `colors` is then three hex colours: below, at and above it.",
+          "anyOf": [
+            {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "week_start": {
+          "description": "`\"monday\"` or `\"sunday\"`: the first row of the grid.",
+          "anyOf": [
+            {
+              "enum": [
+                "monday",
+                "sunday"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": "monday"
+        },
+        "expected": {
+          "description": "A target per day, flagged when a day is below it (days with no data count as below): a number, a Series indexed by date, or a DataFrame with the `date` column, an `expected` column and, with `group`, the group column.",
+          "anyOf": [
+            {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/table"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "events": {
+          "description": "Dates to mark: a list of dates, or a DataFrame with `start`, optional `end` and `label` columns; spans draw as bands.",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "$ref": "#/$defs/table"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "on_click": {
+          "description": "`\"rows\"` lists the rows behind a day or an hour in a panel when it is clicked (up to `ROWS_PER_CELL` rows per cell, embedded in the report); `None` (default) for no click action.",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "enum": [
+                "rows"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "df",
+        "date"
+      ],
+      "additionalProperties": false
+    },
+    "name": {
+      "description": "A block's name: a letter, then letters, digits, _ or -. It is the block's link (#page/name) and unique within its page.",
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+    },
+    "ref": {
+      "description": "An object passed separately, by name: from_spec(spec, data={name: object}). Any option can be one.",
+      "type": "object",
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "additionalProperties": false
+    },
+    "table": {
+      "description": "A table written into the JSON: column names, optional pandas dtypes (such as int64, float64, bool, object, datetime64[ns], category) and rows of values. Missing values are null; dates are ISO strings.",
+      "type": "object",
+      "properties": {
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "dtypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "array"
+          }
+        }
+      },
+      "required": [
+        "columns",
+        "rows"
+      ],
+      "additionalProperties": false
+    },
+    "figure": {
+      "description": "A chart written into the JSON: a Plotly figure's JSON or a Vega-Lite specification (drawn with Altair). Matplotlib and Bokeh figures go by reference.",
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "plotly": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "plotly"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "vega-lite": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "vega-lite"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "image": {
+      "description": "An image file's path, or the image as a data: URI (data:image/png;base64,...).",
+      "type": "string"
+    }
+  }
+}

@@ -36,6 +36,7 @@ coding agents both write. Reports work offline forever: no CDN, no server.
    guides/notebooks
    guides/export
    guides/embed
+   guides/json
    guides/lab
    recipes
 
@@ -47,6 +48,7 @@ coding agents both write. Reports work offline forever: no CDN, no server.
    api/layout
    api/formatting
    api/output
+   api/json
    api/lab
 
 .. toctree::
