@@ -1,0 +1,8 @@
+<!-- briefing {{ version }} embed: {{ embed_id }} -->
+<div class="bf-embed" id="{{ embed_id }}" data-bf-version="{{ version }}">
+{{ assets }}<style>
+{{ theme_css }}</style>
+<div class="bf-embed__body">{{ header_html }}{{ content_html }}</div>
+<div class="bf-embed__footer">{{ footer_text }}</div>
+<script>briefing.init(document.getElementById("{{ embed_id }}"));</script>
+</div>

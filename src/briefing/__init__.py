@@ -64,9 +64,36 @@ from briefing.export import save_image, save_pdf
 from briefing.renderers.formatting import Formatting, TextAlignment, Width
 
 # ── renderer ──────────────────────────────────────────────────────────────────
+from briefing.renderers.fragment import render_embed_assets, render_fragment
 from briefing.renderers.html import render_report
 
 # ── public API ────────────────────────────────────────────────────────────────
+
+
+def _render(
+    blocks: Briefing | list[t.Any] | object,
+    name: str,
+    formatting: Formatting | None,
+    now: datetime | None,
+    full_html: bool,
+    include_assets: bool,
+    embed_id: str | None,
+    header: bool | None,
+) -> str:
+    """A full report, or with ``full_html=False`` a fragment (#122)."""
+    wrapped = Briefing.wrap(blocks)
+    if full_html:
+        options = {"include_assets": not include_assets, "embed_id": embed_id, "header": header}
+        given = [option for option, set_ in options.items() if set_]
+        if given:
+            raise BriefingError(
+                f"{', '.join(given)} only apply to a fragment: pass full_html=False as well, or leave them out."
+            )
+        return render_report(wrapped, name=name, formatting=formatting, now=now)
+    return render_fragment(
+        wrapped, name=name, formatting=formatting, now=now,
+        include_assets=include_assets, embed_id=embed_id, header=bool(header),
+    )
 
 
 def save(
@@ -77,8 +104,12 @@ def save(
     name: str = "Report",
     formatting: Formatting | None = None,
     now: datetime | None = None,
+    full_html: bool = True,
+    include_assets: bool = True,
+    embed_id: str | None = None,
+    header: bool | None = None,
 ) -> None:
-    """Save *blocks* as a self-contained HTML file at *path*.
+    """Save *blocks* as a self-contained HTML file at *path*, or as a fragment to embed.
 
     Args:
         blocks: A :class:`~briefing.Briefing` instance, a list of blocks, or a
@@ -89,13 +120,20 @@ def save(
         formatting: A :class:`~briefing.Formatting` instance controlling the theme.
         now: Pin the header timestamp for byte-reproducible output (see also the
             ``SOURCE_DATE_EPOCH`` environment variable).
+        full_html: ``False`` saves a fragment, one ``<div>`` to put into another page,
+            as :func:`stringify` describes.
+        include_assets: With ``full_html=False``: ``False`` leaves out the CSS and
+            scripts, for a page that loads :func:`embed_assets` once.
+        embed_id: With ``full_html=False``: the fragment's id, which starts every id
+            in it. Defaults to the name of its only block, else a hash of it.
+        header: With ``full_html=False``: ``True`` shows *name* and the date above it.
 
     Example::
 
         bf.save(report, "analysis.html", name="Q1 Analysis", open=True)
+        bf.save(chart, "revenue-embed.html", full_html=False)
     """
-    wrapped = Briefing.wrap(blocks)
-    html = render_report(wrapped, name=name, formatting=formatting, now=now)
+    html = _render(blocks, name, formatting, now, full_html, include_assets, embed_id, header)
     dest = Path(path)
     dest.write_text(html, encoding="utf-8")
     if open:
@@ -108,13 +146,22 @@ def stringify(
     name: str = "Report",
     formatting: Formatting | None = None,
     now: datetime | None = None,
+    full_html: bool = True,
+    include_assets: bool = True,
+    embed_id: str | None = None,
+    header: bool | None = None,
 ) -> str:
-    """Render *blocks* to a self-contained HTML string.
+    """Render *blocks* to a self-contained HTML string, or to a fragment to embed.
 
     In a notebook you don't need this: a block or a ``Briefing`` displays itself
     as an isolated preview, and :func:`preview` adds a name or a theme.
 
     Pass *now* (or set ``SOURCE_DATE_EPOCH``) for byte-reproducible output.
+
+    With ``full_html=False`` the result is a fragment, like Plotly's
+    ``to_html(full_html=False)``: one ``<div class="bf-embed">`` to put into another
+    page (a docs site, a notebook, a Confluence HTML macro). It carries its theme,
+    keeps its CSS and scripts to itself, and works next to other fragments.
 
     Args:
         blocks: A :class:`Briefing`, a list of blocks, or a single block.
@@ -122,17 +169,48 @@ def stringify(
         formatting: A :class:`Formatting` instance controlling the theme.
         now: Pin the header timestamp for byte-reproducible output (see also
             the ``SOURCE_DATE_EPOCH`` environment variable).
+        full_html: ``False`` returns a fragment instead of a whole document.
+        include_assets: With ``full_html=False``: ``False`` leaves out the CSS and
+            scripts, for a page that loads :func:`embed_assets` once in its ``<head>``.
+        embed_id: With ``full_html=False``: the fragment's id, which starts every id
+            in it. Defaults to the name of its only block, else ``bf-e`` and 8 hex
+            digits of a hash of the fragment. Two fragments on a page need two ids.
+        header: With ``full_html=False``: ``True`` shows *name* and the date above it.
 
     Returns:
-        The complete HTML document.
+        The complete HTML document, or the fragment.
 
     Example::
 
         html = bf.stringify(bf.Text("# Hello"), name="Greeting")
         email_body = html  # or write it anywhere a string goes
+        fragment = bf.stringify(bf.Plot(fig, name="revenue"), full_html=False)  # <div id="revenue" …>
     """
-    wrapped = Briefing.wrap(blocks)
-    return render_report(wrapped, name=name, formatting=formatting, now=now)
+    return _render(blocks, name, formatting, now, full_html, include_assets, embed_id, header)
+
+
+def embed_assets(blocks: Briefing | list[t.Any] | object) -> str:
+    """The CSS and scripts of fragments, once, for the ``<head>`` of a page that holds several.
+
+    Like Plotly's ``get_plotlyjs()``: put it in the page once, then render each
+    fragment with ``include_assets=False``. It holds briefing's CSS scoped to
+    fragments, ``report.js``, the scripts of lab blocks and the chart runtimes
+    (Plotly, Vega) that *blocks* need.
+
+    Args:
+        blocks: The blocks the page's fragments hold: a block, a :class:`Briefing`,
+            or a list of either.
+
+    Returns:
+        ``<style>`` and ``<script>`` tags.
+
+    Example::
+
+        head = bf.embed_assets([chart, table])
+        parts = [bf.stringify(b, full_html=False, include_assets=False) for b in (chart, table)]
+    """
+    items = blocks if isinstance(blocks, list) else [blocks]
+    return render_embed_assets(Briefing.wrap(item) for item in items)
 
 
 __all__: list[str] = [
@@ -169,6 +247,7 @@ __all__: list[str] = [
     "Width",
     # api
     "Preview",
+    "embed_assets",
     "preview",
     "save",
     "save_image",

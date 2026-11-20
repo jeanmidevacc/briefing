@@ -99,3 +99,8 @@ def test_the_same_name_in_two_pages_is_fine() -> None:
 def test_a_name_that_matches_a_made_up_id_is_an_error() -> None:
     with pytest.raises(bf.BriefingError, match="'sel-1-panel-0' matches the id 'sel-1'"):
         bf.stringify(bf.Briefing(bf.Select(bf.Text("a", label="A", name="sel-1-panel-0"), bf.Text("b", label="B"))))
+
+
+def test_headings_of_a_page_that_is_a_text_link_under_its_name() -> None:
+    soup = _render(bf.Select(bf.Text("## Notes {#notes}", label="A", name="a"), bf.Text("b", label="B")))
+    assert _links(soup) == ["a", "a/notes"]

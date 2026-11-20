@@ -1,0 +1,33 @@
+/* briefing embedded fragment (#122), first part: comes before report.css, scoped with it.
+
+   The host page's rules for plain elements (p, table, * …) would reach into the fragment.
+   Each element inside it goes back to the browser's defaults for the properties below,
+   which report.css then styles, as it does in a report. The host's rules are beaten when
+   they are no more specific than one class and one element. Vega charts are left out:
+   they set their fonts as SVG attributes, which this would override. */
+
+@property --bf-rem {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 16px;
+}
+
+.bf-embed *:not(.bf-altair *) {
+  font-family: revert;
+  font-size: revert;
+  font-weight: revert;
+  font-style: revert;
+  font-variant: revert;
+  line-height: revert;
+  letter-spacing: revert;
+  word-spacing: revert;
+  text-transform: revert;
+  text-indent: revert;
+  text-shadow: revert;
+  text-align: revert;
+  color: revert;
+  background-color: revert;
+  list-style: revert;
+  border-collapse: revert;
+  border-spacing: revert;
+}

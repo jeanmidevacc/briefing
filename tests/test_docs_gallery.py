@@ -16,7 +16,7 @@ import pytest
 
 import briefing as bf
 from briefing.blocks.base import Block
-from tests.contract import RULES, parse_report
+from tests.contract import FRAGMENT_RULES, RULES, parse_report
 
 DOCS = Path(__file__).resolve().parents[1] / "docs"
 
@@ -48,11 +48,17 @@ def _report(example_id: str, tmp_path_factory: pytest.TempPathFactory) -> str:
     return _reports[example_id]
 
 
+def _rules(example_id: str) -> dict[str, t.Any]:
+    """The contract of what the example saves: a report, or a fragment (full_html=False, #122)."""
+    return FRAGMENT_RULES if "full_html=False" in BY_ID[example_id].code else RULES
+
+
 def _cases() -> list[t.Any]:
     cases = []
-    for rule in RULES:
-        marks = [pytest.mark.xfail(reason=KNOWN_FAILURES[rule], strict=True)] if rule in KNOWN_FAILURES else []
-        cases += [pytest.param(rule, ex.id, marks=marks, id=f"{rule}:{ex.id}") for ex in EXAMPLES]
+    for ex in EXAMPLES:
+        for rule in _rules(ex.id):
+            marks = [pytest.mark.xfail(reason=KNOWN_FAILURES[rule], strict=True)] if rule in KNOWN_FAILURES else []
+            cases.append(pytest.param(rule, ex.id, marks=marks, id=f"{rule}:{ex.id}"))
     return cases
 
 
@@ -62,7 +68,7 @@ def test_the_docs_have_live_examples() -> None:
 
 @pytest.mark.parametrize(("rule", "example_id"), _cases())
 def test_example_follows_rule(rule: str, example_id: str, tmp_path_factory: pytest.TempPathFactory) -> None:
-    RULES[rule](parse_report(_report(example_id, tmp_path_factory)))
+    _rules(example_id)[rule](parse_report(_report(example_id, tmp_path_factory)))
 
 
 @pytest.mark.parametrize("example_id", [ex.id for ex in EXAMPLES])

@@ -16,7 +16,7 @@ from collections.abc import Callable, Iterator
 
 from bs4 import BeautifulSoup, Tag
 
-from tests.html_helpers import attr, parse
+from tests.html_helpers import attr, classes, parse
 
 #: Put into every user-supplied string by the escaping scenarios. It must never
 #: come back as live markup: an event handler, or a script that would run.
@@ -156,3 +156,74 @@ def check_deterministic(render: Callable[[], str]) -> None:
         pairs = enumerate(zip(first, second, strict=False))
         at = next((i for i, (a, b) in pairs if a != b), min(len(first), len(second)))
         raise AssertionError(f"renders differ at byte {at}: {first[at - 40:at + 40]!r} vs {second[at - 40:at + 40]!r}")
+
+
+# ── fragments (#122): one <div class="bf-embed"> that keeps to itself ─────────
+
+_CSS_COMMENT = re.compile(r"/\*.*?\*/", re.S)
+_CSS_STRING = re.compile(r""""[^"]*"|'[^']*'""")
+
+
+def fragment_root(soup: Tag) -> Tag:
+    """The fragment's root: its one top-level element, a ``div.bf-embed``."""
+    tops = [child for child in soup.children if isinstance(child, Tag)]
+    assert len(tops) == 1 and tops[0].name == "div" and "bf-embed" in classes(tops[0]), (
+        f"a fragment is one <div class=bf-embed>, not {[t.name for t in tops]}"
+    )
+    return tops[0]
+
+
+def css_selectors(css: str) -> list[str]:
+    """Every selector of a stylesheet, at-rule bodies included."""
+    css = _CSS_STRING.sub('""', _CSS_COMMENT.sub("", css))
+    selectors = []
+    for prelude in re.findall(r"([^{};]+)\{", css):
+        if prelude.strip().startswith("@"):
+            continue
+        depth, start = 0, 0
+        for i, char in enumerate(prelude + ","):
+            depth += (char in "([") - (char in ")]")
+            if char == "," and depth == 0:
+                selectors.append(" ".join(prelude[start:i].split()))
+                start = i + 1
+    return [s for s in selectors if s]
+
+
+def check_fragment_shape(soup: Tag) -> None:
+    """No ``<html>``, ``<head>`` or ``<body>``: one root ``<div>`` naming the briefing version."""
+    import briefing
+
+    assert soup.find(["html", "head", "body"]) is None, "a fragment has no <html>, <head> or <body>"
+    root = fragment_root(soup)
+    assert attr(root, "id"), "the fragment's root has no id"
+    assert attr(root, "data-bf-version") == briefing.__version__
+
+
+def check_fragment_selectors(soup: Tag) -> None:
+    """Every CSS selector starts at the fragment: ``.bf-embed``, or an id that starts with its embed id."""
+    embed_id = re.escape(attr(fragment_root(soup), "id"))
+    scoped = re.compile(rf"(?:\.bf-embed|#{embed_id}(?:-[\w-]*)?)(?![\w-])")
+    for sheet in soup.find_all("style"):
+        loose = [s for s in css_selectors(sheet.get_text()) if not scoped.match(s)]
+        assert not loose, f"selectors that reach outside the fragment: {loose[:5]}"
+
+
+def check_fragment_ids(soup: Tag) -> None:
+    """Every id starts with the embed id (the root's id), SVG ids included."""
+    embed_id = attr(fragment_root(soup), "id")
+    ids = [attr(tag, "id") for tag in soup.find_all(id=True)]
+    stray = [i for i in ids if i != embed_id and not i.startswith(f"{embed_id}-")]
+    assert not stray, f"ids that don't start with {embed_id!r}: {stray[:5]}"
+
+
+#: The rules every fragment follows: the report rules that apply to a part of a page, and its own.
+FRAGMENT_RULES: dict[str, Callable[[Tag], None]] = {
+    "no_external_urls": check_no_external_urls,
+    "unique_ids": check_unique_ids,
+    "aria_references": check_aria_references,
+    "json_scripts_parse": check_json_scripts_parse,
+    "markdown_rendered": check_markdown_rendered,
+    "fragment_shape": check_fragment_shape,
+    "fragment_selectors": check_fragment_selectors,
+    "fragment_ids": check_fragment_ids,
+}

@@ -15,6 +15,7 @@ import pytest
 import briefing as bf
 from briefing.blocks.base import Block
 from tests.banner_images import RED_SVG
+from tests.contract import PAYLOAD
 
 #: The "calendar" scenario keeps the deprecated hour view (#111) so the tests still cover it;
 #: modules that render the scenarios filter its warning with this.
@@ -165,4 +166,41 @@ SCENARIOS: dict[str, Build] = {
         ),
         bf.Toggle(bf.Select(bf.Text("a", label="A"), bf.Text("b", label="B"), type="dropdown"), label="More"),
     ),
+}
+
+
+# ── user text, to check it stays escaped ──────────────────────────────────────
+
+
+def _payload_frame() -> pd.DataFrame:
+    return pd.DataFrame({PAYLOAD: [PAYLOAD, "plain"], "n": [1, 2]})
+
+
+#: Every user-supplied string set to PAYLOAD. ``Text`` and ``HTML`` content is
+#: raw markup by design (see CLAUDE.md), so only their labels are tested.
+ESCAPE_SCENARIOS: dict[str, Callable[[], tuple[bf.Briefing, str]]] = {
+    "report-name": lambda: (bf.Briefing(bf.Text("x")), PAYLOAD),
+    "report-footer": lambda: (bf.Briefing(bf.Text("x"), footer=PAYLOAD), "R"),
+    "select-tab-labels": lambda: (bf.Briefing(tabs(bf.Text("a", label=PAYLOAD), bf.Text("b", label=PAYLOAD))), "R"),
+    "select-dropdown-labels": lambda: (
+        bf.Briefing(bf.Select(bf.Text("a", label=PAYLOAD), bf.HTML("<b>b</b>", label=PAYLOAD), type="dropdown")),
+        "R",
+    ),
+    "toggle-label": lambda: (bf.Briefing(bf.Toggle(bf.Text("a"), label=PAYLOAD)), "R"),
+    "page-titles": lambda: (bf.Briefing(bf.Page(bf.Text("a"), title=PAYLOAD), bf.Page(bf.Text("b"), title="2")), "R"),
+    "code": lambda: (bf.Briefing(bf.Code(PAYLOAD, language=PAYLOAD, caption=PAYLOAD)), "R"),
+    "formula": lambda: (bf.Briefing(bf.Formula(PAYLOAD, caption=PAYLOAD)), "R"),
+    "bignumber": lambda: (bf.Briefing(bf.BigNumber(PAYLOAD, PAYLOAD, change=PAYLOAD, is_upward_change=True)), "R"),
+    "alert": lambda: (bf.Briefing(bf.Alert(PAYLOAD, title=PAYLOAD)), "R"),
+    "plot-caption": lambda: (bf.Briefing(bf.Plot(matplotlib_figure(), caption=PAYLOAD)), "R"),
+    "table": lambda: (bf.Briefing(bf.Table(_payload_frame(), caption=PAYLOAD)), "R"),
+    "datatable": lambda: (bf.Briefing(bf.DataTable(_payload_frame(), caption=PAYLOAD)), "R"),
+    "dataprofile": lambda: (bf.Briefing(bf.lab.DataProfile(_payload_frame())), "R"),
+    "datadive": lambda: (bf.Briefing(bf.lab.DataDive(_payload_frame(), color=PAYLOAD)), "R"),
+    "banner-alt": lambda: (bf.Briefing(tabs(bf.Banner("x", image=RED_SVG, alt=PAYLOAD, label=PAYLOAD),
+                                             bf.Text("b", label="B"))), "R"),
+    "calendar": lambda: (bf.Briefing(bf.lab.CalendarHeatmap(
+        pd.DataFrame({"day": pd.to_datetime(["2026-01-05", "2026-01-06"]), "who": [PAYLOAD, "b"]}),
+        date="day", group="who", events=pd.DataFrame({"start": ["2026-01-05"], "label": [PAYLOAD]}),
+        on_click="rows")), "R"),
 }

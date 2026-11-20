@@ -1,0 +1,44 @@
+/* briefing embedded fragment (#122), last part: comes after report.css, scoped with it.
+
+   The root stands in for the report's <html> and <body>. It sets every inherited property
+   the report relies on, so the host's values don't leak in, and paints the theme's
+   background. --bf-rem is the reader's default font size (what rem means in a report), so
+   lengths don't follow a host page that changes its own root font size. */
+
+.bf-embed {
+  --bf-rem: 1em;
+  display: block;
+  margin: 0;
+  padding: 1rem;
+  border: 0;
+  border-radius: var(--bf-radius);
+  background: var(--bf-bg);
+  color: var(--bf-text);
+  font: normal normal 400 medium / 1.6 var(--bf-font);
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-align: start;
+  text-indent: 0;
+  text-transform: none;
+  text-shadow: none;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: manual;
+  direction: ltr;
+  visibility: visible;
+  cursor: auto;
+  list-style: disc outside none;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.bf-embed .bf-embed__footer {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--bf-muted);
+}
+
+@media print {
+  .bf-embed { padding: 0; border-radius: 0; }
+}
