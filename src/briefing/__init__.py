@@ -20,7 +20,6 @@ Quick start::
     bf.save(report, "analysis.html")
 """
 import typing as t
-import warnings
 import webbrowser
 from datetime import datetime
 from pathlib import Path
@@ -258,36 +257,20 @@ __all__: list[str] = [
 ]
 
 
-# ── deprecated aliases (removed after 0.2) ───────────────────────────────────
+# ── names removed in 0.3.0, deprecated since 0.2 ──────────────────────────────
 
-#: old name -> (new name, object)
-_RENAMED: dict[str, tuple[str, object]] = {
-    "Blocks": ("Briefing", Briefing),
-    "BaseBlock": ("Block", Block),
-    "save_report": ("save", save),
-    "stringify_report": ("stringify", stringify),
+#: old name -> what to use instead
+_REMOVED: dict[str, str] = {
+    "Blocks": "Briefing",
+    "BaseBlock": "Block",
+    "save_report": "save",
+    "stringify_report": "stringify",
+    "DataProfile": "lab.DataProfile",
+    "DataDive": "lab.DataDive",
 }
-
-#: names that moved into the briefing.lab subpackage
-_MOVED_TO_LAB: frozenset[str] = frozenset({"DataProfile", "DataDive"})
 
 
 def __getattr__(name: str) -> t.Any:
-    if name in _RENAMED:
-        new, obj = _RENAMED[name]
-        warnings.warn(
-            f"briefing.{name} is deprecated and will be removed after 0.2 — "
-            f"use briefing.{new}.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return obj
-    if name in _MOVED_TO_LAB:
-        warnings.warn(
-            f"briefing.{name} moved to briefing.lab.{name} (pip install briefing[lab]) "
-            f"and will be removed after 0.2 — use briefing.lab.{name}.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return getattr(lab, name)
+    if name in _REMOVED:
+        raise AttributeError(f"briefing.{name} was removed in 0.3.0: use briefing.{_REMOVED[name]}.")
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -33,9 +33,8 @@ class Plot(Block):
     Args:
         figure: A Plotly, Altair, Matplotlib (or Seaborn / Plotnine) or Bokeh figure.
         caption: Optional caption shown below the chart.
-        responsive: Let the chart fill the width of its container.
-        scale: Deprecated, has no effect, and is removed after 0.2. Size the figure
-            in its plotting library instead, e.g. Matplotlib's ``figsize=(w, h)``.
+        responsive: Let the chart fill the width of its container. Size the figure in
+            its plotting library, e.g. Matplotlib's ``figsize=(w, h)``.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
@@ -50,23 +49,13 @@ class Plot(Block):
         figure: t.Any,
         caption: str | None = None,
         responsive: bool = True,
-        scale: float | None = None,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
-        if scale is not None:
-            warnings.warn(
-                "Plot(scale=...) is deprecated, has no effect, and will be removed after 0.2. "
-                "Size the figure in its plotting library instead, e.g. Matplotlib's figsize=(w, h); "
-                "responsive=True already makes it fill its container.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
         super().__init__(name=name, label=label)
         self.figure = figure
         self.caption = _truncate(caption, _MAX_CAPTION_LEN) if caption else caption
         self.responsive = responsive
-        self.scale = 1.0 if scale is None else scale
 
 
 class Table(Block):

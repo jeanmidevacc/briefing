@@ -39,6 +39,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in that root, once. A full report calls `briefing.init(document)`, so it behaves as before;
   this lets two briefing outputs share a page later (#123).
 
+### Removed
+
+- The names deprecated in 0.2 are gone, as their warnings announced: `bf.Blocks`,
+  `bf.BaseBlock`, `bf.save_report` and `bf.stringify_report` (use `bf.Briefing`, `bf.Block`,
+  `bf.save` and `bf.stringify`), and `bf.DataProfile` / `bf.DataDive` at the top level (use
+  `bf.lab.DataProfile` / `bf.lab.DataDive`). Each old name now raises an `AttributeError` that
+  says what to use instead. `Plot(scale=...)`, which had no effect, is removed too: size the
+  figure in its plotting library.
+
 ### Fixed
 
 - A `Text` or `HTML` block that leaves a comment, a tag or a `<script>`, `<style>` or
