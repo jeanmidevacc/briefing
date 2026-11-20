@@ -67,10 +67,15 @@ To put a chart, a table or a whole report into another page (a docs site, a note
 `bf.stringify(report, full_html=False)` gives one self-contained `<div>`, like Plotly's
 `to_html(full_html=False)`: it keeps its look and interactivity, and several share a page.
 
+A report can also be written as JSON, by a coding agent or any other program:
+`bf.validate(spec)` lists what is wrong in it, each problem with its place, and
+`bf.from_spec(spec, data={"sales": df})` builds the report. `bf.to_spec(report)` gives the
+JSON of a report written in Python, and `bf.schema()` the format's JSON Schema.
+
 ## Documentation
 
 **[briefing.readthedocs.io](https://briefing.readthedocs.io)** has a guide for each block family
-with live examples, themes, notebooks, printing and export, embedding in other pages, the
+with live examples, themes, notebooks, printing and export, embedding in other pages, reports as JSON, the
 `briefing.lab` blocks, recipes and the full API reference.
 
 - [Changelog](CHANGELOG.md)

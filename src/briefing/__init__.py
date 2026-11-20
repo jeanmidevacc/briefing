@@ -66,6 +66,9 @@ from briefing.renderers.formatting import Formatting, TextAlignment, Width
 from briefing.renderers.fragment import render_embed_assets, render_fragment
 from briefing.renderers.html import render_report
 
+# ── the report as JSON: to_spec / from_spec / validate (#31) ─────────────────
+from briefing.spec import Diagnostic, from_spec, schema, to_spec, validate
+
 # ── public API ────────────────────────────────────────────────────────────────
 
 
@@ -252,6 +255,12 @@ __all__: list[str] = [
     "save_image",
     "save_pdf",
     "stringify",
+    # the report as JSON
+    "Diagnostic",
+    "from_spec",
+    "schema",
+    "to_spec",
+    "validate",
     # meta
     "__version__",
 ]

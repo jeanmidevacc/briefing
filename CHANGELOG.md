@@ -19,6 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   copied is the report as it was made, not as clicks left it: the report carries a
   compressed copy of its untouched blocks. Where copying is refused, the code shows in a
   dialog. The buttons never print or export. A report without `"embed"` is unchanged.
+- Reports as JSON (#31). `bf.to_spec(report)` gives a report's JSON form (each block as
+  `{"type": "Text", ...}` with the constructor's parameters as keys) and the dataframes and
+  figures it names by reference; `bf.from_spec(spec, data)` builds the report back, byte for
+  byte the same. With `to_spec(..., inline=True)`, tables, Plotly and Altair charts and
+  images go into the JSON when they come back exactly the same. `bf.validate(spec, data)`
+  (or `bf.validate(report)`) returns every problem as a `bf.Diagnostic` with a code, a JSON
+  Pointer to where it is, a message and a hint, and never raises: unknown types and
+  options, wrong types, unknown references, duplicate names, empty containers, a block's
+  own checks and warnings, and whatever stops the report from rendering. `bf.schema()`
+  returns the format's JSON Schema, which also ships as `briefing/schema/v1.json`. A
+  `Select`'s `type` is written `"select_type"` in JSON, since `"type"` names the block.
 
 ## [0.3.0] - 2026-11-20
 

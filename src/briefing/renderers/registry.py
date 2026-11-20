@@ -108,15 +108,27 @@ class IdGen:
         """The link id of *block*, if it is named."""
         return self._links.get(id(block))
 
-    def check_links(self) -> None:
-        """Raise if a name matches an id briefing made up, so every id in the page stays unique."""
+    def clashes(self) -> list[tuple[str, str]]:
+        """Each claimed link id that matches an id briefing made up, with that id."""
+        found = []
         for link in self._owners:
             clash = next((m for m in self._made if link == m or link.startswith(f"{m}-")), None)
             if clash is not None:
-                raise BriefingError(
-                    f"The name {link!r} matches the id {clash!r} that briefing gives another element "
-                    "of this report. Pick a name that doesn't look like '<word>-<number>'."
-                )
+                found.append((link, clash))
+        return found
+
+    def check_links(self) -> None:
+        """Raise if a name matches an id briefing made up, so every id in the page stays unique."""
+        for link, clash in self.clashes():
+            raise BriefingError(clash_message(link, clash))
+
+
+def clash_message(link: str, made: str) -> str:
+    """What :meth:`IdGen.check_links` says when the name *link* matches the made-up id *made*."""
+    return (
+        f"The name {link!r} matches the id {made!r} that briefing gives another element "
+        "of this report. Pick a name that doesn't look like '<word>-<number>'."
+    )
 
 
 _RENDERERS: dict[type, Renderer] = {}
