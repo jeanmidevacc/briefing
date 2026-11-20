@@ -25,13 +25,18 @@ Renderer = Callable[[t.Any, "IdGen"], str]
 
 
 class IdGen:
-    """Sequential DOM-ID generator, unique within one render pass."""
+    """Sequential DOM-ID generator, unique within one render pass.
 
-    def __init__(self) -> None:
+    With a *prefix*, every id starts with ``<prefix>-``, so the ids of two outputs
+    on one page can't collide.
+    """
+
+    def __init__(self, prefix: str | None = None) -> None:
         self._counter = itertools.count(1)
+        self._prefix = f"{prefix}-" if prefix else ""
 
     def next(self, prefix: str = "bf") -> str:
-        return f"{prefix}-{next(self._counter)}"
+        return f"{self._prefix}{prefix}-{next(self._counter)}"
 
 
 _RENDERERS: dict[type, Renderer] = {}

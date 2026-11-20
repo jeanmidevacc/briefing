@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every report says which version of briefing made it: a footer line, "Made with briefing
   0.3.0", and `<meta name="generator">` in the page head. `Briefing(footer="Analytics team")`
   puts text before that line; the line itself can't be turned off (#23).
+- `Formatting.to_css_vars(selector=":root")` takes the selector to put the theme on, so a
+  theme can apply to one element instead of the whole page (#123).
+
+### Changed
+
+- The report's scripts now work inside the root they are given instead of on the whole page:
+  `window.briefing.init(root)` wires up tabs, toggles, tables, calendars and the export menu
+  in that root, once. A full report calls `briefing.init(document)`, so it behaves as before;
+  this lets two briefing outputs share a page later (#123).
 
 ### Fixed
 

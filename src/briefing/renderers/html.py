@@ -404,7 +404,9 @@ def render_report(
     export = getattr(normalised, "export", ())
     if export:  # the menu's script only ships in reports that asked for the menu
         extra_js.append(_EXPORT_JS)
-    report_js = "\n".join([_JS, *extra_js])
+    # The scripts register their parts with window.briefing; a full report then wires up the
+    # whole document once (#123).
+    report_js = "\n".join([_JS, *extra_js, "briefing.init(document);"])
 
     idgen = _IdGen()
     content_html = _render_block(normalised, idgen)

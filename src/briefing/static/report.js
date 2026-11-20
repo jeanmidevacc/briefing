@@ -1,6 +1,55 @@
-/* briefing report — interactive behaviour (tabs + toggles). Vanilla JS, no deps. */
+/* briefing report — the shared runtime (window.briefing) and the core behaviour: charts, tabs,
+   dropdowns, DataTable, toggles and print. Vanilla JS, no deps. */
 (function () {
   'use strict';
+
+  // ── Runtime ──────────────────────────────────────────────────────────────────
+  // One per page, shared by every briefing report or fragment on it. Each script registers
+  // a part: make(runtime) runs once per page and returns setup(root), which briefing.init(root)
+  // runs on that root, once (the root's data-bf-ready flag says it is done). Parts query from
+  // their root only, add page-wide listeners only through runtime.on, and do their print
+  // work through runtime.onPrint, which the runtime calls on beforeprint and afterprint.
+
+  if (!window.briefing) {
+    window.briefing = (function () {
+      var parts = [], roots = [], registered = {}, printHooks = [], printing = false;
+
+      function on(target, type, handler, capture) { target.addEventListener(type, handler, !!capture); }
+
+      on(window, 'beforeprint', function () {
+        if (printing) return;
+        printing = true;
+        printHooks.forEach(function (hook) { hook.before(); });
+      });
+      on(window, 'afterprint', function () {
+        if (!printing) return;
+        printing = false;
+        printHooks.forEach(function (hook) { hook.after(); });
+      });
+
+      var runtime = {
+        on: on,
+        onPrint: function (before, after) { printHooks.push({ before: before, after: after }); }
+      };
+
+      return {
+        register: function (name, make) {
+          if (registered[name]) return;  // the same script, inlined again by another output
+          registered[name] = true;
+          var setup = make(runtime);
+          parts.push(setup);
+          roots.forEach(function (root) { setup(root); });  // roots initialized before it came
+        },
+        init: function (root) {
+          var flag = root.documentElement || root;  // a document is flagged on its <html>
+          if (flag.hasAttribute('data-bf-ready')) return;
+          flag.setAttribute('data-bf-ready', '');
+          roots.push(root);
+          parts.forEach(function (setup) { setup(root); });
+        }
+      };
+    })();
+  }
 
   // Plotly sizes a chart when it draws it; one drawn while hidden keeps the 700 px
   // default. Redraw the charts inside a panel once that panel is shown.
@@ -16,19 +65,19 @@
 
   // ── Altair (Vega-Lite) ───────────────────────────────────────────────────────
 
-  document.querySelectorAll('.bf-altair').forEach(function (el) {
+  function drawAltair(el) {
     var specEl = el.nextElementSibling;
     if (!window.vegaEmbed || !specEl) return;
     // No actions menu: it links to the online Vega editor.
     window.vegaEmbed(el, JSON.parse(specEl.textContent), { actions: false, renderer: 'svg' })
       .catch(function (err) { el.textContent = 'This chart could not be drawn: ' + err; });
-  });
+  }
 
   function thousands(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
 
   // ── Select / tabs ───────────────────────────────────────────────────────────
 
-  document.querySelectorAll('.bf-select:not(.bf-select--dropdown)').forEach(function (sel) {
+  function setupTabs(sel) {
     var tablist = sel.querySelector(':scope > .bf-select__tablist');
     if (!tablist) return;
 
@@ -59,11 +108,11 @@
     });
 
     activate(0);
-  });
+  }
 
   // ── Select / dropdown ────────────────────────────────────────────────────────
 
-  document.querySelectorAll('.bf-select--dropdown').forEach(function (sel) {
+  function setupDropdown(sel) {
     var select = sel.querySelector('.bf-select__select');
     var panels = Array.from(sel.querySelectorAll('.bf-select__panel'));
 
@@ -79,11 +128,11 @@
     }
 
     activate(0);
-  });
+  }
 
   // ── DataTable ────────────────────────────────────────────────────────────────
 
-  document.querySelectorAll('.bf-datatable').forEach(function (container) {
+  function setupDataTable(container, runtime) {
     var tbody    = container.querySelector('.bf-dt__table tbody');
     var search   = container.querySelector('.bf-dt__search');
     var countEl  = container.querySelector('.bf-dt__count');
@@ -182,7 +231,7 @@
 
     // Print every row matching the search, up to PRINT_ROWS, instead of one page.
     var printNote = null;
-    window.addEventListener('beforeprint', function () {
+    runtime.onPrint(function () {
       allRows.forEach(function (r) { r.hidden = true; });
       filtered.slice(0, PRINT_ROWS).forEach(function (r) { r.hidden = false; });
       if (filtered.length > PRINT_ROWS && !printNote) {
@@ -191,20 +240,19 @@
         printNote.textContent = 'Printed ' + thousands(PRINT_ROWS) + ' of ' + thousands(filtered.length) + ' rows.';
         container.querySelector('.bf-dt__scroll').insertAdjacentElement('afterend', printNote);
       }
-    });
-    window.addEventListener('afterprint', function () {
+    }, function () {
       if (printNote) { printNote.remove(); printNote = null; }
       render();
     });
 
     render();
-  });
+  }
 
   // ── Toggle ───────────────────────────────────────────────────────────────────
 
-  document.querySelectorAll('.bf-toggle__header').forEach(function (header) {
+  function setupToggle(header, root) {
     var bodyId = header.getAttribute('aria-controls');
-    var body   = bodyId ? document.getElementById(bodyId) : header.nextElementSibling;
+    var body   = bodyId ? root.querySelector('[id="' + bodyId + '"]') : header.nextElementSibling;
 
     // Start collapsed (HTML already sets hidden + aria-expanded="false").
     function toggle() {
@@ -218,40 +266,48 @@
     header.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
     });
-  });
+  }
 
   // ── Print ────────────────────────────────────────────────────────────────────
   // While printing, html.bf-printing lays the report out at the paper's width
   // with every panel and toggle shown (report.css), each panel under its tab or
   // option label. Charts are resized for that width, and everything is restored
   // afterwards. The class also applies on screen, so hidden charts can be measured.
+  // A root that is an element (an embedded fragment) gets the class itself.
 
-  var printing = false;
-
-  window.addEventListener('beforeprint', function () {
-    if (printing) return;
-    printing = true;
-    document.documentElement.classList.add('bf-printing');
-    document.querySelectorAll('.bf-select').forEach(function (sel) {
-      var labels = sel.classList.contains('bf-select--dropdown')
-        ? Array.from(sel.querySelectorAll('.bf-select__select option'))
-        : Array.from(sel.querySelectorAll(':scope > .bf-select__tablist > .bf-select__tab'));
-      sel.querySelectorAll(':scope > .bf-select__panel').forEach(function (panel, i) {
-        var label = document.createElement('div');
-        label.className = 'bf-print-label';
-        label.textContent = labels[i] ? labels[i].textContent : '';
-        panel.insertAdjacentElement('beforebegin', label);
+  function setupPrint(root, runtime) {
+    var flag = root.documentElement || root;
+    var body = root.body || root;
+    runtime.onPrint(function () {
+      flag.classList.add('bf-printing');
+      root.querySelectorAll('.bf-select').forEach(function (sel) {
+        var labels = sel.classList.contains('bf-select--dropdown')
+          ? Array.from(sel.querySelectorAll('.bf-select__select option'))
+          : Array.from(sel.querySelectorAll(':scope > .bf-select__tablist > .bf-select__tab'));
+        sel.querySelectorAll(':scope > .bf-select__panel').forEach(function (panel, i) {
+          var label = document.createElement('div');
+          label.className = 'bf-print-label';
+          label.textContent = labels[i] ? labels[i].textContent : '';
+          panel.insertAdjacentElement('beforebegin', label);
+        });
       });
+      resizePlots(body);
+    }, function () {
+      root.querySelectorAll('.bf-print-label').forEach(function (label) { label.remove(); });
+      flag.classList.remove('bf-printing');
+      resizePlots(body);
     });
-    resizePlots(document.body);
-  });
+  }
 
-  window.addEventListener('afterprint', function () {
-    if (!printing) return;
-    printing = false;
-    document.querySelectorAll('.bf-print-label').forEach(function (label) { label.remove(); });
-    document.documentElement.classList.remove('bf-printing');
-    resizePlots(document.body);
+  window.briefing.register('report', function (runtime) {
+    return function (root) {
+      root.querySelectorAll('.bf-altair').forEach(drawAltair);
+      root.querySelectorAll('.bf-select:not(.bf-select--dropdown)').forEach(setupTabs);
+      root.querySelectorAll('.bf-select--dropdown').forEach(setupDropdown);
+      root.querySelectorAll('.bf-datatable').forEach(function (container) { setupDataTable(container, runtime); });
+      root.querySelectorAll('.bf-toggle__header').forEach(function (header) { setupToggle(header, root); });
+      setupPrint(root, runtime);
+    };
   });
 
 })();

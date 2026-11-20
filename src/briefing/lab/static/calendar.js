@@ -3,6 +3,8 @@
 (function () {
   'use strict';
 
+  var runtime;  // the page helpers of window.briefing, set when this script registers
+
   // The SVGs fit the width of their block (CSS, #106). Publish the scale k on the view: legend
   // swatches follow the cells (--bf-cal-k), and labels change size at half the cells' rate, so
   // they stay readable when the calendar grows or shrinks (--bf-cal-text, in the SVG's units).
@@ -15,7 +17,7 @@
     view.style.setProperty('--bf-cal-k', String(k));
     view.style.setProperty('--bf-cal-text', String((1 + k) / (2 * k)));
   }
-  document.querySelectorAll('.bf-calendar').forEach(function (figure) {
+  function setupSizing(figure) {
     var views = figure.querySelectorAll('.bf-cal__views > .bf-select__panel');
     views = views.length ? Array.prototype.slice.call(views) : [figure];
     views.forEach(function (view) {
@@ -23,14 +25,15 @@
       if (window.ResizeObserver) {
         new ResizeObserver(function () { measure(view); }).observe(view);
       } else {
-        window.addEventListener('resize', function () { measure(view); });
+        runtime.on(window, 'resize', function () { measure(view); });
       }
     });
-  });
+  }
 
   // Hover tooltip (#109): instant, themed, and shown on keyboard focus and tap too. Its text comes
   // from each cell's <title>, which is then removed so the browser's own slow tooltip doesn't double
   // up; clickable cells keep the text as their aria-label. Built with textContent only.
+  // One tooltip shows at a time on the page, whichever briefing output it belongs to.
   var tips = [];
   function hideTips() { tips.forEach(function (tip) { tip.hidden = true; }); }
   function showTip(tip, cell) {
@@ -47,13 +50,13 @@
     var box = cell.getBoundingClientRect(), gap = 6, edge = 4;
     var width = tip.offsetWidth, height = tip.offsetHeight;
     var left = box.left + box.width / 2 - width / 2;
-    left = Math.max(edge, Math.min(left, document.documentElement.clientWidth - width - edge));
+    left = Math.max(edge, Math.min(left, cell.ownerDocument.documentElement.clientWidth - width - edge));
     var top = box.top - height - gap;
     if (top < edge) top = box.bottom + gap;
     tip.style.left = left + 'px';
     tip.style.top = top + 'px';
   }
-  document.querySelectorAll('.bf-calendar').forEach(function (figure) {
+  function setupTooltips(figure) {
     var tip = document.createElement('div');
     tip.className = 'bf-cal__tip';
     tip.setAttribute('role', 'tooltip');
@@ -72,17 +75,18 @@
       cell.addEventListener('blur', hideTips);
       cell.addEventListener('pointerdown', function (e) { if (e.pointerType !== 'mouse') showTip(tip, cell); });
     });
-  });
-  if (tips.length) {
-    // A tap elsewhere, scrolling (the page or a calendar's own scroll box) or Escape hides it.
-    document.addEventListener('pointerdown', function (e) {
-      if (!(e.target.closest && e.target.closest('[data-tip]'))) hideTips();
-    });
-    window.addEventListener('scroll', hideTips, true);
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideTips(); });
+    if (tips.length === 1) {
+      // With the first tooltip on the page: a tap elsewhere, scrolling (the page or a
+      // calendar's own scroll box) or Escape hides it.
+      runtime.on(document, 'pointerdown', function (e) {
+        if (!(e.target.closest && e.target.closest('[data-tip]'))) hideTips();
+      });
+      runtime.on(window, 'scroll', hideTips, true);
+      runtime.on(document, 'keydown', function (e) { if (e.key === 'Escape') hideTips(); });
+    }
   }
 
-  document.querySelectorAll('.bf-calendar').forEach(function (figure) {
+  function setupRows(figure) {
     var dataEl = figure.querySelector('script.bf-cal__rows');
     if (!dataEl) return;
     var data = JSON.parse(dataEl.textContent);
@@ -136,5 +140,15 @@
       });
     });
     panel.querySelector('.bf-cal__panel-close').addEventListener('click', function () { panel.hidden = true; });
+  }
+
+  window.briefing.register('calendar', function (helpers) {
+    runtime = helpers;
+    return function (root) {
+      var figures = root.querySelectorAll('.bf-calendar');
+      figures.forEach(setupSizing);
+      figures.forEach(setupTooltips);
+      figures.forEach(setupRows);
+    };
   });
 })();

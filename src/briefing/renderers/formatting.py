@@ -137,14 +137,24 @@ class Formatting:
 
     # ── helpers ───────────────────────────────────────────────────────────────
 
-    def to_css_vars(self) -> str:
-        """Render theme values as a CSS ``:root { }`` block."""
+    def to_css_vars(self, selector: str = ":root") -> str:
+        """Render the theme as a CSS rule that sets the ``--bf-*`` variables.
+
+        Args:
+            selector: The CSS selector the variables are set on. ``:root`` themes the
+                whole page; an element's selector (``#revenue``) themes only that element,
+                so outputs with different themes can share a page.
+
+        Example::
+
+            bf.Formatting.dark().to_css_vars("#revenue")  # '#revenue {\n  --bf-bg: ...'
+        """
         try:
             w = _WIDTH_CSS[Width(self.width)]
         except ValueError:
             w = self.width  # caller passed a raw CSS value like "60rem"
         return (
-            ":root {\n"
+            f"{selector} {{\n"
             f"  --bf-bg:         {self.bg_color};\n"
             f"  --bf-bg-rgb:     {_rgb_triplet(self.bg_color)};\n"
             f"  --bf-accent:     {self.accent_color};\n"

@@ -2,14 +2,12 @@
 (function () {
   'use strict';
 
-  var menu = document.querySelector('.bf-export');
-  if (!menu) return;
-
   // File name: the report title, plus the open page's tab label when there are pages.
-  function fileName() {
-    var tab = document.querySelector(
+  function fileName(root) {
+    var tab = root.querySelector(
       '.bf-blocks > .bf-select:only-child > .bf-select__tablist > .bf-select__tab[aria-selected="true"]');
-    var name = (document.title || 'report') + (tab ? ' ' + tab.textContent : '');
+    var title = root.querySelector('.bf-report__title');
+    var name = ((title && title.textContent) || 'report') + (tab ? ' ' + tab.textContent : '');
     return (name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'report') + '.png';
   }
 
@@ -43,11 +41,11 @@
   // (CSS px, the page's own top padding), so content never touches the image's edge.
   var MARGIN = 32;
 
-  function savePng() {
-    var report = document.querySelector('.bf-report');
+  function savePng(root, menu) {
+    var report = root.querySelector('.bf-report');
     var rect = report.getBoundingClientRect();
     var width = Math.ceil(rect.width), height = Math.ceil(rect.height), scale = 2;
-    var background = getComputedStyle(document.body).backgroundColor;
+    var background = getComputedStyle(root.body || root).backgroundColor;
     var copy = cloneWithStyles(report);
     copy.style.margin = '0';
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '">' +
@@ -66,8 +64,8 @@
       canvas.toBlob(function (blob) {
         var link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = fileName();
-        document.body.appendChild(link);
+        link.download = fileName(root);
+        menu.appendChild(link);
         link.click();
         link.remove();
         setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
@@ -76,6 +74,11 @@
     image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
 
-  var png = menu.querySelector('.bf-export__btn[data-export="png"]');
-  if (png) png.addEventListener('click', savePng);
+  window.briefing.register('export', function () {
+    return function (root) {
+      var menu = root.querySelector('.bf-export');
+      var png = menu && menu.querySelector('.bf-export__btn[data-export="png"]');
+      if (png) png.addEventListener('click', function () { savePng(root, menu); });
+    };
+  });
 })();
