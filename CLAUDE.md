@@ -68,6 +68,11 @@ present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer
   the `bf.` prefix (`tests/test_readme.py` rejects the old `fl.`).
 - Static JavaScript is vanilla ES5 inside an IIFE (`var`, `function`), with no build step
   and no dependency. CSS uses the `--bf-*` variables so every theme applies.
+- Each script registers a part with `window.briefing.register(name, make)` (the runtime at the
+  top of `report.js`); `briefing.init(root)` then runs it on each root once. A part queries
+  from its root, never from `document`, adds page-wide listeners only through `runtime.on`
+  and does print work through `runtime.onPrint`. `tests/test_static_scripts.py` checks this,
+  and `tests/test_browser/test_roots.py` checks two roots on one page.
 - Renaming or removing public API: keep the old name in `__init__.__getattr__` with a
   `DeprecationWarning` that says when it goes away, and add a test in
   `tests/test_deprecations.py`.

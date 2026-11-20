@@ -3,7 +3,7 @@
 (function () {
   'use strict';
 
-  document.querySelectorAll('.bf-datadive').forEach(function (container) {
+  function setupDive(container) {
     var dataEl = container.querySelector('.bf-dd__data');
     var metaEl = container.querySelector('.bf-dd__meta');
     var svgEl  = container.querySelector('.bf-dd__plot');
@@ -371,6 +371,10 @@
     });
 
     redraw();
+  }
+
+  window.briefing.register('lab', function () {
+    return function (root) { root.querySelectorAll('.bf-datadive').forEach(setupDive); };
   });
 
 })();
