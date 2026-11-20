@@ -123,6 +123,31 @@ body {
 .bf-html li        { margin-bottom: 0.25rem; }
 .bf-text a,
 .bf-html a         { color: var(--bf-accent); text-decoration: underline; }
+/* ── Links (#24): a named heading's actions show on hover or keyboard focus ── */
+[data-bf-link] { scroll-margin-top: 1rem; }
+.bf-heading-actions {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin-left: 0.4em;
+  vertical-align: middle;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+:is(h1, h2, h3, h4, h5, h6):hover > .bf-heading-actions,
+.bf-heading-actions:focus-within { opacity: 1; }
+@media (hover: none) { .bf-heading-actions { opacity: 1; } }
+.bf-text .bf-heading-link {
+  display: inline-flex;
+  padding: 0.15em;
+  border-radius: 0.25rem;
+  color: var(--bf-muted);
+  text-decoration: none;
+}
+.bf-text .bf-heading-link:hover,
+.bf-text .bf-heading-link:focus-visible,
+.bf-text .bf-heading-link[data-copied] { color: var(--bf-accent); }
+html.bf-printing .bf-heading-actions { display: none; }
+
 .bf-text strong,
 .bf-html strong    { font-weight: 600; }
 .bf-text em,
@@ -804,4 +829,5 @@ html.bf-printing .bf-print-label {
   .bf-cal__days, .bf-cal__hours { min-width: 0; --bf-cal-text: 1; }
   .bf-cal__swatch { width: 11px; height: 11px; }
   .bf-cal__tip { display: none !important; }
+  .bf-heading-actions { display: none; }
 }

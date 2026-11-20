@@ -18,7 +18,10 @@ from __future__ import annotations
 import base64
 import html as _html
 import os
+import re
+import typing as t
 import warnings
+from collections.abc import Callable
 from datetime import UTC, datetime
 from importlib.resources import files
 
@@ -32,6 +35,7 @@ from briefing.blocks.layout import Briefing, Group, Select, SelectType, Toggle, 
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
 from briefing.renderers.formatting import Formatting
 from briefing.renderers.formula import latex_to_mathml
+from briefing.renderers.links import claim_links
 from briefing.renderers.markup import close_open_markup
 from briefing.renderers.normalize import normalize
 from briefing.renderers.plot import get_runtime_scripts, render_figure, scan_for_plots
@@ -75,16 +79,69 @@ _jinja_env = Environment(
 # the same way when imported.
 
 
-def _markdown(text: str) -> str:
-    """Markdown as Text renders it: CommonMark plus pipe tables, its raw HTML kept inside the block."""
+#: ``## Methodology {#methodology}``: a heading's explicit name, at the end of its text (#24).
+_HEADING_NAME = re.compile(r"\s*\{#([a-zA-Z][a-zA-Z0-9_-]*)\}\s*$")
+
+_LINK_ICON = (
+    '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" '
+    'stroke-linecap="round" aria-hidden="true"><path d="M6.5 9.5l3-3"/>'
+    '<path d="M7 4.5l1-1a2.83 2.83 0 0 1 4 4l-1 1"/><path d="M9 11.5l-1 1a2.83 2.83 0 0 1-4-4l1-1"/></svg>'
+)
+
+
+def _heading_actions(link: str) -> str:
+    """The buttons shown beside a named heading: copy its link (room for more, #124)."""
+    return (
+        f'<span class="bf-heading-actions"><a class="bf-heading-link" href="#{link}" '
+        f'aria-label="Copy link to this section" title="Copy link">{_LINK_ICON}</a></span>'
+    )
+
+
+def _name_headings(state: t.Any) -> None:
+    """markdown-it core rule: ``{#name}`` at the end of a heading becomes its link id."""
+    claim = state.env.get("bf_heading")
+    tokens = state.tokens
+    for i, token in enumerate(tokens):
+        if claim is None or token.type != "heading_open" or not tokens[i + 1].children:
+            continue
+        last = tokens[i + 1].children[-1]
+        match = _HEADING_NAME.search(last.content) if last.type == "text" else None
+        if match is None:
+            continue
+        last.content = last.content[:match.start()]
+        link = claim(match.group(1))
+        token.attrSet("id", link)
+        token.attrSet("data-bf-link", "")
+        tokens[i + 2].meta["bf_link"] = link
+
+
+def _close_heading(renderer: t.Any, tokens: t.Any, idx: int, options: t.Any, env: t.Any) -> str:
+    link = tokens[idx].meta.get("bf_link")
+    closing = str(renderer.renderToken(tokens, idx, options, env))
+    return _heading_actions(link) + closing if link else closing
+
+
+def _markdown(text: str, heading: Callable[[str], str] | None = None) -> str:
+    """Markdown as Text renders it: CommonMark plus pipe tables, its raw HTML kept inside the block.
+
+    *heading* claims the link id of a heading named with ``{#name}``; without it the
+    text stays as written.
+    """
     from markdown_it import MarkdownIt
 
-    return close_open_markup(str(MarkdownIt("commonmark").enable("table").render(text)))
+    md = MarkdownIt("commonmark").enable("table")
+    md.core.ruler.push("bf_heading_names", _name_headings)
+    md.add_render_rule("heading_close", _close_heading)
+    return close_open_markup(str(md.render(text, {"bf_heading": heading})))
+
+
+def _headings_of(block: Block, idgen: _IdGen) -> Callable[[str], str]:
+    return lambda name: idgen.claim(block, name, f"the heading {{#{name}}}")
 
 
 @renderer_for(Text)
-def _render_text(block: Text, _: _IdGen) -> str:
-    return f'<div class="bf-block bf-text">{_markdown(block.content)}</div>'
+def _render_text(block: Text, idgen: _IdGen) -> str:
+    return f'<div class="bf-block bf-text">{_markdown(block.content, _headings_of(block, idgen))}</div>'
 
 
 def _veil(block: Banner) -> str:
@@ -104,7 +161,7 @@ def _veil(block: Banner) -> str:
 
 
 @renderer_for(Banner)
-def _render_banner(block: Banner, _: _IdGen) -> str:
+def _render_banner(block: Banner, idgen: _IdGen) -> str:
     src = f"data:{block.mime};base64,{base64.b64encode(block.image).decode('ascii')}"
     alt = f'alt="{_html.escape(block.alt)}"' if block.alt else 'alt="" aria-hidden="true"'
     mode = f"bf-banner--{block.side}" if block.fade else "bf-banner--uniform"
@@ -114,7 +171,7 @@ def _render_banner(block: Banner, _: _IdGen) -> str:
         f'<div class="bf-block bf-banner {mode}" style="{style}">'
         f'<img class="bf-banner__image" src="{src}" {alt}>'
         f'<div class="bf-banner__veil" style="{_veil(block)}"></div>'
-        f'<div class="bf-banner__text bf-text">{_markdown(block.text)}</div>'
+        f'<div class="bf-banner__text bf-text">{_markdown(block.text, _headings_of(block, idgen))}</div>'
         f"</div>"
     )
 
@@ -351,10 +408,23 @@ def _render_block(block: Block, idgen: _IdGen) -> str:
         return f'<div class="bf-blocks">{inner}</div>'
 
     renderer = lookup_renderer(block)
-    if renderer is not None:
-        return renderer(block, idgen)
+    html = renderer(block, idgen) if renderer is not None else _render_placeholder(block, idgen)
+    link = idgen.link(block)
+    return _with_link(html, link) if link else html
 
-    return _render_placeholder(block, idgen)
+
+#: The first start tag of a block's HTML: its name and its attributes (quoted values may hold ">").
+_FIRST_TAG = re.compile(r"""\s*<([a-zA-Z][\w-]*)((?:[^>"']|"[^"]*"|'[^']*')*)>""")
+_ID_ATTR = re.compile(r'\sid="[^"]*"')
+
+
+def _with_link(html: str, link: str) -> str:
+    """Give the outer element of a named block its link id, in place of any id made up for it (#24)."""
+    match = _FIRST_TAG.match(html)
+    if match is None:
+        return f'<div id="{link}" data-bf-link>{html}</div>'
+    attrs = _ID_ATTR.sub("", match.group(2), count=1)
+    return f'<{match.group(1)} id="{link}" data-bf-link{attrs}>{html[match.end():]}'
 
 
 # ── public API ────────────────────────────────────────────────────────────────
@@ -409,7 +479,9 @@ def render_report(
     report_js = "\n".join([_JS, *extra_js, "briefing.init(document);"])
 
     idgen = _IdGen()
+    claim_links(normalised, idgen)
     content_html = _render_block(normalised, idgen)
+    idgen.check_links()
 
     now = _resolve_now(now)
     template = _jinja_env.get_template("report.html.j2")

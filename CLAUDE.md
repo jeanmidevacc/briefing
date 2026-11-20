@@ -29,6 +29,9 @@ and runs `twine check --strict`.
 3. **Render** (`renderers/html.py`): each block type has a function registered with
    `@renderer_for(BlockClass)` in `renderers/registry.py`; lookup walks the MRO. Renderers
    take `(block, idgen)` and return an HTML fragment string.
+   `renderers/links.py` first gives each named block its link id (`page/name`) on the
+   `IdGen`; `_render_block` puts it on the block's outer element, so a renderer never
+   writes `block.name` into its HTML itself.
 4. **Assemble**: `templates/report.html.j2` inlines `static/report.css`, `static/report.js`,
    the theme's CSS variables (`Formatting.to_css_vars()`) and any runtime a block needs.
 

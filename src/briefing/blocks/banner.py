@@ -57,7 +57,7 @@ class Banner(Block):
         height: CSS height such as ``"16rem"`` (default) or a number of pixels.
         focus: ``(x, y)`` in percent: the point of the image kept in view when it is cropped.
         alt: A description of the image; by default it is decorative.
-        name: Stable block id.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::

@@ -77,7 +77,7 @@
 
   // ── Select / tabs ───────────────────────────────────────────────────────────
 
-  function setupTabs(sel) {
+  function setupTabs(sel, root) {
     var tablist = sel.querySelector(':scope > .bf-select__tablist');
     if (!tablist) return;
 
@@ -96,14 +96,18 @@
     }
 
     tabs.forEach(function (tab, i) {
-      tab.addEventListener('click', function () { activate(i); });
+      tab.addEventListener('click', function () { activate(i); panelChosen(root, panels[i]); });
 
       // Arrow-key navigation for accessibility.
       tab.addEventListener('keydown', function (e) {
-        if (e.key === 'ArrowRight') { activate(Math.min(i + 1, tabs.length - 1)); tabs[Math.min(i + 1, tabs.length - 1)].focus(); }
-        if (e.key === 'ArrowLeft')  { activate(Math.max(i - 1, 0));               tabs[Math.max(i - 1, 0)].focus(); }
-        if (e.key === 'Home')       { activate(0);                                 tabs[0].focus(); }
-        if (e.key === 'End')        { activate(tabs.length - 1);                   tabs[tabs.length - 1].focus(); }
+        var j = e.key === 'ArrowRight' ? Math.min(i + 1, tabs.length - 1)
+          : e.key === 'ArrowLeft' ? Math.max(i - 1, 0)
+          : e.key === 'Home' ? 0
+          : e.key === 'End' ? tabs.length - 1 : -1;
+        if (j < 0) return;
+        activate(j);
+        tabs[j].focus();
+        panelChosen(root, panels[j]);
       });
     });
 
@@ -112,7 +116,7 @@
 
   // ── Select / dropdown ────────────────────────────────────────────────────────
 
-  function setupDropdown(sel) {
+  function setupDropdown(sel, root) {
     var select = sel.querySelector('.bf-select__select');
     var panels = Array.from(sel.querySelectorAll('.bf-select__panel'));
 
@@ -123,7 +127,9 @@
 
     if (select) {
       select.addEventListener('change', function () {
-        activate(parseInt(select.value, 10));
+        var idx = parseInt(select.value, 10);
+        activate(idx);
+        panelChosen(root, panels[idx]);
       });
     }
 
@@ -299,14 +305,100 @@
     });
   }
 
+  // ── Links (#24) ──────────────────────────────────────────────────────────────
+  // A named block or heading carries data-bf-link, and its link as its id: "page/name", or
+  // "name" outside a named page. In a document, the address bar's #link opens the pages,
+  // tabs and toggles around its target and scrolls to it, and choosing a tab writes that
+  // tab's link there without adding a history entry. Inside an element root (an embedded
+  // fragment) links never read or write the page's address: a link to a block in the root
+  // opens and scrolls to it there.
+
+  var revealing = false;  // set while reveal() opens tabs and toggles
+
+  function isDocument(root) { return root.nodeType === 9; }
+
+  function findLink(root, link) {
+    return link ? root.querySelector('[data-bf-link][id="' + link.replace(/["\\]/g, '\\$&') + '"]') : null;
+  }
+
+  function linkOf(href) {
+    try { return decodeURIComponent(href.slice(href.indexOf('#') + 1)); } catch (e) { return ''; }
+  }
+
+  // Open every hidden tab panel and toggle around target, outermost first, then scroll to it.
+  function reveal(root, target) {
+    var around = [];
+    for (var node = target.parentElement; node && node !== root; node = node.parentElement) around.unshift(node);
+    revealing = true;
+    around.forEach(function (el) {
+      if (!el.hidden) return;
+      if (el.classList.contains('bf-select__panel')) {
+        var sel = el.parentElement;
+        var i = Array.prototype.indexOf.call(sel.querySelectorAll(':scope > .bf-select__panel'), el);
+        var select = sel.querySelector(':scope > .bf-select__select');
+        if (select) {
+          select.value = String(i);
+          select.dispatchEvent(new Event('change'));
+        } else {
+          sel.querySelectorAll(':scope > .bf-select__tablist > .bf-select__tab')[i].click();
+        }
+      } else if (el.classList.contains('bf-toggle__body') && el.previousElementSibling) {
+        el.previousElementSibling.click();
+      }
+    });
+    revealing = false;
+    target.scrollIntoView();
+  }
+
+  // The link of what a chosen panel shows: its block's, else the closest named block around it.
+  function panelChosen(root, panel) {
+    if (revealing || !isDocument(root)) return;
+    var named = panel.querySelector(':scope > [data-bf-link]');
+    for (var node = panel.parentElement; !named && node && node !== root; node = node.parentElement) {
+      if (node.hasAttribute('data-bf-link')) named = node;
+    }
+    history.replaceState(history.state, '', named ? '#' + named.id : location.pathname + location.search);
+  }
+
+  function setupLinks(root, runtime) {
+    if (isDocument(root)) {
+      var follow = function () {
+        var target = findLink(root, linkOf(location.hash));
+        if (target) reveal(root, target);
+      };
+      follow();
+      runtime.on(window, 'hashchange', follow);
+    } else {
+      root.addEventListener('click', function (e) {
+        var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+        var target = a && root.contains(a) ? findLink(root, linkOf(a.getAttribute('href'))) : null;
+        if (!target) return;
+        e.preventDefault();
+        reveal(root, target);
+      });
+    }
+    // A named heading's icon copies its link (in a document; in a fragment it just goes there).
+    root.querySelectorAll('.bf-heading-link').forEach(function (icon) {
+      icon.addEventListener('click', function (e) {
+        if (!isDocument(root)) return;
+        e.preventDefault();
+        history.replaceState(history.state, '', icon.getAttribute('href'));
+        if (navigator.clipboard) navigator.clipboard.writeText(location.href).catch(function () {});
+        icon.setAttribute('data-copied', '');
+        setTimeout(function () { icon.removeAttribute('data-copied'); }, 1500);
+      });
+    });
+  }
+
   window.briefing.register('report', function (runtime) {
     return function (root) {
       root.querySelectorAll('.bf-altair').forEach(drawAltair);
-      root.querySelectorAll('.bf-select:not(.bf-select--dropdown)').forEach(setupTabs);
-      root.querySelectorAll('.bf-select--dropdown').forEach(setupDropdown);
+      root.querySelectorAll('.bf-select:not(.bf-select--dropdown)').forEach(function (sel) { setupTabs(sel, root); });
+      root.querySelectorAll('.bf-select--dropdown').forEach(function (sel) { setupDropdown(sel, root); });
       root.querySelectorAll('.bf-datatable').forEach(function (container) { setupDataTable(container, runtime); });
       root.querySelectorAll('.bf-toggle__header').forEach(function (header) { setupToggle(header, root); });
       setupPrint(root, runtime);
+      setupLinks(root, runtime);
     };
   });
 

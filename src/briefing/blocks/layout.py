@@ -60,7 +60,7 @@ class Group(ContainerBlock):
         columns: Number of grid columns, a whole number of 1 or more.
         widths: Relative column widths, positive numbers, one per column (e.g. ``[2, 1]``).
         valign: Vertical alignment of the cells: ``"top"``, ``"center"`` or ``"bottom"``.
-        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
@@ -107,7 +107,7 @@ class Select(ContainerBlock):
         *arg_blocks: The panels; each child's ``label`` is its tab or option title.
         blocks: The panels as a list, instead of positional arguments.
         type: ``"tabs"`` (default) or ``"dropdown"`` (or a :class:`SelectType`).
-        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
@@ -144,7 +144,7 @@ class Toggle(ContainerBlock):
     Args:
         *arg_blocks: The hidden content; several blocks are wrapped in a ``Group``.
         blocks: The content as a list, instead of positional arguments.
-        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: The clickable title (``"Details"`` when omitted).
 
     Example::

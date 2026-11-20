@@ -139,6 +139,18 @@ SCENARIOS: dict[str, Build] = {
         bf.Banner("# Cover\n\nA **subtitle**.", image=RED_SVG, text_position=55, opacity=80),
         bf.Banner("## Left", image=RED_SVG, side="left", text_position=40, focus=(20, 80), alt="A red field"),
     ),
+    "links": lambda _: bf.Briefing(
+        bf.Page(bf.Text("# Summary {#top}\n\nSee [the method](#detail/methodology)."), title="Summary", name="summary"),
+        bf.Page(
+            bf.Select(bf.Text("North", label="North", name="north"), bf.Text("South", label="South"), name="by-region"),
+            bf.Select(bf.Text("One", label="One"), bf.Text("Two", label="Two", name="two"), type="dropdown"),
+            bf.Toggle(bf.Text("## Methodology {#methodology}\n\nHow it was measured.", name="method"), label="More",
+                      name="more"),
+            title="Detail",
+            name="detail",
+        ),
+        bf.Page(bf.Text("## Methodology {#methodology}\n\nThe same name in a page without one."), title="Notes"),
+    ),
     "export-menu": lambda _: bf.Briefing(
         bf.Page(bf.Text("# One"), title="One"), bf.Page(bf.Text("# Two"), title="Two"), export="png"
     ),
