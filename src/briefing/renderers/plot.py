@@ -88,13 +88,18 @@ def scan_for_plots(root: Block) -> set[str]:
 # ── runtime JS (embedded once in <head>) ──────────────────────────────────────
 
 
-def get_runtime_scripts(libraries: set[str]) -> str:
+def get_runtime_scripts(libraries: set[str], tagged: bool = False) -> str:
     """Return ``<script>`` tags to embed in ``<head>`` for *libraries*.
 
     Plotly and Altair (Vega) need a bundled runtime; other libraries either
     need no JS (Matplotlib/SVG) or embed their runtime per-figure (Bokeh/iframe).
+    *tagged* names each tag's global (``data-bf-runtime="Plotly"``), so the
+    copy-embed button can put it into a copied fragment (#124).
     """
-    return "\n".join(f"<script>{source}</script>" for _, source in runtime_sources(libraries))
+    return "\n".join(
+        f'<script data-bf-runtime="{defined}">{source}</script>' if tagged else f"<script>{source}</script>"
+        for defined, source in runtime_sources(libraries)
+    )
 
 
 def runtime_sources(libraries: set[str]) -> list[tuple[str, str]]:
@@ -173,10 +178,12 @@ def _render_matplotlib(fig: t.Any, responsive: bool, salt: str, scoped: bool = F
 
     svg = _scope_svg_ids(svg, prefix=f"{salt}-")
     if scoped:
-        # An inline SVG's <style> applies to the whole page; in a fragment (#122) it stays inside.
+        # An inline SVG's <style> applies to the whole page. With prefixed ids (a fragment, #122,
+        # or a report whose parts can be copied, #124) it applies to this SVG only, by its id.
         from briefing.renderers.css_scope import scope_css
 
-        svg = _SVG_STYLE.sub(lambda m: f"{m.group(1)}{scope_css(m.group(2))}{m.group(3)}", svg)
+        svg = svg.replace("<svg", f'<svg id="{salt}"', 1)
+        svg = _SVG_STYLE.sub(lambda m: f"{m.group(1)}{scope_css(m.group(2), root=f'#{salt}')}{m.group(3)}", svg)
 
     if responsive:
         # Matplotlib 3.10+ escapes quotes inside SVG attributes (width=\"500pt\")

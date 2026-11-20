@@ -66,6 +66,33 @@ head = bf.embed_assets([chart, table])  # <style> and <script> tags, for the <he
 parts = [bf.stringify(b, full_html=False, include_assets=False) for b in (chart, table)]
 ```
 
+## Copy a part of a report, without Python
+
+A report built with `export="embed"` lets its readers do the same from the page: a `</>`
+button on each page, labelled group, chart, table, text, number, alert, banner and lab
+block copies that part as a fragment, ready to paste into another page.
+
+```python
+report = bf.Briefing(
+    bf.Page(bf.Text("# Summary"), bf.Plot(fig), title="Summary", name="summary"),
+    bf.Page(bf.DataTable(df, name="rows"), title="Detail", name="detail"),
+    export="embed",  # or ("png", "embed") with the "Save as PNG" button
+)
+```
+
+- The button shows on hover and on keyboard focus, and says what it copies ("Copy embed
+  code for the Summary page"). A note confirms the copy and its size.
+- **What is copied is the report as it was made,** not as it looks after clicks: a sorted
+  or searched table, a different tab or a zoomed chart come back as they were. The report
+  carries a compressed copy of its untouched blocks for this.
+- **One paste works on its own:** the fragment carries its CSS, scripts and chart runtime,
+  as `include_assets=True` does. A copied Plotly chart is about 4.5 MB for that reason.
+- Where the browser refuses to copy (some notebook frames), the code shows in a dialog,
+  selected, to copy by hand.
+- The buttons never print, and never show in `save_image`, `save_pdf`, "Save as PNG" or
+  fragments. A report without `export="embed"` has none of this.
+- It costs about 30 KB in a report of 100 KB.
+
 ## What a fragment keeps to itself
 
 - **Nothing leaks out.** Every CSS rule starts with `.bf-embed` or the fragment's id,

@@ -47,6 +47,8 @@ class DataProfile(Block):
         bf.lab.DataProfile(df, missing_threshold=0.10)  # red at >10% missing
     """
 
+    embed_noun: t.ClassVar[str | None] = "profile"
+
     def __init__(
         self,
         df: pd.DataFrame | t.Any,
@@ -93,6 +95,8 @@ class DataDive(Block):
         bf.lab.DataDive(df)
         bf.lab.DataDive(df, x="revenue", y="units", color="region", max_rows=5_000)
     """
+
+    embed_noun: t.ClassVar[str | None] = "chart"
 
     #: DataFrames larger than this are sampled with a warning.
     MAX_ROWS: t.ClassVar[int] = 10_000
@@ -211,6 +215,8 @@ class CalendarHeatmap(Block):
         bf.lab.CalendarHeatmap(ledger, date="day", value="balance",
                                center=0, colors=["#dc2626", "#f3f4f6", "#16a34a"])
     """
+
+    embed_noun: t.ClassVar[str | None] = "calendar"
 
     AGGS: t.ClassVar[tuple[str, ...]] = ("sum", "mean", "median", "min", "max", "count")
     #: Rows embedded per day or hour for on_click="rows"; the panel says when there are more.

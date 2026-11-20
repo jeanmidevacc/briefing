@@ -65,6 +65,8 @@ class Banner(Block):
         bf.Banner("# Q1 2026\\n\\n**Sales briefing**", image="cover.jpg", text_position=55, opacity=80)
     """
 
+    embed_noun: t.ClassVar[str | None] = "banner"
+
     #: Images above this size warn: the report embeds them (until #38 adds a size budget).
     MAX_IMAGE_BYTES: t.ClassVar[int] = 2 * 1024 * 1024
 

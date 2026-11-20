@@ -39,6 +39,10 @@ and runs `twine check --strict`.
    `static/embed-reset.css` and `static/embed.css`, ids prefixed with its `embed_id`, and
    `briefing.init(root)` on its `<div>`. `tests/test_fragments.py` runs the fragment
    contract over every scenario; full reports must not change (golden snapshots).
+   `export=("embed",)` (#124, `renderers/copy_embed.py`) marks the blocks whose class sets
+   `embed_noun` with `data-bf-embed`, prefixes made-up ids with a hash of the report and
+   adds a gzip copy of the untouched blocks (`fragment.copy_data`); `static/copy-embed.js`
+   cuts a block out of it as a fragment. Reports without it must not change.
 
 `briefing.lab` (`DataProfile`, `DataDive`) plugs in the same way: `lab/__init__.py` calls
 `register_renderer(..., js_asset=...)`, so `lab.js` is inlined only when a lab block is

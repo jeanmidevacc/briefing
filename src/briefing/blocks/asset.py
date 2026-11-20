@@ -44,6 +44,8 @@ class Plot(Block):
         bf.Plot(altair_chart, label="Chart", responsive=True)
     """
 
+    embed_noun: t.ClassVar[str | None] = "chart"
+
     def __init__(
         self,
         figure: t.Any,
@@ -76,6 +78,8 @@ class Table(Block):
         bf.Table(df)
         bf.Table(df.style.highlight_max(color="lightgreen"))
     """
+
+    embed_noun: t.ClassVar[str | None] = "table"
 
     def __init__(
         self,
@@ -112,6 +116,8 @@ class DataTable(Block):
 
         bf.DataTable(df, caption="Top 1 000 orders")
     """
+
+    embed_noun: t.ClassVar[str | None] = "table"
 
     #: Maximum rows rendered by default; larger DataFrames are truncated with a warning.
     MAX_ROWS: t.ClassVar[int] = 10_000

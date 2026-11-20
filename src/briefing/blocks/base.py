@@ -31,6 +31,10 @@ class Block:
         bf.Text("Revenue grew 12 %", name="summary", label="Summary")
     """
 
+    #: What the copy-embed button calls a block of this type ("Copy embed code for this
+    #: chart", #124), or ``None`` when the block gets no button.
+    embed_noun: t.ClassVar[str | None] = None
+
     def __init__(
         self,
         name: BlockId | None = None,
