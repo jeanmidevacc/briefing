@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   0.3.0", and `<meta name="generator">` in the page head. `Briefing(footer="Analytics team")`
   puts text before that line; the line itself can't be turned off (#23).
 
+### Fixed
+
+- `bf.lab.DataProfile` no longer fails with "cannot convert float NaN to integer" on a
+  numeric column whose values span more than the largest float, such as -1e308 and 1e308.
+  The new property tests found it (#45).
+
 ## [0.2.4] - 2026-11-17
 
 ### Fixed

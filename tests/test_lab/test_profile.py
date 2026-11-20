@@ -97,6 +97,12 @@ class TestHistogramSvg:
         svg = _histogram_svg(pd.Series([float("nan"), float("nan")]))
         assert "<svg" in svg
 
+    def test_range_wider_than_the_largest_float(self):
+        # max - min overflows to inf here; that used to raise "cannot convert float NaN to integer" (#45)
+        svg = _histogram_svg(pd.Series([-1e308, 0.0, 1e308]))
+        filled = [float(h) > 0 for h in re.findall(r'height="([\d.]+)"', svg)]
+        assert filled == [i in (0, 10, 19) for i in range(20)]
+
     def test_no_external_resources(self):
         svg = _histogram_svg(pd.Series(range(100)))
         # xmlns URI is expected; no external src= links
