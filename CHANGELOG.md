@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every report says which version of briefing made it: a footer line, "Made with briefing
   0.3.0", and `<meta name="generator">` in the page head. `Briefing(footer="Analytics team")`
   puts text before that line; the line itself can't be turned off (#23).
+- Links to pages, tabs and headings (#24). A block's `name=` is now its link:
+  `report.html#detail` opens the page named `detail`, `#detail/by-region` a tab or block
+  named `by-region` in it, and `## Methodology {#methodology}` names a heading
+  (`#detail/methodology`). Opening a link selects its page and tab, opens any toggle around it
+  and scrolls to it, also offline. Choosing a tab puts its link in the address bar without a
+  history entry, so a reload keeps it open. Named headings show a copy-link icon on hover. A
+  name used twice in one page raises an error.
 - `Formatting.to_css_vars(selector=":root")` takes the selector to put the theme on, so a
   theme can apply to one element instead of the whole page (#123).
 

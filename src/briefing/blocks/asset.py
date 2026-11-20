@@ -36,7 +36,7 @@ class Plot(Block):
         responsive: Let the chart fill the width of its container.
         scale: Deprecated, has no effect, and is removed after 0.2. Size the figure
             in its plotting library instead, e.g. Matplotlib's ``figsize=(w, h)``.
-        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
@@ -79,7 +79,7 @@ class Table(Block):
     Args:
         data: A dataframe (as for :class:`DataTable`) or a pandas ``Styler``, kept as-is.
         caption: Optional caption below the table.
-        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
@@ -116,7 +116,7 @@ class DataTable(Block):
             interchange protocol, or a dict of columns.
         caption: Optional caption below the table.
         max_rows: Rows beyond this are dropped with a warning.
-        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::

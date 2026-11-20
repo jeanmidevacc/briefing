@@ -23,7 +23,7 @@ class Block:
     e.g. as a tab title inside a Select).
 
     Args:
-        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::

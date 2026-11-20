@@ -74,6 +74,22 @@ class Viewer:
         return self.page
 
 
+#: The call a full report's script ends with (#123).
+INIT_DOCUMENT = "\nbriefing.init(document);"
+
+
+def split_report(html: str) -> tuple[str, str, str]:
+    """A rendered report's <head>, its .bf-report element and its scripts without the init call.
+
+    For pages that place a report's body in an element root and initialise it themselves.
+    """
+    head = html[:html.index("</head>")]
+    body = html[html.index('<div class="bf-report">'):html.rindex("<script>")]
+    scripts = html[html.rindex("<script>") + len("<script>"):html.rindex("</script>")]
+    assert scripts.endswith(INIT_DOCUMENT)
+    return head, body, scripts.removesuffix(INIT_DOCUMENT)
+
+
 @pytest.fixture
 def viewer(page: Page, tmp_path: Path, request: pytest.FixtureRequest) -> Iterator[Viewer]:
     v = Viewer(page, tmp_path)

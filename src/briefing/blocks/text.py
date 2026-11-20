@@ -37,7 +37,7 @@ class Text(EmbeddedTextBlock):
     Args:
         text: Markdown; common leading indentation is removed.
         file: Path to a ``.md`` file to read instead of ``text``.
-        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
@@ -86,7 +86,7 @@ class HTML(EmbeddedTextBlock):
 
     Args:
         html: The HTML fragment, inserted as-is.
-        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
@@ -111,7 +111,7 @@ class Code(EmbeddedTextBlock):
         language: Language for syntax highlighting (any Pygments lexer name, e.g.
             ``"python"``, ``"sql"``); an unknown language is shown as plain text.
         caption: Optional caption below the block.
-        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
@@ -142,7 +142,7 @@ class Formula(EmbeddedTextBlock):
     Args:
         formula: A LaTeX expression, without ``$`` or ``\\(`` delimiters.
         caption: Optional caption below the formula.
-        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
@@ -177,7 +177,7 @@ class BigNumber(Block):
             is red (bad news). Leave it ``None`` and the colour follows the arrow
             (▲ green, ▼ red); with neither flag the change is shown neutral, in
             the theme's muted colour.
-        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
@@ -227,7 +227,7 @@ class Alert(Block):
         message: The alert's text.
         level: ``"info"``, ``"success"``, ``"warning"`` or ``"error"`` (or an :class:`AlertLevel`).
         title: Optional bold title above the message.
-        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::

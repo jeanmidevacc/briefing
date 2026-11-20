@@ -10,9 +10,7 @@ from playwright.sync_api import Locator, Page, expect
 
 import briefing as bf
 from tests.golden import static_files
-from tests.test_browser.conftest import Viewer
-
-_INIT_DOCUMENT = "\nbriefing.init(document);"
+from tests.test_browser.conftest import INIT_DOCUMENT, Viewer, split_report
 
 
 def _report(name: str) -> str:
@@ -30,18 +28,9 @@ def _report(name: str) -> str:
     return bf.stringify(report, name=name)
 
 
-def _parts(html: str) -> tuple[str, str, str]:
-    """A rendered report's <head>, its .bf-report element and its scripts without the init call."""
-    head = html[:html.index("</head>")]
-    body = html[html.index('<div class="bf-report">'):html.rindex("<script>")]
-    scripts = html[html.rindex("<script>") + len("<script>"):html.rindex("</script>")]
-    assert scripts.endswith(_INIT_DOCUMENT)
-    return head, body, scripts.removesuffix(_INIT_DOCUMENT)
-
-
 def _two_roots(init: str = "a b") -> str:
-    head, alpha, scripts = _parts(_report("Alpha"))
-    _, beta, _ = _parts(_report("Beta"))
+    head, alpha, scripts = split_report(_report("Alpha"))
+    _, beta, _ = split_report(_report("Beta"))
     calls = "".join(f"briefing.init(document.getElementById('root-{r}'));" for r in init.split())
     return (
         f'{head}</head><body><section id="root-a">{alpha}</section><section id="root-b">{beta}</section>'
@@ -151,18 +140,18 @@ def test_a_second_init_of_an_element_root_does_nothing(viewer: Viewer) -> None:
 
 
 def test_a_script_inlined_twice_registers_once(viewer: Viewer) -> None:
-    head, body, scripts = _parts(_report("Alpha"))
+    head, body, scripts = split_report(_report("Alpha"))
     report_js = static_files()["static/report.js"]
-    twice = f"{report_js}\n{scripts}{_INIT_DOCUMENT}"
+    twice = f"{report_js}\n{scripts}{INIT_DOCUMENT}"
     page = viewer.open(f"{head}</head><body>{body}<script>{twice}</script></body></html>")
     _click_once_and_check(page)
 
 
 def test_a_script_registered_after_init_sets_up_the_roots_already_there(viewer: Viewer) -> None:
     dive = bf.stringify(bf.Briefing(bf.lab.DataDive(pd.DataFrame({"x": [1.0, 2.0, 3.0], "y": [3.0, 1.0, 2.0]}))))
-    head, body, scripts = _parts(dive)
+    head, body, scripts = split_report(dive)
     lab_js = static_files()["lab/static/lab.js"]
     assert lab_js in scripts
-    report_first = scripts.replace(lab_js, "") + _INIT_DOCUMENT + "\n" + lab_js
+    report_first = scripts.replace(lab_js, "") + INIT_DOCUMENT + "\n" + lab_js
     page = viewer.open(f"{head}</head><body>{body}<script>{report_first}</script></body></html>")
     expect(page.locator(".bf-dd__dot")).to_have_count(3)

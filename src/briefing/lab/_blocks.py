@@ -38,7 +38,7 @@ class DataProfile(Block):
         missing_threshold: Share of missing values (0–1) above which a column's
             missing count is highlighted in red.
         max_categories: Most frequent values shown for categorical columns.
-        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
@@ -85,7 +85,7 @@ class DataDive(Block):
         facet_col: Accepted but not drawn yet (a warning says so); planned for DataDive v2.
         layout: ``"scatter"`` (two axes) or ``"tile"`` (packed dots per cell).
         max_rows: Larger frames are sampled down to this many rows, with a warning.
-        name: Stable block id (letters, digits, ``_`` and ``-``), for referencing the block.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
@@ -202,7 +202,7 @@ class CalendarHeatmap(Block):
         on_click: ``"rows"`` lists the rows behind a day or an hour in a panel
             when it is clicked (up to ``ROWS_PER_CELL`` rows per cell, embedded in
             the report); ``None`` (default) for no click action.
-        name: Stable block id.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
