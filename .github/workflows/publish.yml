@@ -2,7 +2,7 @@ name: Publish
 
 # Publishes to PyPI on a GitHub Release, using Trusted Publishing (OIDC) — no
 # PyPI token or repository secret — then rebuilds the docs on Read the Docs
-# (docs.yml, which needs the RTD_TOKEN secret). Run manually (workflow_dispatch)
+# (docs.yml, with the RTD_TOKEN secret of the pypi environment). Run manually (workflow_dispatch)
 # to push a build to TestPyPI first.
 #
 # One-time setup on PyPI (and TestPyPI):
@@ -66,8 +66,6 @@ jobs:
     # The release's documentation: rebuild `stable` and `latest` on Read the Docs.
     needs: pypi
     uses: ./.github/workflows/docs.yml
-    secrets:
-      RTD_TOKEN: ${{ secrets.RTD_TOKEN }}
 
   testpypi:
     needs: build

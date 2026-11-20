@@ -5,22 +5,21 @@ name: Docs
 # package; run it by hand from Actions → Docs → Run workflow, or with
 # `gh workflow run docs.yml`.
 #
-# One-time setup: create an API token at https://app.readthedocs.org/accounts/tokens/
-# and add it to this repository as the Actions secret RTD_TOKEN
-# (Settings → Secrets and variables → Actions → New repository secret).
+# The Read the Docs API token is the secret RTD_TOKEN of the repository's `pypi`
+# environment (Settings → Environments → pypi), next to the release that triggers
+# the rebuild; create one at https://app.readthedocs.org/accounts/tokens/. A run
+# shows in GitHub as a deployment to that environment.
 
 on:
   workflow_dispatch: {}
-  workflow_call:
-    secrets:
-      RTD_TOKEN:
-        required: true
+  workflow_call: {}
 
 permissions: {}
 
 jobs:
   rebuild:
     runs-on: ubuntu-latest
+    environment: pypi  # holds RTD_TOKEN
     steps:
       - name: Rebuild stable and latest on Read the Docs
         env:
@@ -29,7 +28,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "$RTD_TOKEN" ]; then
-            echo "::error::The RTD_TOKEN secret is missing: see the setup note at the top of .github/workflows/docs.yml"
+            echo "::error::The pypi environment has no RTD_TOKEN secret: see the note at the top of .github/workflows/docs.yml"
             exit 1
           fi
           api=https://app.readthedocs.org/api/v3/projects/briefing
