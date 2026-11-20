@@ -22,11 +22,13 @@ SCRIPTS = {path: text for path, text in static_files().items() if path.endswith(
 _DOCUMENT_ACCESS = re.compile(r"(?<![\w.$])document\s*\.\s*(?!create(?:Element|DocumentFragment|TextNode)\b)(\w+)")
 #: A listener added on the page itself, or an ``on…`` handler set on it.
 _PAGE_LISTENER = re.compile(r"(?<![\w.$])(?:window|document)\s*\.\s*(?:addEventListener|on\w+\s*=)")
-_REGISTERS = re.compile(r"window\.briefing\.register\('(\w+)'")
+_REGISTERS = re.compile(r"window\.briefing\.register\('([\w-]+)'")
 
 
-def test_the_four_scripts_are_checked() -> None:
-    assert sorted(SCRIPTS) == ["lab/static/calendar.js", "lab/static/lab.js", "static/export.js", "static/report.js"]
+def test_every_script_is_checked() -> None:
+    assert sorted(SCRIPTS) == [
+        "lab/static/calendar.js", "lab/static/lab.js", "static/copy-embed.js", "static/export.js", "static/report.js",
+    ]
 
 
 @pytest.mark.parametrize("path", sorted(SCRIPTS))

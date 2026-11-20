@@ -38,12 +38,22 @@ class IdGen:
     rendering; a name used twice within a page is an error.
     """
 
-    def __init__(self, prefix: str | None = None) -> None:
+    def __init__(self, prefix: str | None = None, *, prefix_links: bool = True, embeds: bool = False) -> None:
+        """Start numbering ids.
+
+        *prefix_links* ``False`` leaves link ids unprefixed: a report with the copy-embed
+        button prefixes its made-up ids but keeps its addresses (``#detail/x``). With
+        *embeds*, :attr:`embeds` collects the blocks that get that button (#124).
+        """
         self._counter = itertools.count(1)
         self._prefix = f"{prefix}-" if prefix else ""
+        self._link_prefix = self._prefix if prefix_links else ""
+        #: What each block with a copy-embed button needs, in the order they render.
+        self.embeds: list[dict[str, t.Any]] | None = [] if embeds else None
         self._made: list[str] = []
         self._links: dict[int, str] = {}  # id(block) -> its link id
         self._pages: dict[int, str | None] = {}  # id(block) -> the name of its page
+        self._page_blocks: set[int] = set()  # id() of the blocks that are pages
         self._owners: dict[str, str] = {}  # link id -> what claimed it, for error messages
 
     @property
@@ -60,6 +70,13 @@ class IdGen:
         """Record that *block* sits in the page named *page* (``None``: no named page)."""
         self._pages[id(block)] = page
 
+    def mark_page(self, block: Block) -> None:
+        """Record that *block* is one of the report's pages."""
+        self._page_blocks.add(id(block))
+
+    def is_page(self, block: Block) -> bool:
+        return id(block) in self._page_blocks
+
     def claim(self, block: Block, name: str, what: str) -> str:
         """Reserve the link id of *name* in *block*'s page and return it.
 
@@ -67,7 +84,7 @@ class IdGen:
         error raised when another block or heading of the same page already has it.
         """
         page = self._pages.get(id(block))
-        link = f"{self._prefix}{page}/{name}" if page else f"{self._prefix}{name}"
+        link = f"{self._link_prefix}{page}/{name}" if page else f"{self._link_prefix}{name}"
         if link in self._owners:
             where = f" in page {page!r}" if page else ""
             raise BriefingError(

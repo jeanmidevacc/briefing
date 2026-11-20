@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A copy-embed button for readers (#124). `bf.Briefing(..., export="embed")` puts a `</>`
+  button on each page, labelled group, chart, table, text, number, alert, banner and lab
+  block: it copies that part as an embed fragment (as `bf.stringify(..., full_html=False)`
+  makes), CSS, scripts and chart runtime included, to paste into another page. What is
+  copied is the report as it was made, not as clicks left it: the report carries a
+  compressed copy of its untouched blocks. Where copying is refused, the code shows in a
+  dialog. The buttons never print or export. A report without `"embed"` is unchanged.
+
 ## [0.3.0] - 2026-11-20
 
 ### Added

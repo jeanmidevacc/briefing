@@ -11,14 +11,20 @@ a short marker, so that snapshots only change when briefing's own output does:
   the library's release, not with briefing. Ids that briefing gives a chart stay.
 - **briefing's version** in ``<meta name="generator">`` and the footer becomes
   ``{version}``, so a release doesn't rewrite every snapshot.
+- **the copy-embed data** (#124), gzip in base64, becomes a hash of its JSON with
+  the same swaps, and the report's id prefix ``bf-r…`` (a hash that follows the
+  charts' output) becomes ``bf-r{hash}``.
 
 Each swap only applies to text that is exactly what it expects; anything else
 stays in the snapshot, so a change to how a file or chart is inlined shows up.
 """
 from __future__ import annotations
 
+import base64
 import functools
+import gzip
 import hashlib
+import json
 import re
 from datetime import UTC, datetime
 from importlib.resources import files
@@ -87,8 +93,21 @@ def _figure_marker(match: re.Match[str]) -> str:
     return f"{match['open']}{inner}{match['close']}"
 
 
+_COPY_DATA = re.compile(r'(<script type="application/json" class="bf-copy-data">)"([A-Za-z0-9+/=]*)"(</script>)')
+_REPORT_ID = re.compile(r"\bbf-r[0-9a-f]{8}-")
+
+
+def _copy_data_marker(match: re.Match[str]) -> str:
+    payload = json.loads(gzip.decompress(base64.b64decode(match[2])))
+    payload["version"] = "{version}"
+    payload["body"] = mask(payload["body"])
+    digest = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:12]
+    return f"{match[1]}/* golden: copy-embed data for {len(payload['blocks'])} blocks, sha256 {digest} */{match[3]}"
+
+
 def mask(html: str) -> str:
     """The golden snapshot text of *html*: see the module docstring for what is swapped."""
+    html = _REPORT_ID.sub("bf-r{hash}-", _COPY_DATA.sub(_copy_data_marker, html))
     for path, content in static_files().items():
         html = html.replace(content, static_marker(path, content))
     for text, marker in _runtimes():

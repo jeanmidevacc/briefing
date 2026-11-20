@@ -152,6 +152,27 @@ SCENARIOS: dict[str, Build] = {
         ),
         bf.Page(bf.Text("## Methodology {#methodology}\n\nThe same name in a page without one."), title="Notes"),
     ),
+    "copy-embed": lambda df: bf.Briefing(
+        bf.Page(
+            bf.Text("# Summary {#top}\n\nSee [the detail](#detail/rows)."),
+            bf.Group(bf.BigNumber("Revenue", "$4.2M"), bf.Alert("Margin dropped.", title="Heads up"), columns=2,
+                     label="Numbers"),
+            bf.Banner("## Q1", image=RED_SVG),
+            title="Summary",
+            name="summary",
+        ),
+        bf.Page(
+            bf.Plot(matplotlib_figure(), caption="Line"),
+            bf.Plot(plotly_figure(), name="scatter"),
+            bf.Table(df("df_constant")),
+            bf.DataTable(df("df_mixed"), name="rows"),
+            bf.lab.DataProfile(pd.DataFrame({"n": [1, 2, 3]})),  # dtypes named alike by pandas 2 and 3
+            bf.Code("x = 1"),
+            title="Detail",
+            name="detail",
+        ),
+        export=("png", "embed"),
+    ),
     "export-menu": lambda _: bf.Briefing(
         bf.Page(bf.Text("# One"), title="One"), bf.Page(bf.Text("# Two"), title="Two"), export="png"
     ),

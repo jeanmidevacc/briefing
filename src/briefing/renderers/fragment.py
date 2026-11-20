@@ -7,10 +7,14 @@ to ``.bf-embed`` and the scripts its blocks need. Its last script runs
 """
 from __future__ import annotations
 
+import base64
 import functools
+import gzip
 import hashlib
 import html as _html
+import json
 import re
+import typing as t
 from collections.abc import Iterable
 from datetime import datetime
 
@@ -130,6 +134,36 @@ def render_fragment(
         content_html=content_html,
         footer_text=footer_text(normalised.footer),
     )
+
+
+def copy_data(
+    root: Briefing, fmt: Formatting, body: str, prefix: str, embeds: list[dict[str, t.Any]], scripts: list[str]
+) -> str:
+    """The untouched copy that a report with copy-embed buttons carries (#124), as a ``<script>``.
+
+    ``copy-embed.js`` cuts a block out of *body* (the report's blocks as rendered, before
+    any script ran), renames the *prefix* its made-up ids start with to the block's embed
+    id, and wraps it like :func:`render_fragment`: the scoped CSS, the scripts it needs
+    (by their index in *scripts*, the report's own ``<script data-bf-script>`` tags), the
+    theme on its id, the footer. Gzip with a fixed time keeps the bytes reproducible.
+    """
+    payload = {
+        "version": __version__,
+        "prefix": prefix,
+        "token": _TOKEN,
+        "css": embed_css(),
+        "theme": rem_to_var(fmt.to_css_vars(f"#{_TOKEN}")),
+        "footer": footer_text(root.footer),
+        "blocks": [
+            {"runtimes": embed["runtimes"], "scripts": [0, *(scripts.index(js) for js in embed["scripts"])]}
+            for embed in embeds
+        ],
+        "body": body,
+    }
+    packed = gzip.compress(
+        json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode(), compresslevel=9, mtime=0
+    )
+    return f'<script type="application/json" class="bf-copy-data">"{base64.b64encode(packed).decode("ascii")}"</script>'
 
 
 def render_embed_assets(roots: Iterable[Block]) -> str:

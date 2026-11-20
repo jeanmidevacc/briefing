@@ -25,6 +25,7 @@ def claim_links(root: Briefing, idgen: IdGen) -> None:
             _claim(block, None, idgen)
             for page in block.blocks:
                 _claim(page, None, idgen, what="a page")
+                idgen.mark_page(page)
                 idgen.place(page, page.name)  # a page's own headings (a Text page) sit in it
                 for child in _children(page):
                     _walk(child, page.name, idgen)

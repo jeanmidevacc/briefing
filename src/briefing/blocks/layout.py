@@ -69,6 +69,8 @@ class Group(ContainerBlock):
         bf.Group(a, b, c, columns=3, widths=[2, 1, 1])
     """
 
+    embed_noun: t.ClassVar[str | None] = "section"
+
     min_blocks: t.ClassVar[int] = 0
 
     def __init__(
@@ -227,9 +229,12 @@ class Briefing(ContainerBlock):
             traces come out blank, and fonts are whatever the reader's machine
             has. For exact, reproducible files use :func:`~briefing.save_image` /
             :func:`~briefing.save_pdf`. To print, use the browser's own print
-            (Ctrl+P or ⌘P): it gets the same print layout. *Deprecated:*
-            ``"pdf"`` (the "Print" button) raises a ``DeprecationWarning`` and
-            adds nothing; it will be rejected from 0.4.0.
+            (Ctrl+P or ⌘P): it gets the same print layout. ``"embed"`` puts a
+            ``</>`` button on each page, labelled group, chart, table, text,
+            number, alert and banner: it copies that part as an embed fragment, as
+            :func:`~briefing.stringify` makes with ``full_html=False``, to paste
+            into another page. *Deprecated:* ``"pdf"`` (the "Print" button) raises
+            a ``DeprecationWarning`` and adds nothing; it will be rejected from 0.4.0.
         footer: Text to put before the report's footer line, such as a team name. Every
             report ends with "Made with briefing" and its version; that line can't be
             turned off.
@@ -248,7 +253,7 @@ class Briefing(ContainerBlock):
     min_blocks: t.ClassVar[int] = 1
 
     #: The actions export= accepts, in menu order.
-    EXPORTS: t.ClassVar[tuple[str, ...]] = ("png",)
+    EXPORTS: t.ClassVar[tuple[str, ...]] = ("png", "embed")
     #: Accepted with a DeprecationWarning, and dropped: they add no button.
     DEPRECATED_EXPORTS: t.ClassVar[dict[str, str]] = {"pdf": EXPORT_PDF_DEPRECATION}
     export: tuple[str, ...]
@@ -278,7 +283,9 @@ class Briefing(ContainerBlock):
         if not isinstance(actions, Sequence) or any(
             a not in cls.EXPORTS and a not in cls.DEPRECATED_EXPORTS for a in actions
         ):
-            raise BriefingError(f"export accepts 'png', for example export='png'; got {export!r}.")
+            raise BriefingError(
+                f"export accepts 'png' and 'embed', for example export=('png', 'embed'); got {export!r}."
+            )
         unique = tuple(dict.fromkeys(t.cast("Sequence[str]", actions)))
         for action in unique:
             if action in cls.DEPRECATED_EXPORTS:

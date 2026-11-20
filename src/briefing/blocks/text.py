@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import textwrap
+import typing as t
 from enum import StrEnum
 from pathlib import Path
 
@@ -50,6 +51,8 @@ class Text(EmbeddedTextBlock):
         \"\"\")
         bf.Text(file="notes.md")
     """
+
+    embed_noun: t.ClassVar[str | None] = "text"
 
     def __init__(
         self,
@@ -188,6 +191,8 @@ class BigNumber(Block):
         bf.BigNumber("Accuracy", 0.924)
     """
 
+    embed_noun: t.ClassVar[str | None] = "number"
+
     def __init__(
         self,
         heading: str,
@@ -235,6 +240,8 @@ class Alert(Block):
         bf.Alert("Data drift detected in feature 'age'.", level="warning")
         bf.Alert("Pipeline completed successfully.", level=bf.AlertLevel.SUCCESS)
     """
+
+    embed_noun: t.ClassVar[str | None] = "alert"
 
     def __init__(
         self,

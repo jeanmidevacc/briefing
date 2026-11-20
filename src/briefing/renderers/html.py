@@ -16,6 +16,7 @@ Architecture
 from __future__ import annotations
 
 import base64
+import hashlib
 import html as _html
 import os
 import re
@@ -33,6 +34,7 @@ from briefing.blocks.banner import Banner
 from briefing.blocks.base import Block
 from briefing.blocks.layout import Briefing, Group, Select, SelectType, Toggle, VAlign
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
+from briefing.renderers.copy_embed import RUNTIME_GLOBALS, embed_label
 from briefing.renderers.formatting import Formatting
 from briefing.renderers.formula import latex_to_mathml
 from briefing.renderers.links import claim_links
@@ -64,6 +66,10 @@ _JS = _load_static("report.js")
 _EXPORT_JS = _load_static("export.js")
 _EXPORT_CSS = _load_static("export.css")
 _EXPORT_LABELS = {"png": "Save as PNG"}
+_COPY_JS = _load_static("copy-embed.js")
+_COPY_CSS = _load_static("copy-embed.css")
+#: Stands for the report's id prefix while it renders, until a hash of the report names it (#124).
+_REPORT_TOKEN = "bfreportidtoken"
 
 _jinja_env = Environment(
     loader=PackageLoader("briefing", "templates"),
@@ -410,7 +416,16 @@ def _render_block(block: Block, idgen: _IdGen) -> str:
     renderer = lookup_renderer(block)
     html = renderer(block, idgen) if renderer is not None else _render_placeholder(block, idgen)
     link = idgen.link(block)
-    return _with_link(html, link) if link else html
+    marks = ""
+    if idgen.embeds is not None and (label := embed_label(block, page=idgen.is_page(block))) is not None:
+        # A copy-embed button (#124): what copy-embed.js needs to cut this block out as a fragment.
+        marks = f' data-bf-embed="{_html.escape(label)}" data-bf-embed-id="{len(idgen.embeds)}"'
+        libraries = scan_for_plots(block)
+        idgen.embeds.append({
+            "runtimes": sorted(RUNTIME_GLOBALS[lib] for lib in libraries if lib in RUNTIME_GLOBALS),
+            "scripts": block_scripts(block),
+        })
+    return _with_attrs(html, link, marks) if link or marks else html
 
 
 #: The first start tag of a block's HTML: its name and its attributes (quoted values may hold ">").
@@ -418,13 +433,14 @@ _FIRST_TAG = re.compile(r"""\s*<([a-zA-Z][\w-]*)((?:[^>"']|"[^"]*"|'[^']*')*)>""
 _ID_ATTR = re.compile(r'\sid="[^"]*"')
 
 
-def _with_link(html: str, link: str) -> str:
-    """Give the outer element of a named block its link id, in place of any id made up for it (#24)."""
+def _with_attrs(html: str, link: str | None, marks: str) -> str:
+    """Put a named block's link id (in place of any id made up for it, #24) and *marks* on its outer element."""
+    named = f' id="{link}" data-bf-link' if link else ""
     match = _FIRST_TAG.match(html)
     if match is None:
-        return f'<div id="{link}" data-bf-link>{html}</div>'
-    attrs = _ID_ATTR.sub("", match.group(2), count=1)
-    return f'<{match.group(1)} id="{link}" data-bf-link{attrs}>{html[match.end():]}'
+        return f"<div{named}{marks}>{html}</div>"
+    attrs = _ID_ATTR.sub("", match.group(2), count=1) if link else match.group(2)
+    return f"<{match.group(1)}{named}{marks}{attrs}>{html[match.end():]}"
 
 
 # ── public API ────────────────────────────────────────────────────────────────
@@ -459,20 +475,42 @@ def render_report(
     """
     fmt = formatting or Formatting()
     normalised = normalize(blocks)
+    export = getattr(normalised, "export", ())
+    embed = "embed" in export
 
     # Pre-pass: detect which library runtimes are needed and build <head> scripts.
     libraries = scan_for_plots(normalised)
-    head_scripts = get_runtime_scripts(libraries)
+    head_scripts = get_runtime_scripts(libraries, tagged=embed)
 
     extra_js = block_scripts(normalised)
-    export = getattr(normalised, "export", ())
-    if export:  # the menu's script only ships in reports that asked for the menu
+    if "png" in export:  # the menu's script only ships in reports that asked for the menu
         extra_js.append(_EXPORT_JS)
+    if embed:
+        extra_js.append(_COPY_JS)
     # The scripts register their parts with window.briefing; a full report then wires up the
-    # whole document once (#123).
-    report_js = "\n".join([_JS, *extra_js, "briefing.init(document);"])
+    # whole document once (#123). With copy-embed (#124) each script gets its own tag, so the
+    # button can put the ones a block needs into its fragment.
+    scripts = [_JS, *extra_js]
+    if embed:
+        report_scripts = "".join(f'<script data-bf-script="{i}">{js}</script>' for i, js in enumerate(scripts))
+        report_scripts += "<script>briefing.init(document);</script>"
+    else:
+        report_scripts = f"<script>{chr(10).join([*scripts, 'briefing.init(document);'])}</script>"
 
-    content_html = render_content(normalised, _IdGen())
+    embed_data = ""
+    if embed:
+        # Copy-embed (#124): made-up ids start with a hash of the report, so a block cut out of
+        # it becomes a fragment by renaming that prefix; links keep their addresses.
+        from briefing.renderers.fragment import copy_data
+
+        idgen = _IdGen(prefix=_REPORT_TOKEN, prefix_links=False, embeds=True)
+        content_html = render_content(normalised, idgen)
+        report_id = "bf-r" + hashlib.sha256(content_html.encode()).hexdigest()[:8]
+        content_html = content_html.replace(_REPORT_TOKEN, report_id)
+        embeds = idgen.embeds or []
+        embed_data = copy_data(normalised, fmt, content_html, f"{report_id}-", embeds, scripts) + "\n  "
+    else:
+        content_html = render_content(normalised, _IdGen())
 
     now = _resolve_now(now)
     template = _jinja_env.get_template("report.html.j2")
@@ -483,14 +521,15 @@ def render_report(
         report_date_iso=now.isoformat(),
         css_vars=fmt.to_css_vars(),
         report_css=_CSS,
-        report_js=report_js,
+        report_scripts=report_scripts,
         head_scripts=head_scripts,
         content_html=content_html,
-        show_header=name != "Report" or bool(export),
+        show_header=name != "Report" or "png" in export,
         version=__version__,
         footer_text=footer_text(normalised.footer),
         export_html=_export_menu(export),
-        export_css=_EXPORT_CSS if export else "",
+        export_css=(_EXPORT_CSS if "png" in export else "") + (_COPY_CSS if embed else ""),
+        embed_data=embed_data,
     )
 
 
@@ -523,10 +562,11 @@ def footer_text(prefix: str | None) -> str:
 
 def _export_menu(export: tuple[str, ...]) -> str:
     """The header's export buttons, or nothing (so other reports render exactly as before)."""
-    if not export:
+    actions = [a for a in export if a in _EXPORT_LABELS]  # "embed" puts its buttons on the blocks
+    if not actions:
         return ""
     buttons = "".join(
-        f'<button class="bf-export__btn" type="button" data-export="{a}">{_EXPORT_LABELS[a]}</button>' for a in export
+        f'<button class="bf-export__btn" type="button" data-export="{a}">{_EXPORT_LABELS[a]}</button>' for a in actions
     )
     return f'<div class="bf-export" role="group" aria-label="Export">{buttons}</div>'
 

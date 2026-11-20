@@ -51,7 +51,7 @@ _PAGES_JS = """() => {
 # While exporting, the root tab bar (one page is shown at a time) and the in-report
 # export menu (#100) are controls, not content.
 _EXPORT_CSS = (
-    ".bf-blocks > .bf-select:only-child > .bf-select__tablist, .bf-export { display: none !important; }"
+    ".bf-blocks > .bf-select:only-child > .bf-select__tablist, .bf-export, .bf-copy { display: none !important; }"
 )
 
 
