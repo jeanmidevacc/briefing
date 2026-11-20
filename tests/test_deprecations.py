@@ -1,4 +1,4 @@
-"""Deprecated names and features: the folio -> bulletin -> briefing aliases, and the calendar hour view."""
+"""Deprecated and removed names and features: the 0.2 aliases (gone in 0.3.0), the calendar hour view, export="pdf"."""
 from __future__ import annotations
 
 import typing as t
@@ -8,71 +8,47 @@ import pytest
 
 import briefing as bf
 
-RENAMED = [
+#: Names deprecated in 0.2 and removed in 0.3.0, with what to use instead.
+REMOVED = [
     ("Blocks", "Briefing"),
     ("BaseBlock", "Block"),
     ("save_report", "save"),
     ("stringify_report", "stringify"),
+    ("DataProfile", "lab.DataProfile"),
+    ("DataDive", "lab.DataDive"),
 ]
 
 
-@pytest.mark.parametrize(("old", "new"), RENAMED)
-def test_old_name_warns_and_returns_new_object(old: str, new: str) -> None:
-    with pytest.warns(DeprecationWarning, match=rf"briefing\.{old}.*briefing\.{new}"):
-        obj = getattr(bf, old)
-    assert obj is getattr(bf, new)
+@pytest.mark.parametrize(("old", "new"), REMOVED)
+def test_a_removed_name_says_what_to_use_instead(old: str, new: str) -> None:
+    with pytest.raises(AttributeError, match=rf"briefing\.{old} was removed in 0\.3\.0: use briefing\.{new}\."):
+        getattr(bf, old)
+    assert not hasattr(bf, old)
 
 
-@pytest.mark.parametrize(("old", "new"), RENAMED)
-def test_new_name_does_not_warn(old: str, new: str) -> None:
+@pytest.mark.parametrize(("old", "new"), REMOVED)
+def test_the_replacement_works_without_a_warning(old: str, new: str) -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        getattr(bf, new)
-
-
-MOVED_TO_LAB = ["DataProfile", "DataDive"]
-
-
-@pytest.mark.parametrize("name", MOVED_TO_LAB)
-def test_lab_block_top_level_warns_and_returns_lab_object(name: str) -> None:
-    with pytest.warns(DeprecationWarning, match=rf"briefing\.{name}.*briefing\.lab\.{name}"):
-        obj = getattr(bf, name)
-    assert obj is getattr(bf.lab, name)
-
-
-@pytest.mark.parametrize("name", MOVED_TO_LAB)
-def test_lab_block_via_lab_does_not_warn(name: str) -> None:
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        getattr(bf.lab, name)
+        obj: t.Any = bf
+        for part in new.split("."):
+            obj = getattr(obj, part)
 
 
 def test_unknown_attribute_still_raises_attributeerror() -> None:
-    with pytest.raises(AttributeError):
+    with pytest.raises(AttributeError, match="has no attribute 'DefinitelyNotAThing'"):
         bf.DefinitelyNotAThing
 
 
-# ── Plot(scale=...) (#7) ──────────────────────────────────────────────────────
+# ── Plot(scale=...) (#7): deprecated in 0.1.1, removed in 0.3.0 ──────────────
 
 
-def test_plot_scale_warns_and_points_to_figsize() -> None:
-    with pytest.warns(DeprecationWarning, match=r"scale=.*removed after 0\.2.*figsize"):
-        bf.Plot(object(), scale=2.0)
-
-
-def test_plot_without_scale_does_not_warn() -> None:
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        bf.Plot(object())
-
-
-def test_plot_scale_is_gone_after_0_2() -> None:
-    # Fails from 0.3 on until `scale` is removed, alongside the other deprecated aliases.
+def test_plot_scale_is_gone() -> None:
     import inspect
 
-    version = tuple(int(part) for part in bf.__version__.split(".")[:2])
-    if version >= (0, 3):
-        assert "scale" not in inspect.signature(bf.Plot).parameters
+    assert "scale" not in inspect.signature(bf.Plot).parameters
+    with pytest.raises(TypeError, match="scale"):
+        bf.Plot(object(), scale=2.0)  # type: ignore[call-arg]
 
 
 # ── CalendarHeatmap's hour view (#111) ────────────────────────────────────────
