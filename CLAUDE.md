@@ -121,6 +121,9 @@ present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer
 
 - The version lives in `src/briefing/_version.py` (`__version__`); the publish workflow
   fails if the release tag doesn't match it.
+- A GitHub Release runs `publish.yml`: PyPI (Trusted Publishing), then `docs.yml`, which
+  rebuilds `stable` and `latest` on Read the Docs with the `RTD_TOKEN` secret.
+  `gh workflow run docs.yml` rebuilds them by hand.
 - Add every user-visible change to `## [Unreleased]` in `CHANGELOG.md` (Keep a Changelog).
 - `hatchling` is pinned below 1.27 and `license` is a text table on purpose: both keep the
   metadata at version 2.3, which `twine check` accepts. Don't "modernise" them.

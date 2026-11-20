@@ -1,0 +1,59 @@
+name: Docs
+
+# Rebuilds the documentation on Read the Docs: `stable` (the newest release) and
+# `latest` (main). publish.yml runs it after every release, once PyPI has the
+# package; run it by hand from Actions → Docs → Run workflow, or with
+# `gh workflow run docs.yml`.
+#
+# One-time setup: create an API token at https://app.readthedocs.org/accounts/tokens/
+# and add it to this repository as the Actions secret RTD_TOKEN
+# (Settings → Secrets and variables → Actions → New repository secret).
+
+on:
+  workflow_dispatch: {}
+  workflow_call:
+    secrets:
+      RTD_TOKEN:
+        required: true
+
+permissions: {}
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rebuild stable and latest on Read the Docs
+        env:
+          RTD_TOKEN: ${{ secrets.RTD_TOKEN }}
+          REPO: https://github.com/${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ -z "$RTD_TOKEN" ]; then
+            echo "::error::The RTD_TOKEN secret is missing: see the setup note at the top of .github/workflows/docs.yml"
+            exit 1
+          fi
+          api=https://app.readthedocs.org/api/v3/projects/briefing
+          auth="Authorization: Token $RTD_TOKEN"
+
+          # The newest release tag, and the commit it points to.
+          tag=$(git ls-remote --tags --refs "$REPO" 'v*' | awk -F/ '{print $3}' | sort -V | tail -1)
+          sha=$(git ls-remote "$REPO" "refs/tags/$tag^{}" | cut -f1)
+          [ -n "$sha" ] || sha=$(git ls-remote "$REPO" "refs/tags/$tag" | cut -f1)
+          echo "newest release: $tag ($sha)"
+
+          # Read the Docs learns about new tags when it syncs its versions; `stable`
+          # then moves to the newest one. Wait for that before building it.
+          curl -fsS -X POST -H "$auth" "$api/sync-versions/" > /dev/null
+          for _ in $(seq 1 30); do
+            current=$(curl -fsS -H "$auth" "$api/versions/stable/" | jq -r .identifier)
+            [ "$current" = "$sha" ] && break
+            sleep 10
+          done
+          if [ "$current" != "$sha" ]; then
+            echo "::warning::stable still points at $current, not $tag; building it anyway"
+          fi
+
+          for version in stable latest; do
+            build=$(curl -fsS -X POST -H "$auth" "$api/versions/$version/builds/" | jq -r .build.id)
+            echo "$version: https://app.readthedocs.org/projects/briefing/builds/$build/"
+          done

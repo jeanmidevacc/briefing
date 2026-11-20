@@ -1,8 +1,9 @@
 name: Publish
 
 # Publishes to PyPI on a GitHub Release, using Trusted Publishing (OIDC) — no
-# API tokens or repository secrets. Run manually (workflow_dispatch) to push a
-# build to TestPyPI first.
+# PyPI token or repository secret — then rebuilds the docs on Read the Docs
+# (docs.yml, which needs the RTD_TOKEN secret). Run manually (workflow_dispatch)
+# to push a build to TestPyPI first.
 #
 # One-time setup on PyPI (and TestPyPI):
 #   Account → Publishing → Add a pending publisher
@@ -60,6 +61,13 @@ jobs:
           name: dist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
+
+  docs:
+    # The release's documentation: rebuild `stable` and `latest` on Read the Docs.
+    needs: pypi
+    uses: ./.github/workflows/docs.yml
+    secrets:
+      RTD_TOKEN: ${{ secrets.RTD_TOKEN }}
 
   testpypi:
     needs: build
