@@ -48,8 +48,9 @@ present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer
 - **Deterministic output.** Same input + `SOURCE_DATE_EPOCH` (or `now=`) gives byte-identical
   HTML. DOM ids come from `IdGen`; never use `uuid`, `random` or the wall clock.
 - **Escape user text.** Every value from the user goes through `html.escape` unless it is
-  markdown in `Text` or raw markup in `HTML`. Embedded JSON goes in
-  `<script type="application/json">`, never inline JavaScript.
+  markdown in `Text` or raw markup in `HTML`; those go through `close_open_markup`
+  (`renderers/markup.py`), so nothing left open in them runs past their block. Embedded
+  JSON goes in `<script type="application/json">`, never inline JavaScript.
 - **Lab stays out of the core report.** A report without a `DataDive` must not contain
   `lab.js`; `tests/test_lab/test_lab_boundary.py` checks it.
 - **Errors and warnings.** Raise `BriefingError` (`_error.py`) for invalid input, with a

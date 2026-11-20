@@ -6,13 +6,14 @@ make real DOM-level checks rather than brittle string matching.
 from __future__ import annotations
 
 import pytest
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
 
 import briefing as bf
 from briefing.blocks.layout import Briefing, Group, Select, SelectType, Toggle
 from briefing.blocks.text import HTML, Alert, AlertLevel, BigNumber, Code, Text
 from briefing.renderers.formatting import Formatting, Width
 from briefing.renderers.html import render_report
+from tests.banner_images import RED_SVG
 from tests.html_helpers import attr, classes, find_one, parse
 
 # ── helpers ───────────────────────────────────────────────────────────────────
@@ -167,6 +168,29 @@ class TestHTMLRendering:
     def test_wrapped_in_fl_html(self):
         soup = render(blocks(HTML("<span>x</span>")))
         assert soup.find(class_="bf-html") is not None
+
+
+class TestRawMarkupStaysInItsBlock:
+    """An unclosed comment, <script> or <style> used to hide every later block (#45)."""
+
+    @pytest.mark.parametrize("block", [Text("Intro\n\n<!-- draft note"), HTML("<!-- draft note")], ids=["text", "html"])
+    def test_an_unclosed_comment_ends_with_its_block(self, block):
+        first, second = render(blocks(block, Text("after"))).select(".bf-block")
+        assert [c.strip() for c in first.find_all(string=lambda s: isinstance(s, Comment))] == ["draft note"]
+        assert second.get_text(strip=True) == "after"
+
+    @pytest.mark.parametrize("tag", ["script", "style", "textarea"])
+    @pytest.mark.parametrize("make", [Text, HTML], ids=["text", "html"])
+    def test_an_unclosed_raw_text_element_ends_with_its_block(self, make, tag):
+        first, second = render(blocks(make(f"<{tag}>"), Text("after"))).select(".bf-block")
+        assert find_one(first, tag).get_text() == ""
+        assert second.get_text(strip=True) == "after"
+
+    def test_banner_text_is_closed_too(self):
+        soup = render(blocks(bf.Banner("# Cover\n\n<!-- draft", image=RED_SVG), Text("after")))
+        comments = find_one(soup, ".bf-banner__text").find_all(string=lambda s: isinstance(s, Comment))
+        assert [c.strip() for c in comments] == ["draft"]
+        assert soup.select(".bf-text")[-1].get_text(strip=True) == "after"
 
 
 # ── Code block ────────────────────────────────────────────────────────────────

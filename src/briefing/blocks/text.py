@@ -31,7 +31,8 @@ class EmbeddedTextBlock(Block):
 class Text(EmbeddedTextBlock):
     """Markdown text block (CommonMark plus pipe tables).
 
-    Raw HTML inside the markdown is passed through as-is, like :class:`HTML`.
+    Raw HTML inside the markdown is passed through as-is, like :class:`HTML`
+    (and, like it, closed at the end of the block if left open).
 
     Args:
         text: Markdown; common leading indentation is removed.
@@ -79,7 +80,9 @@ class HTML(EmbeddedTextBlock):
 
     The content is injected into the report verbatim, inside a plain
     ``<div>`` — it is **not** sandboxed or sanitised. Only pass HTML you
-    trust; any ``<script>`` it contains will run.
+    trust; any ``<script>`` it contains will run. A comment, tag or
+    ``<script>``/``<style>`` element left open at its end is closed there,
+    so it can't hide the blocks after it.
 
     Args:
         html: The HTML fragment, inserted as-is.

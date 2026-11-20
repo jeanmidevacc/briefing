@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A `Text` or `HTML` block that leaves a comment, a tag or a `<script>`, `<style>` or
+  `<textarea>` open, such as a line starting with `<!-- draft note`, no longer hides
+  everything after it: the later blocks, the footer and the report's script, so tabs stopped
+  working. briefing closes what is left open at the end of the block. Found by the new
+  property tests (#45).
 - `bf.lab.DataProfile` no longer fails with "cannot convert float NaN to integer" on a
   numeric column whose values span more than the largest float, such as -1e308 and 1e308.
   The new property tests found it (#45).

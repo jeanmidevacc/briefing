@@ -32,6 +32,7 @@ from briefing.blocks.layout import Briefing, Group, Select, SelectType, Toggle, 
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
 from briefing.renderers.formatting import Formatting
 from briefing.renderers.formula import latex_to_mathml
+from briefing.renderers.markup import close_open_markup
 from briefing.renderers.normalize import normalize
 from briefing.renderers.plot import get_runtime_scripts, render_figure, scan_for_plots
 from briefing.renderers.registry import (
@@ -75,10 +76,10 @@ _jinja_env = Environment(
 
 
 def _markdown(text: str) -> str:
-    """Markdown as Text renders it: CommonMark plus pipe tables."""
+    """Markdown as Text renders it: CommonMark plus pipe tables, its raw HTML kept inside the block."""
     from markdown_it import MarkdownIt
 
-    return str(MarkdownIt("commonmark").enable("table").render(text))
+    return close_open_markup(str(MarkdownIt("commonmark").enable("table").render(text)))
 
 
 @renderer_for(Text)
@@ -120,7 +121,7 @@ def _render_banner(block: Banner, _: _IdGen) -> str:
 
 @renderer_for(HTML)
 def _render_html(block: HTML, _: _IdGen) -> str:
-    return f'<div class="bf-block bf-html">{block.content}</div>'
+    return f'<div class="bf-block bf-html">{close_open_markup(block.content)}</div>'
 
 
 def _highlight(code: str, language: str) -> str:
