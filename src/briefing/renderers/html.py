@@ -464,13 +464,7 @@ def render_report(
     libraries = scan_for_plots(normalised)
     head_scripts = get_runtime_scripts(libraries)
 
-    # Pre-pass: collect JS assets that optional blocks (e.g. briefing.lab's
-    # DataDive) need, so the core report.js stays lean when they're unused.
-    extra_js: list[str] = []
-    for block in iter_blocks(normalised):
-        js = asset_js_for(block)
-        if js is not None and js not in extra_js:
-            extra_js.append(js)
+    extra_js = block_scripts(normalised)
     export = getattr(normalised, "export", ())
     if export:  # the menu's script only ships in reports that asked for the menu
         extra_js.append(_EXPORT_JS)
@@ -478,10 +472,7 @@ def render_report(
     # whole document once (#123).
     report_js = "\n".join([_JS, *extra_js, "briefing.init(document);"])
 
-    idgen = _IdGen()
-    claim_links(normalised, idgen)
-    content_html = _render_block(normalised, idgen)
-    idgen.check_links()
+    content_html = render_content(normalised, _IdGen())
 
     now = _resolve_now(now)
     template = _jinja_env.get_template("report.html.j2")
@@ -497,14 +488,35 @@ def render_report(
         content_html=content_html,
         show_header=name != "Report" or bool(export),
         version=__version__,
-        footer_text=_footer_text(normalised.footer),
+        footer_text=footer_text(normalised.footer),
         export_html=_export_menu(export),
         export_css=_EXPORT_CSS if export else "",
     )
 
 
-def _footer_text(prefix: str | None) -> str:
-    """The report's last line: who made it, if the report says so, and with which version."""
+def block_scripts(root: Block) -> list[str]:
+    """The scripts that optional blocks under *root* need (e.g. briefing.lab's), each once.
+
+    Only these are inlined, so the core report.js stays lean when they're unused.
+    """
+    scripts: list[str] = []
+    for block in iter_blocks(root):
+        js = asset_js_for(block)
+        if js is not None and js not in scripts:
+            scripts.append(js)
+    return scripts
+
+
+def render_content(normalised: Briefing, idgen: _IdGen) -> str:
+    """The HTML of a normalised tree's blocks, with the link ids its names claim (#24)."""
+    claim_links(normalised, idgen)
+    content_html = _render_block(normalised, idgen)
+    idgen.check_links()
+    return content_html
+
+
+def footer_text(prefix: str | None) -> str:
+    """The last line of a report or fragment: who made it, if it says so, and with which version."""
     made_with = f"Made with briefing {__version__}"
     return f"{_html.escape(prefix)} · {made_with}" if prefix else made_with
 

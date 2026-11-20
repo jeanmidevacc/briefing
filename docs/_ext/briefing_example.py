@@ -12,7 +12,9 @@ Usage, from MyST Markdown::
 The code runs at build time (see :mod:`gallery`) with ``SOURCE_DATE_EPOCH``
 pinned. The report is copied to ``_examples/`` in the built site and shown in
 an iframe that grows to the report's height, with an "Open full page" link.
-An exception or a warning while running an example stops the build.
+A fragment (saved with ``full_html=False``, #122) goes into the page itself, so
+the docs show it on a real host page. An exception or a warning while running an
+example stops the build.
 """
 from __future__ import annotations
 
@@ -52,6 +54,7 @@ class BriefingExample(SphinxDirective):
                 report = run_example(code, Path(tmp), where=where)
             except ExampleError as exc:
                 raise ExtensionError(str(exc)) from exc
+            saved = report.read_text(encoding="utf-8")
             out = Path(self.env.app.outdir) / OUTPUT_DIR
             out.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(report, out / target)
@@ -59,6 +62,9 @@ class BriefingExample(SphinxDirective):
 
         literal = nodes.literal_block(code, code)
         literal["language"] = "python"
+        if not saved.lstrip().startswith("<!DOCTYPE"):  # a fragment: live in the page
+            fragment = f'<div class="bf-example bf-example--fragment">{saved}</div>'
+            return [literal, nodes.raw("", fragment, format="html")]
         src = html.escape("../" * docname.count("/") + f"{OUTPUT_DIR}/{target}")
         title = html.escape(self.options.get("title", "Rendered report"))
         height = self.options.get("height", 360)

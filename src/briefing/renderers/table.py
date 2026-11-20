@@ -116,7 +116,11 @@ def render_table(block: Table, idgen: IdGen | None = None) -> str:
     if isinstance(data, Styler):
         # A full <style>+<table> fragment, used as it is apart from the id: pandas puts a random
         # uuid in every id and selector. The copy leaves the caller's Styler as it was.
-        table_html = copy.copy(data).set_uuid((idgen or IdGen()).next("table")).to_html()
+        idgen = idgen or IdGen()
+        uuid = idgen.next("table")
+        table_html = copy.copy(data).set_uuid(uuid).to_html()
+        if idgen.prefix:  # in a fragment (#122), every id and selector starts with its embed id
+            table_html = table_html.replace(f"T_{uuid}", uuid)
     else:
         table_html = data.to_html(
             classes="bf-table__table",

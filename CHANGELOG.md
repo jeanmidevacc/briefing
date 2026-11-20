@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every report says which version of briefing made it: a footer line, "Made with briefing
   0.3.0", and `<meta name="generator">` in the page head. `Briefing(footer="Analytics team")`
   puts text before that line; the line itself can't be turned off (#23).
+- Fragments to embed in other pages, like Plotly's `full_html=False` (#122).
+  `bf.stringify(chart, full_html=False)` (and `bf.save(..., full_html=False)`) gives one
+  `<div class="bf-embed">` that carries its theme, scopes every CSS rule to itself, starts
+  every id with its `embed_id` and initialises only its own scripts, so several fragments,
+  dark and light, share a page. `include_assets=False` with `bf.embed_assets(blocks)` sends
+  the CSS, scripts and chart runtimes once. A host's rules for plain elements and a changed
+  root font size don't reach the fragment. New guide: "Embed in other pages".
 - Links to pages, tabs and headings (#24). A block's `name=` is now its link:
   `report.html#detail` opens the page named `detail`, `#detail/by-region` a tab or block
   named `by-region` in it, and `## Methodology {#methodology}` names a heading

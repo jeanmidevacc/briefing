@@ -8,6 +8,7 @@ HTML
 
 .. autofunction:: save
 .. autofunction:: stringify
+.. autofunction:: embed_assets
 .. autofunction:: preview
 .. autoclass:: Preview
 

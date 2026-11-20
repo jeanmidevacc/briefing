@@ -94,16 +94,19 @@ def get_runtime_scripts(libraries: set[str]) -> str:
     Plotly and Altair (Vega) need a bundled runtime; other libraries either
     need no JS (Matplotlib/SVG) or embed their runtime per-figure (Bokeh/iframe).
     """
-    parts: list[str] = []
+    return "\n".join(f"<script>{source}</script>" for _, source in runtime_sources(libraries))
 
+
+def runtime_sources(libraries: set[str]) -> list[tuple[str, str]]:
+    """The chart runtimes *libraries* need, as (the global each one defines, its source)."""
+    sources: list[tuple[str, str]] = []
     if "plotly" in libraries:
-        parts.append(_plotlyjs_script())
+        sources.append(("Plotly", _plotlyjs()))
     if "altair" in libraries:
         vega = _vega_bundle()
         if vega is not None:  # without it, each Altair chart renders an install hint
-            parts.append(f"<script>{vega}</script>")
-
-    return "\n".join(parts)
+            sources.append(("vegaEmbed", vega))
+    return sources
 
 
 _ALTAIR_INSTALL_HINT = (
@@ -136,12 +139,11 @@ def _vega_bundle() -> str | None:
 _VEGA_GLOBALS = "window.vegaEmbed = vegaEmbed; window.vegaLite = vegaLite; window.vega = vega;"
 
 
-def _plotlyjs_script() -> str:
+def _plotlyjs() -> str:
     try:
         from plotly.offline import get_plotlyjs
 
-        js = get_plotlyjs()
-        return f"<script>{js}</script>"
+        return str(get_plotlyjs())
     except ImportError as exc:
         raise BriefingError(
             "plotly is not installed. Run: pip install plotly"
@@ -151,7 +153,7 @@ def _plotlyjs_script() -> str:
 # ── per-library renderers ─────────────────────────────────────────────────────
 
 
-def _render_matplotlib(fig: t.Any, responsive: bool, salt: str) -> str:
+def _render_matplotlib(fig: t.Any, responsive: bool, salt: str, scoped: bool = False) -> str:
     import matplotlib
 
     # Accept both Figure and Axes-like objects (seaborn, plotnine, etc.)
@@ -170,6 +172,11 @@ def _render_matplotlib(fig: t.Any, responsive: bool, salt: str) -> str:
         svg = svg[svg.index("<svg"):]
 
     svg = _scope_svg_ids(svg, prefix=f"{salt}-")
+    if scoped:
+        # An inline SVG's <style> applies to the whole page; in a fragment (#122) it stays inside.
+        from briefing.renderers.css_scope import scope_css
+
+        svg = _SVG_STYLE.sub(lambda m: f"{m.group(1)}{scope_css(m.group(2))}{m.group(3)}", svg)
 
     if responsive:
         # Matplotlib 3.10+ escapes quotes inside SVG attributes (width=\"500pt\")
@@ -180,6 +187,7 @@ def _render_matplotlib(fig: t.Any, responsive: bool, salt: str) -> str:
 
 
 _SVG_ID = re.compile(r'(?<![\w-])id="([^"]+)"')
+_SVG_STYLE = re.compile(r"(<style\b[^>]*>)(.*?)(</style>)", re.S)
 _SVG_URL_REF = re.compile(r"url\(#([^)\s]+)\)")
 _SVG_HREF_REF = re.compile(r'((?:xlink:)?href)="#([^"]+)"')
 
@@ -280,7 +288,7 @@ def render_figure(block: Plot, idgen: IdGen | None = None) -> str:
 
     try:
         if lib == "matplotlib":
-            inner = _render_matplotlib(fig, block.responsive, salt=idgen.next("mpl"))
+            inner = _render_matplotlib(fig, block.responsive, salt=idgen.next("mpl"), scoped=bool(idgen.prefix))
         elif lib == "plotly":
             inner = _render_plotly(fig, block.responsive, div_id=idgen.next("plotly"))
         elif lib == "altair":

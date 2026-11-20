@@ -46,6 +46,11 @@ class IdGen:
         self._pages: dict[int, str | None] = {}  # id(block) -> the name of its page
         self._owners: dict[str, str] = {}  # link id -> what claimed it, for error messages
 
+    @property
+    def prefix(self) -> str:
+        """The prefix every id starts with (``"revenue-"``), or ``""``."""
+        return self._prefix
+
     def next(self, prefix: str = "bf") -> str:
         made = f"{self._prefix}{prefix}-{next(self._counter)}"
         self._made.append(made)
@@ -76,6 +81,11 @@ class IdGen:
         """Claim the link id of a named *block* (see :meth:`claim`)."""
         if block.name:
             self._links[id(block)] = self.claim(block, block.name, what)
+
+    @property
+    def claimed(self) -> list[str]:
+        """Every link id claimed so far, prefix included."""
+        return list(self._owners)
 
     def link(self, block: Block) -> str | None:
         """The link id of *block*, if it is named."""

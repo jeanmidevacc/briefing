@@ -34,6 +34,11 @@ and runs `twine check --strict`.
    writes `block.name` into its HTML itself.
 4. **Assemble**: `templates/report.html.j2` inlines `static/report.css`, `static/report.js`,
    the theme's CSS variables (`Formatting.to_css_vars()`) and any runtime a block needs.
+   A fragment (`full_html=False`, `renderers/fragment.py`) uses `templates/fragment.html.j2`
+   instead: report.css scoped to `.bf-embed` by `renderers/css_scope.py` between
+   `static/embed-reset.css` and `static/embed.css`, ids prefixed with its `embed_id`, and
+   `briefing.init(root)` on its `<div>`. `tests/test_fragments.py` runs the fragment
+   contract over every scenario; full reports must not change (golden snapshots).
 
 `briefing.lab` (`DataProfile`, `DataDive`) plugs in the same way: `lab/__init__.py` calls
 `register_renderer(..., js_asset=...)`, so `lab.js` is inlined only when a lab block is

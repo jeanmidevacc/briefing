@@ -63,11 +63,15 @@ previews itself as the last expression of a cell.
 With `briefing[image]`, `bf.save_image(report, "q1.png", size="og")` renders a 1200×630 social
 card and `bf.save_pdf(report, "q1.pdf")` a PDF of every page, both offline in headless Chromium.
 
+To put a chart, a table or a whole report into another page (a docs site, a notebook, a wiki),
+`bf.stringify(report, full_html=False)` gives one self-contained `<div>`, like Plotly's
+`to_html(full_html=False)`: it keeps its look and interactivity, and several share a page.
+
 ## Documentation
 
 **[briefing.readthedocs.io](https://briefing.readthedocs.io)** has a guide for each block family
-with live examples, themes, notebooks, printing and export, the `briefing.lab` blocks, recipes and
-the full API reference.
+with live examples, themes, notebooks, printing and export, embedding in other pages, the
+`briefing.lab` blocks, recipes and the full API reference.
 
 - [Changelog](CHANGELOG.md)
 - [`examples/notebook_walkthrough.ipynb`](examples/notebook_walkthrough.ipynb): build a report
