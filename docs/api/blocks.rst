@@ -23,6 +23,8 @@ Highlights
    :members:
    :undoc-members:
 .. autoclass:: Banner
+.. autoclass:: Image
+.. autoclass:: Attachment
 
 Data and charts
 ---------------

@@ -330,6 +330,13 @@
     });
     var name = button.getAttribute('data-bf-filename') || 'table.csv';
     var blob = new Blob(['\ufeff' + lines.join('\r\n') + '\r\n'], { type: 'text/csv;charset=utf-8' });
+    saveFile(container, blob, name, container.querySelector('.bf-dt__csv-note'),
+      'Downloaded ' + thousands(filtered.length) + ' row' + (filtered.length !== 1 ? 's' : '') + ' as ' + name + '.');
+  }
+
+  // Download *blob* as *name* from the page, and say so in *note*: in a frame, a host may block
+  // downloads, so the note also says what to do then.
+  function saveFile(container, blob, name, note, said) {
     var url = URL.createObjectURL(blob);
     var link = document.createElement('a');
     link.href = url;
@@ -339,12 +346,33 @@
     link.click();
     link.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
-    var note = container.querySelector('.bf-dt__csv-note');
     if (note) {
-      note.textContent = 'Downloaded ' + thousands(filtered.length) + ' row' + (filtered.length !== 1 ? 's' : '') +
-        ' as ' + name + '.' + (window.top !== window
-          ? " If no file arrived, this page can't download here: open the report in its own tab." : '');
+      note.textContent = said + (window.top !== window
+        ? " If no file arrived, this page can't download here: open the report in its own tab." : '');
     }
+  }
+
+  // ── Attachment (#36) ─────────────────────────────────────────────────────────
+
+  // The file is in script.bf-attachment__data: packed text (#38) or base64 bytes.
+  function setupAttachment(container) {
+    var button = container.querySelector('.bf-attachment__button');
+    var data = container.querySelector('script.bf-attachment__data');
+    if (!button || !data) return;
+    button.addEventListener('click', function () {
+      var encoded = JSON.parse(data.textContent);
+      var content;
+      if (data.hasAttribute('data-packed')) {
+        content = window.briefingUnpack(encoded, Number(data.getAttribute('data-size')));
+      } else {
+        var binary = atob(encoded);
+        content = new Uint8Array(binary.length);
+        for (var i = 0; i < binary.length; i++) content[i] = binary.charCodeAt(i);
+      }
+      var name = button.getAttribute('data-bf-filename');
+      saveFile(container, new Blob([content], { type: button.getAttribute('data-bf-type') }), name,
+        container.querySelector('.bf-attachment__note'), 'Downloaded ' + name + '.');
+    });
   }
 
   // ── Toggle ───────────────────────────────────────────────────────────────────
@@ -489,6 +517,7 @@
       root.querySelectorAll('.bf-select:not(.bf-select--dropdown)').forEach(function (sel) { setupTabs(sel, root); });
       root.querySelectorAll('.bf-select--dropdown').forEach(function (sel) { setupDropdown(sel, root); });
       root.querySelectorAll('.bf-datatable').forEach(function (container) { setupDataTable(container, runtime); });
+      root.querySelectorAll('.bf-attachment').forEach(setupAttachment);
       root.querySelectorAll('.bf-toggle__header').forEach(function (header) { setupToggle(header, root); });
       setupPrint(root, runtime);
       setupLinks(root, runtime);

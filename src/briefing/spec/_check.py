@@ -39,6 +39,7 @@ _DEF_WORDS = {
     "table": 'a table {"columns": [...], "rows": [[...]]}',
     "figure": 'a chart {"plotly": {...}} or {"vega-lite": {...}}',
     "image": "an image file path or a data: URI",
+    "file": "a file path or a data: URI",
     "ref": '{"ref": "<name>"}',
     "name": "a name (a letter, then letters, digits, _ or -)",
     "block": "a block",

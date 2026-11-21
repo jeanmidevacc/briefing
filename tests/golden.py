@@ -15,8 +15,9 @@ a short marker, so that snapshots only change when briefing's own output does:
 - **the copy-embed data** (#124), gzip in base64, becomes a hash of its JSON with
   the same swaps, and the report's id prefix ``bf-r…`` (a hash that follows the
   charts' output) becomes ``bf-r{hash}``.
-- **a big table's packed rows** (#38), deflate in base64, become a hash of the JSON
-  they unpack to, so a zlib release doesn't change the snapshot but the rows do.
+- **a big table's packed rows** (#38) and **a text attachment's packed file** (#36),
+  deflate in base64, become a hash of what they unpack to, so a zlib release doesn't
+  change the snapshot but the content does.
 
 Each swap only applies to text that is exactly what it expects; anything else
 stays in the snapshot, so a change to how a file or chart is inlined shows up.
@@ -102,16 +103,19 @@ def _figure_marker(match: re.Match[str]) -> str:
 
 
 _PACKED_TABLE = re.compile(
-    r'(<script type="application/json" class="bf-dt__data" data-size="(\d+)">)"([A-Za-z0-9+/=]*)"(</script>)'
+    r'(<script type="application/json" class="(?:bf-dt__data|bf-attachment__data)" data-size="(\d+)"(?: data-packed)?>)'
+    r'"([A-Za-z0-9+/=]*)"(</script>)'
 )
 
 
 def _packed_table_marker(match: re.Match[str]) -> str:
     from briefing.renderers.pack import unpack
 
+    if "bf-attachment__data" in match[1] and "data-packed" not in match[1]:
+        return match[0]  # an attachment's bytes, base64 as they are: nothing to hide
     rows = unpack(match[3], int(match[2]))
     digest = hashlib.sha256(rows.encode()).hexdigest()[:12]
-    return f"{match[1]}/* golden: packed table rows, sha256 {digest} */{match[4]}"
+    return f"{match[1]}/* golden: packed, sha256 {digest} */{match[4]}"
 
 
 _COPY_DATA = re.compile(r'(<script type="application/json" class="bf-copy-data">)"([A-Za-z0-9+/=]*)"(</script>)')

@@ -115,7 +115,8 @@ class _Writer:
     def _data(self, value: object, field: Field, block: Block, kind: BlockType, refs: list[str]) -> t.Any:
         if self.inline:
             accepts = refs_in(field.schema)
-            for target, encode in (("table", encode_table), ("figure", encode_figure), ("image", encode_image)):
+            for target, encode in (("table", encode_table), ("figure", encode_figure), ("image", encode_image),
+                                   ("file", encode_image)):
                 if target in accepts and (encoded := encode(value)) is not None:
                     return encoded
         if id(value) not in self._seen:
@@ -404,7 +405,7 @@ class Reader:
                 return decode_table(dict(value)), True
             if isinstance(value, Mapping) and "figure" in accepts:
                 return decode_figure(dict(value)), True
-            if isinstance(value, str) and "image" in accepts and value.startswith("data:"):
+            if isinstance(value, str) and accepts & {"image", "file"} and value.startswith("data:"):
                 return decode_image(value), True
         except BriefingError as exc:
             self._add("error", "invalid-data", path, f'{what} "{field.key}": {exc}')

@@ -166,6 +166,15 @@ SCENARIOS: dict[str, Build] = {
         bf.Banner("# Cover\n\nA **subtitle**.", image=RED_SVG, text_position=55, opacity=80),
         bf.Banner("## Left", image=RED_SVG, side="left", text_position=40, focus=(20, 80), alt="A red field"),
     ),
+    "image": lambda _: bf.Briefing(
+        bf.Image(RED_SVG, caption="A red field", width="60%"),
+        bf.Image(RED_SVG, alt="Red", width=120),
+    ),
+    "attachment": lambda df: bf.Briefing(
+        bf.Attachment(b"# Notes\n\nPacked, as text.\n", filename="notes.md", label="Notes"),
+        bf.Attachment(bytes(range(256)), filename="blob.bin"),
+        bf.Attachment(df("df_constant"), name="constant"),
+    ),
     "links": lambda _: bf.Briefing(
         bf.Page(bf.Text("# Summary {#top}\n\nSee [the method](#detail/methodology)."), title="Summary", name="summary"),
         bf.Page(
@@ -244,6 +253,8 @@ ESCAPE_SCENARIOS: dict[str, Callable[[], tuple[bf.Briefing, str]]] = {
     "datatable": lambda: (bf.Briefing(bf.DataTable(_payload_frame(), caption=PAYLOAD)), "R"),
     "dataprofile": lambda: (bf.Briefing(bf.lab.DataProfile(_payload_frame())), "R"),
     "datadive": lambda: (bf.Briefing(bf.lab.DataDive(_payload_frame(), color=PAYLOAD)), "R"),
+    "image-caption-alt": lambda: (bf.Briefing(bf.Image(RED_SVG, caption=PAYLOAD, alt=PAYLOAD)), "R"),
+    "attachment-label": lambda: (bf.Briefing(bf.Attachment(b"x", filename="x.txt", label=PAYLOAD)), "R"),
     "banner-alt": lambda: (bf.Briefing(tabs(bf.Banner("x", image=RED_SVG, alt=PAYLOAD, label=PAYLOAD),
                                              bf.Text("b", label="B"))), "R"),
     "calendar": lambda: (bf.Briefing(bf.lab.CalendarHeatmap(

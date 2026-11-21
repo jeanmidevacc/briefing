@@ -66,6 +66,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   it downloads the rows matching the reader's search, in their order, every page, with raw
   values rather than the formatted text, as UTF-8 with a byte-order mark; formula-like text
   is escaped. Off by default; it never prints or appears in exports.
+- `Image` and `Attachment` blocks (#36). `bf.Image(path_or_bytes, caption=, alt=, width=)`
+  embeds a PNG, JPEG, GIF, WebP or SVG as a data URI, at its natural size or `width`,
+  described by `alt` or its caption. `bf.Attachment(path)`, `bf.Attachment(data,
+  filename=)` or `bf.Attachment(dataframe, filename="orders.csv")` puts a file in the report
+  for readers to download, with no server: any file type, text files stored compressed, a
+  dataframe as the same CSV as a `DataTable`'s button. Both have a JSON form, a copy-embed
+  button, and count towards the size budget.
 
 ### Changed
 

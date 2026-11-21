@@ -9,37 +9,57 @@ its size.
 - **Charts**: pass the figure to {class}`~briefing.Plot`. Matplotlib figures become
   SVG, so they stay sharp.
 - **A cover or section image**: use {doc}`banner`, which takes a path or bytes.
-- **Any other image**: put it in `bf.HTML` or `bf.Text` as a data URI. A link to a
-  file or a URL wouldn't survive the report being emailed or moved, and briefing's
-  own tests reject reports that load anything from the network.
+- **Any other image**: use {class}`~briefing.Image`, with a PNG, JPEG, GIF, WebP or
+  SVG file or its bytes. It is embedded once, as a data URI, so it survives the report
+  being emailed or moved; a link to a file or a URL wouldn't, and briefing's own tests
+  reject reports that load anything from the network.
 
 ```{briefing-example}
-:title: An inline SVG image
+:title: An image
+:height: 220
 
-import base64
 import briefing as bf
 
-logo = """<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40">
-  <rect width="120" height="40" rx="8" fill="#4F46E5"/>
-  <text x="60" y="26" font-size="16" font-family="sans-serif" fill="#fff" text-anchor="middle">ACME</text>
+logo = b"""<svg xmlns="http://www.w3.org/2000/svg" width="240" height="80">
+  <rect width="240" height="80" rx="12" fill="#4F46E5"/>
+  <text x="120" y="50" font-size="28" font-family="sans-serif" fill="#fff" text-anchor="middle">ACME</text>
 </svg>"""
-src = "data:image/svg+xml;base64," + base64.b64encode(logo.encode()).decode()
 
-report = [
-    bf.HTML(f'<img src="{src}" alt="ACME logo" width="120" height="40">'),
-    bf.Text("Any image can be embedded this way: read the file, base64-encode it, "
-            "and use a `data:` URI."),
-]
-bf.save(report, "image.html", name="Images")
+bf.save(bf.Image(logo, caption="The ACME logo", width=240), "image.html", name="Images")
 ```
 
-For a PNG or JPEG file it's the same, with its own MIME type:
+`width` takes a CSS width (`"60%"`, `"20rem"`) or a number of pixels; by default the
+image shows at its natural size, shrunk to fit its column. `alt` describes it for readers
+who can't see it, and defaults to the caption; with neither, the image is decorative. An
+SVG is shown as an image, so a script inside it never runs.
 
-```python
-from pathlib import Path
+## Files to download
 
-data = base64.b64encode(Path("photo.jpg").read_bytes()).decode()
-bf.HTML(f'<img src="data:image/jpeg;base64,{data}" alt="..." style="max-width:100%">')
+{class}`~briefing.Attachment` puts a file in the report for readers to download: any
+file by its path, some bytes with a `filename`, or a dataframe, which downloads as CSV in
+the same format as a `DataTable`'s CSV button. It shows as a link with its label and
+size, and downloads from the page itself, with no server; text files are stored
+compressed.
+
+```{briefing-example}
+:title: Files to download
+:height: 180
+
+import pandas as pd
+import briefing as bf
+
+orders = pd.DataFrame({"region": ["North", "South"], "revenue": [412_000, 287_500]})
+notes = "# Method\n\nRevenue is net of returns, in USD.\n"
+
+bf.save(
+    bf.Group(
+        bf.Attachment(orders, filename="orders.csv", label="Orders"),
+        bf.Attachment(notes.encode(), filename="method.md", label="Method"),
+        columns=2,
+    ),
+    "attachments.html",
+    name="Files",
+)
 ```
 
 ## Raw HTML
@@ -62,7 +82,8 @@ compressed: the report unpacks them as it opens, before any chart draws.
 | A Plotly chart (the runtime, once, compressed) | 2.0 MB |
 | An Altair chart (the Vega runtime, once, compressed) | 0.4 MB |
 | A `DataTable` | its rows: in the HTML up to 1,000, compressed above |
-| A `Banner` or a data-URI image | the image file, plus a third for base64 |
+| A `Banner`, an `Image` or a data-URI image | the image file, plus a third for base64 |
+| An `Attachment` | the file, plus a third for base64; text files compressed |
 
 `DataTable` keeps at most `max_rows` rows (10,000 by default), and `lab.DataDive`
 samples down to its `max_rows`; both warn when they drop rows.
