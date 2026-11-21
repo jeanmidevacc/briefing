@@ -40,7 +40,14 @@ from briefing.renderers.formula import latex_to_mathml
 from briefing.renderers.links import claim_links
 from briefing.renderers.markup import close_open_markup
 from briefing.renderers.normalize import normalize
-from briefing.renderers.plot import get_runtime_scripts, render_figure, runtime_sources, scan_for_plots
+from briefing.renderers.pack import UNPACK_JS
+from briefing.renderers.plot import (
+    get_runtime_scripts,
+    render_figure,
+    runtime_script,
+    runtime_sources,
+    scan_for_plots,
+)
 from briefing.renderers.registry import (
     IdGen as _IdGen,
 )
@@ -68,7 +75,6 @@ _EXPORT_JS = _load_static("export.js")
 _EXPORT_CSS = _load_static("export.css")
 _EXPORT_LABELS = {"png": "Save as PNG"}
 _COPY_JS = _load_static("copy-embed.js")
-_UNPACK_JS = _load_static("unpack.js")
 _COPY_CSS = _load_static("copy-embed.css")
 #: Stands for the report's id prefix while it renders, until a hash of the report names it (#124).
 _REPORT_TOKEN = "bfreportidtoken"
@@ -525,7 +531,7 @@ def render_report(
 
     if parts is not None:
         parts += block_parts(blocks, idgen.weights or {}, paths)
-        parts += [Part(RUNTIME_NAMES.get(defined, defined), len(source.encode()))
+        parts += [Part(RUNTIME_NAMES.get(defined, defined), len(runtime_script(defined, source).encode()))
                   for defined, source in runtime_sources(libraries)]
         if embed_data:
             parts.append(Part("the copy-embed data", len(embed_data.encode())))
@@ -560,7 +566,7 @@ def block_scripts(root: Block) -> list[str]:
     for block in iter_blocks(root):
         js = asset_js_for(block)
         if js is None and isinstance(block, DataTable) and from_json(block):
-            js = _UNPACK_JS  # a big table's rows are packed (#38)
+            js = UNPACK_JS  # a big table's rows are packed (#38)
         if js is not None and js not in scripts:
             scripts.append(js)
     return scripts

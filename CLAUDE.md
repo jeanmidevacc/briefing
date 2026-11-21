@@ -47,6 +47,9 @@ and runs `twine check --strict`.
    and its rows packed (`renderers/pack.py`: raw deflate + base64) in a
    `script.bf-dt__data`; `static/unpack.js` (`window.briefingUnpack`, a function, not a
    part) unpacks them synchronously, and `block_scripts` ships it with any such table (#38).
+   Chart runtimes are packed too: `plot.runtime_script` gives the `<script>` text that
+   carries unpack.js and the packed runtime (shielded from RequireJS) and inserts it, once
+   per page, right after itself; reports, fragments and copy-embed copies use it as is.
 
 **The JSON form** (#31, `src/briefing/spec/`): `bf.to_spec`, `bf.from_spec`, `bf.validate`
 and `bf.schema`. `spec/_model.py` reads each block's options from its constructor (names,

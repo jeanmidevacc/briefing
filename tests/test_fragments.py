@@ -114,7 +114,7 @@ def test_with_assets_the_fragment_brings_its_css_scripts_and_runtimes() -> None:
     soup = _soup(bf.Plot(_plotly(), name="chart"))
     scripts = " ".join(s.get_text() for s in soup.find_all("script"))
     assert static_files()["static/report.js"] in scripts
-    assert "if (!window.Plotly) (function (define, module, exports) {" in scripts
+    assert "if (!window.Plotly) (function (script, here) {" in scripts  # packed, unpacked once (#38)
     assert embed_css() in " ".join(s.get_text() for s in soup.find_all("style"))
 
 

@@ -76,7 +76,7 @@ def test_a_copied_table_is_the_untouched_one_and_works_on_another_page(viewer: V
 def test_a_copied_page_brings_its_chart_runtime_and_links(viewer: Viewer) -> None:
     page = _open(viewer)
     fragment = _copy(page, "the Summary page")
-    assert "if (!window.Plotly) (function (define, module, exports) {" in fragment
+    assert "if (!window.Plotly) (function (script, here) {" in fragment  # the packed runtime (#38)
     for rule in FRAGMENT_RULES.values():
         rule(parse_report(fragment))
     host = _paste(viewer, fragment)

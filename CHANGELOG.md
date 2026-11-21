@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `llms.txt` index.
 - A size budget (#38). `bf.save` and `bf.stringify` warn when a report is bigger than
   `max_size`, 10 MB by default, and name its largest parts with their place in the
-  report: `DataTable "orders" at /blocks/2 (9.1 MB), the Plotly runtime (4.8 MB)`. Chart
+  report: `DataTable "orders" at /blocks/2 (9.1 MB), the Plotly runtime (2.0 MB)`. Chart
   runtimes and the copy-embed data count. `max_size="25 MB"` or a number of bytes changes
   it, `None` turns it off. `bf.validate` and `python -m briefing validate --max-size`
   report it as a `too-big` warning.
@@ -51,6 +51,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   1.3 MB to 0.3 MB. It sorts, searches, pages and prints as before; without JavaScript it
   shows its first 25 rows and says how many more there are. Up to 1,000 rows, nothing
   changes.
+- Chart runtimes are compressed (#38). Plotly's and Vega's runtimes are stored deflated
+  and unpacked by the report as it opens, before any chart draws, with no network and no
+  newer browser feature: a report with one Plotly chart goes from 4.9 MB to 2.0 MB, one
+  with an Altair chart from 0.9 MB to 0.5 MB. Fragments, `embed_assets` and copy-embed
+  copies carry them the same way, and charts look and behave as before.
 
 ### Changed
 

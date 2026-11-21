@@ -53,13 +53,14 @@ the rest of the report.
 ## Report size
 
 A report with text, tables and Matplotlib charts weighs tens to a few hundred
-kilobytes. The chart runtimes are embedded once per report, and only in reports that use them:
+kilobytes. The chart runtimes are embedded once per report, and only in reports that use them,
+compressed: the report unpacks them as it opens, before any chart draws.
 
 | In the report | Adds about |
 | --- | --- |
 | The base report (styles and scripts for tabs, tables, toggles, print) | 40 KB |
-| A Plotly chart (the runtime, once) | 4.6 MB |
-| An Altair chart (the Vega runtime, once) | 0.9 MB |
+| A Plotly chart (the runtime, once, compressed) | 2.0 MB |
+| An Altair chart (the Vega runtime, once, compressed) | 0.4 MB |
 | A `DataTable` | its rows: in the HTML up to 1,000, compressed above |
 | A `Banner` or a data-URI image | the image file, plus a third for base64 |
 
@@ -71,7 +72,7 @@ largest parts with where they are in the report (the path `bf.to_spec` gives the
 
 ```text
 UserWarning: The report is 14.2 MB, over max_size (10.0 MB); its largest parts:
-DataTable "orders" at /blocks/2 (9.1 MB), the Plotly runtime (4.8 MB), Banner at /blocks/0 (0.3 MB).
+DataTable "orders" at /blocks/2 (9.1 MB), the Plotly runtime (2.0 MB), Banner at /blocks/0 (0.3 MB).
 ```
 
 `max_size="25 MB"` (or a number of bytes) changes the limit, and `max_size=None` turns
