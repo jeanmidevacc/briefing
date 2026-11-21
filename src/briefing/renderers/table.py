@@ -21,12 +21,14 @@ from __future__ import annotations
 
 import copy
 import html as _html
+import json
 import math
 import numbers
 import typing as t
 from datetime import date, timedelta
 
 from briefing._error import BriefingError
+from briefing.renderers.pack import pack
 from briefing.renderers.registry import IdGen
 
 if t.TYPE_CHECKING:
@@ -170,15 +172,25 @@ def render_datatable(block: DataTable) -> str:
         )
         col_idx += 1
 
-    # ── rows ──
+    # ── rows: all of them, or above HTML_ROWS the first page, the rest as packed JSON (#38) ──
+    big = from_json(block)
     rows_html = ""
-    for idx_val, row in zip(df.index, df.itertuples(index=False), strict=True):
+    shown = df.iloc[:PAGE_ROWS] if big else df
+    for idx_val, row in zip(shown.index, shown.itertuples(index=False), strict=True):
         cells = ""
         if show_index:
             cells += _cell(idx_val)
         for val in row:
             cells += _cell(val)
         rows_html += f"<tr>{cells}</tr>"
+    more_html = data_html = ""
+    if big:
+        more_html = (
+            f'<noscript><p class="bf-dt__more">The first {PAGE_ROWS} of {len(df):,} rows: '
+            "the others need JavaScript.</p></noscript>"
+        )
+        packed, size = pack(json.dumps(_columns(df, show_index), ensure_ascii=False, separators=(",", ":")))
+        data_html = f'<script type="application/json" class="bf-dt__data" data-size="{size}">"{packed}"</script>'
 
     caption_html = (
         f'<div class="bf-dt__caption">{_html.escape(block.caption)}</div>'
@@ -197,14 +209,40 @@ def render_datatable(block: DataTable) -> str:
         f"<tbody>{rows_html}</tbody>"
         f"</table>"
         f"</div>"
+        f"{more_html}"
         f'<div class="bf-dt__footer">'
         f'<button class="bf-dt__page-btn" data-dir="-1">&#8592; Prev</button>'
         f'<span class="bf-dt__page-info"></span>'
         f'<button class="bf-dt__page-btn" data-dir="1">Next &#8594;</button>'
         f"</div>"
         f"{caption_html}"
+        f"{data_html}"
         f"</div>"
     )
 
 
-__all__ = ["render_datatable", "render_table"]
+#: Rows a page of a DataTable shows (``PAGE_SIZE`` in report.js): what a big table keeps in its HTML.
+PAGE_ROWS = 25
+
+
+def from_json(block: DataTable) -> bool:
+    """Whether *block* stores its rows as packed JSON (#38): above ``DataTable.HTML_ROWS`` rows."""
+    return len(block.df) > block.HTML_ROWS
+
+
+def _columns(df: t.Any, show_index: bool) -> dict[str, t.Any]:
+    """A big table's rows for report.js, column by column: how many there are, each cell's text,
+    and its sort key where a column has any that differs from its text (``null``: sort by the text)."""
+    columns = ([df.index.tolist()] if show_index else []) + [df.iloc[:, j].tolist() for j in range(df.shape[1])]
+    text: list[list[str]] = []
+    keys: dict[str, list[str | None]] = {}
+    for j, values in enumerate(columns):
+        texts = [_fmt(v) for v in values]
+        sort = [_sort_key(v) for v in values]
+        text.append(texts)
+        if any(k is not None and k != shown for k, shown in zip(sort, texts, strict=True)):
+            keys[str(j)] = sort
+    return {"rows": len(df), "text": text, "keys": keys}
+
+
+__all__ = ["PAGE_ROWS", "from_json", "render_datatable", "render_table"]

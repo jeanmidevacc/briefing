@@ -138,6 +138,53 @@
 
   // ── DataTable ────────────────────────────────────────────────────────────────
 
+  // The rows of a table, by number: the <tr>s of its HTML, or for a table of more than
+  // DataTable.HTML_ROWS rows the cells packed as JSON in script.bf-dt__data (#38), whose
+  // <tr>s are made as they show. Each row has the key it sorts by in a column (the
+  // data-sort key Python wrote for numbers, dates and durations, else its text) and the
+  // text a search looks into.
+  function tableRows(container, tbody) {
+    var data = container.querySelector('script.bf-dt__data');
+    if (!data) {
+      var trs = Array.from(tbody.rows);
+      return {
+        count: trs.length,
+        element: function (i) { return trs[i]; },
+        key: function (i, col) {
+          var cell = trs[i].cells[col];
+          if (!cell) return '';
+          var key = cell.getAttribute('data-sort');
+          return key !== null ? key : cell.textContent.trim();
+        },
+        text: function (i) { return trs[i].textContent; }
+      };
+    }
+    var table = JSON.parse(window.briefingUnpack(JSON.parse(data.textContent), Number(data.getAttribute('data-size'))));
+    var columns = table.text, keys = table.keys, made = [];
+    return {
+      count: table.rows,
+      element: function (i) {
+        if (!made[i]) {
+          var tr = document.createElement('tr');
+          columns.forEach(function (column, col) {
+            var td = document.createElement('td');
+            var key = keys[col] ? keys[col][i] : null;
+            td.textContent = column[i];
+            if (key !== null && key !== column[i]) td.setAttribute('data-sort', key);
+            tr.appendChild(td);
+          });
+          made[i] = tr;
+        }
+        return made[i];
+      },
+      key: function (i, col) {
+        var key = keys[col] ? keys[col][i] : null;
+        return key !== null ? key : (columns[col] ? columns[col][i].trim() : '');
+      },
+      text: function (i) { return columns.map(function (column) { return column[i]; }).join(''); }
+    };
+  }
+
   function setupDataTable(container, runtime) {
     var tbody    = container.querySelector('.bf-dt__table tbody');
     var search   = container.querySelector('.bf-dt__search');
@@ -149,23 +196,28 @@
 
     if (!tbody) return;
 
-    var allRows  = Array.from(tbody.rows);
-    var PAGE_SIZE = 25;
+    var rows      = tableRows(container, tbody);
+    var all       = [];
+    for (var n = 0; n < rows.count; n++) all.push(n);
+    var PAGE_SIZE = 25;  // PAGE_ROWS in renderers/table.py
     var PRINT_ROWS = 1000;
     var page     = 0;
     var sortCol  = -1;
     var sortAsc  = true;
-    var filtered = allRows.slice();
+    var filtered = all.slice();
+    var searchText = null;  // each row's text in lower case, made on the first search
+
+    // The tbody holds the rows on show, in their (sorted) order, and nothing else.
+    function show(list) {
+      var frag = document.createDocumentFragment();
+      list.forEach(function (i) { frag.appendChild(rows.element(i)); });
+      tbody.textContent = '';
+      tbody.appendChild(frag);
+    }
 
     function render() {
-      // Move the matching rows to the end of tbody in their current (sorted) order,
-      // so the page shows them in that order and not in the original one.
-      var frag = document.createDocumentFragment();
-      filtered.forEach(function (r) { frag.appendChild(r); });
-      tbody.appendChild(frag);
-      allRows.forEach(function (r) { r.hidden = true; });
       var start = page * PAGE_SIZE;
-      filtered.slice(start, start + PAGE_SIZE).forEach(function (r) { r.hidden = false; });
+      show(filtered.slice(start, start + PAGE_SIZE));
 
       var total = filtered.length;
       var from  = total === 0 ? 0 : start + 1;
@@ -178,21 +230,11 @@
 
     function applyFilter() {
       var q = search ? search.value.toLowerCase() : '';
-      filtered = q
-        ? allRows.filter(function (r) { return r.textContent.toLowerCase().indexOf(q) !== -1; })
-        : allRows.slice();
+      if (q && !searchText) searchText = all.map(function (i) { return rows.text(i).toLowerCase(); });
+      filtered = q ? all.filter(function (i) { return searchText[i].indexOf(q) !== -1; }) : all.slice();
       if (sortCol >= 0) applySortToFiltered();
       page = 0;
       render();
-    }
-
-    // The value a row sorts by: the cell's data-sort key (written by Python for
-    // numbers, dates and durations), else its text.
-    function sortKey(row) {
-      var cell = row.cells[sortCol];
-      if (!cell) return '';
-      var key = cell.getAttribute('data-sort');
-      return key !== null ? key : cell.textContent.trim();
     }
 
     // A key that is a whole number, optionally with thousands separators ("1,200"); else NaN.
@@ -203,8 +245,8 @@
 
     function applySortToFiltered() {
       filtered.sort(function (a, b) {
-        var av = sortKey(a);
-        var bv = sortKey(b);
+        var av = rows.key(a, sortCol);
+        var bv = rows.key(b, sortCol);
         // Empty cells go last whichever way the column is sorted.
         if (av === '' || bv === '') return av === bv ? 0 : (av === '' ? 1 : -1);
         var an = asNumber(av);
@@ -238,8 +280,7 @@
     // Print every row matching the search, up to PRINT_ROWS, instead of one page.
     var printNote = null;
     runtime.onPrint(function () {
-      allRows.forEach(function (r) { r.hidden = true; });
-      filtered.slice(0, PRINT_ROWS).forEach(function (r) { r.hidden = false; });
+      show(filtered.slice(0, PRINT_ROWS));
       if (filtered.length > PRINT_ROWS && !printNote) {
         printNote = document.createElement('p');
         printNote.className = 'bf-dt__print-note';

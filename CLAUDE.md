@@ -43,6 +43,10 @@ and runs `twine check --strict`.
    `embed_noun` with `data-bf-embed`, prefixes made-up ids with a hash of the report and
    adds a gzip copy of the untouched blocks (`fragment.copy_data`); `static/copy-embed.js`
    cuts a block out of it as a fragment. Reports without it must not change.
+   A `DataTable` above `DataTable.HTML_ROWS` (1,000) rows keeps its first page in the HTML
+   and its rows packed (`renderers/pack.py`: raw deflate + base64) in a
+   `script.bf-dt__data`; `static/unpack.js` (`window.briefingUnpack`, a function, not a
+   part) unpacks them synchronously, and `block_scripts` ships it with any such table (#38).
 
 **The JSON form** (#31, `src/briefing/spec/`): `bf.to_spec`, `bf.from_spec`, `bf.validate`
 and `bf.schema`. `spec/_model.py` reads each block's options from its constructor (names,

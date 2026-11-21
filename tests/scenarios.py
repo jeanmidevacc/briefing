@@ -81,6 +81,16 @@ def _over_infinite(make: Callable[[pd.DataFrame], Block]) -> Build:
     return lambda _: bf.Briefing(make(_infinite_frame()))
 
 
+def big_frame(rows: int = 1_500) -> pd.DataFrame:
+    """More rows than ``DataTable.HTML_ROWS``: a table whose rows are packed as JSON (#38)."""
+    return pd.DataFrame({
+        "id": range(rows),
+        "x": [((i * 37) % 101) / 7 for i in range(rows)],
+        "word": [f"word {i % 13}" for i in range(rows)],
+        "day": pd.date_range("2025-01-01", periods=rows, freq="h"),
+    })
+
+
 SCENARIOS: dict[str, Build] = {
     "text": lambda _: bf.Briefing(bf.Text("# Title\n\nSome *markdown* with a [link](https://example.com).")),
     "text-markdown-table": lambda _: bf.Briefing(bf.Text("| a | b |\n| --- | --- |\n| 1 | 2 |")),
@@ -130,6 +140,7 @@ SCENARIOS: dict[str, Build] = {
         for fixture in FRAME_FIXTURES
     },
     **{f"{kind}-infinite": _over_infinite(make) for kind, make in FRAME_BLOCKS.items()},
+    "datatable-big": lambda _: bf.Briefing(bf.DataTable(big_frame(), caption="Packed rows", name="rows")),
     "calendar": lambda df: bf.Briefing(bf.lab.CalendarHeatmap(
         df("df_pipeline_log"), date="run_at", value="rows", group="team", expected=500, events=df("df_events"),
         views=("days", "hours"), tz="America/Montreal", on_click="rows")),

@@ -28,7 +28,12 @@ _REGISTERS = re.compile(r"window\.briefing\.register\('([\w-]+)'")
 def test_every_script_is_checked() -> None:
     assert sorted(SCRIPTS) == [
         "lab/static/calendar.js", "lab/static/lab.js", "static/copy-embed.js", "static/export.js", "static/report.js",
+        "static/unpack.js",
     ]
+
+
+#: Scripts that define a function and touch no element, so they register no part.
+FUNCTIONS = {"static/unpack.js"}
 
 
 @pytest.mark.parametrize("path", sorted(SCRIPTS))
@@ -39,7 +44,12 @@ def test_no_script_reaches_into_the_page(path: str) -> None:
 
 @pytest.mark.parametrize("path", sorted(SCRIPTS))
 def test_each_script_registers_one_part(path: str) -> None:
-    assert len(_REGISTERS.findall(SCRIPTS[path])) == 1
+    assert len(_REGISTERS.findall(SCRIPTS[path])) == (0 if path in FUNCTIONS else 1)
+
+
+@pytest.mark.parametrize("path", sorted(FUNCTIONS))
+def test_a_function_script_touches_no_element(path: str) -> None:
+    assert not re.search(r"querySelector|getElement|\.(?:append|insert|remove)\w*\(", SCRIPTS[path])
 
 
 def test_only_the_runtime_listens_to_the_page() -> None:

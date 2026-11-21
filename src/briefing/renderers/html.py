@@ -51,7 +51,7 @@ from briefing.renderers.registry import (
     renderer_for,
 )
 from briefing.renderers.size import RUNTIME_NAMES, Part, block_parts
-from briefing.renderers.table import render_datatable, render_table
+from briefing.renderers.table import from_json, render_datatable, render_table
 
 # ── package resource loading ──────────────────────────────────────────────────
 
@@ -68,6 +68,7 @@ _EXPORT_JS = _load_static("export.js")
 _EXPORT_CSS = _load_static("export.css")
 _EXPORT_LABELS = {"png": "Save as PNG"}
 _COPY_JS = _load_static("copy-embed.js")
+_UNPACK_JS = _load_static("unpack.js")
 _COPY_CSS = _load_static("copy-embed.css")
 #: Stands for the report's id prefix while it renders, until a hash of the report names it (#124).
 _REPORT_TOKEN = "bfreportidtoken"
@@ -558,6 +559,8 @@ def block_scripts(root: Block) -> list[str]:
     scripts: list[str] = []
     for block in iter_blocks(root):
         js = asset_js_for(block)
+        if js is None and isinstance(block, DataTable) and from_json(block):
+            js = _UNPACK_JS  # a big table's rows are packed (#38)
         if js is not None and js not in scripts:
             scripts.append(js)
     return scripts
