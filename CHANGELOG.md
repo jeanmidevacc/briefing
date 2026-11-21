@@ -30,6 +30,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   own checks and warnings, and whatever stops the report from rendering. `bf.schema()`
   returns the format's JSON Schema, which also ships as `briefing/schema/v1.json`. A
   `Select`'s `type` is written `"select_type"` in JSON, since `"type"` names the block.
+- A reference for agents, shipped with the package (#32). `python -m briefing reference`
+  prints it: how to write, check and render a report's JSON, every block and option with
+  its type, default and description, the diagnostic codes and a complete example. It is
+  generated from the block classes, so it matches the installed version. The command line
+  gains `validate` (exit status 1 on an error, `--json` for a JSON list) and `render` for
+  report JSON, both taking referenced tables as `--data name=file.csv` (or `.parquet`), and
+  `skill --install`, which writes a Claude Code skill pointing to the reference into
+  `.claude/skills/briefing/`. The docs publish the reference as `llms-full.txt`, with an
+  `llms.txt` index.
 
 ## [0.3.0] - 2026-11-20
 

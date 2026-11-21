@@ -251,7 +251,7 @@ _ROLE = re.compile(r":\w+:`~?(?:[\w.]+\.)?([\w]+)`")
 
 def _plain_text(rst: str) -> str:
     """A docstring's reStructuredText as plain text: roles become names, literals keep backticks."""
-    return _ROLE.sub(r"\1", rst).replace("``", "`").replace("\\n", "\n")
+    return _ROLE.sub(r"\1", rst).replace("``", "`")
 
 
 def _summary(doc: str) -> str:
