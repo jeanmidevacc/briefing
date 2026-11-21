@@ -80,6 +80,9 @@ body {
   grid-template-columns: repeat(var(--bf-cols, 1), 1fr);
   align-items: start;
 }
+/* A cell may shrink below its content's width: a wide table or code block then scrolls inside
+   its own box instead of widening the column, and with it the report (every Page is a Group). */
+.bf-group > * { min-width: 0; }
 .bf-group--valign-center { align-items: center; }
 .bf-group--valign-bottom { align-items: end; }
 
