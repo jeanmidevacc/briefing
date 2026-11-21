@@ -103,7 +103,10 @@ def _check_object(value: dict[str, t.Any], schema: dict[str, t.Any]) -> bool:
     if any(key not in value for key in schema.get("required", [])):
         return False
     properties = schema.get("properties", {})
-    if schema.get("additionalProperties") is False and any(key not in properties for key in value):
+    others = schema.get("additionalProperties", True)
+    if others is False and any(key not in properties for key in value):
+        return False
+    if isinstance(others, dict) and not all(check(v, others) for key, v in value.items() if key not in properties):
         return False
     return all(check(value[key], s) for key, s in properties.items() if key in value)
 
@@ -126,6 +129,8 @@ def describe(schema: dict[str, t.Any]) -> str:
         return f"a list of {len(schema['prefixItems'])} {_plural(describe(schema['prefixItems'][0]))}"
     if kinds == ["array"] and "items" in schema:
         return f"a list of {_plural(describe(schema['items']))}"
+    if kinds == ["object"] and isinstance(schema.get("additionalProperties"), dict):
+        return f'an object {{"<column>": {describe(schema["additionalProperties"])}}}'
     return " or ".join(_WORDS[k] for k in kinds) or "a value"
 
 

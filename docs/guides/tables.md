@@ -35,6 +35,37 @@ orders = pd.DataFrame({
 bf.save(bf.DataTable(orders, caption="Orders, January–February"), "datatable.html", name="Orders")
 ```
 
+### Number formats and links
+
+`formats=` shows a column's values with a Python format string (the kind pandas'
+`Styler.format` takes) or a function; the cell still sorts by its value, so `12.3%`
+sorts before `50.0%` and `30 Nov 2023` before `05 Jan 2024`. `links=` turns a column's
+cells into links: `{}` in the URL is the cell's value, `{url}` the value of the column
+`url` in the same row. Only `http(s)://` and `mailto:` URLs become links, which open in
+a new tab; anything else stays text, with a warning.
+
+```{briefing-example}
+:title: Formatted and linked cells
+:height: 280
+
+import pandas as pd
+import briefing as bf
+
+papers = pd.DataFrame({
+    "title": ["Graph recommenders", "Learning to rank", "Contextual bandits"],
+    "doi": ["10.1000/182", "10.1000/183", None],
+    "citations": [12_345, 678, 9],
+    "share": [0.1234, 0.5, None],
+    "published": pd.to_datetime(["2024-01-05", "2023-11-30", "2024-02-01"]),
+})
+table = bf.DataTable(
+    papers,
+    formats={"citations": "{:,}", "share": "{:.1%}", "published": "{:%d %b %Y}"},
+    links={"doi": "https://doi.org/{}"},
+)
+bf.save(table, "datatable-formats.html", name="Papers")
+```
+
 ## Static tables with `Table`
 
 `Table` renders a dataframe as plain HTML, and keeps a pandas `Styler`'s formats,

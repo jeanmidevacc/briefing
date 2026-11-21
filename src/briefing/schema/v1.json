@@ -1048,6 +1048,42 @@
           ],
           "default": 10000
         },
+        "formats": {
+          "description": "How to show a column's values: `{\"revenue\": \"€ {:,.0f}\", \"share\": \"{:.1%}\", \"day\": \"{:%d %b %Y}\"}`, Python format strings (as in pandas' `Styler.format`) or functions. Cells still sort by their raw value; missing values stay empty.",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "links": {
+          "description": "Columns whose cells link somewhere: `{\"doi\": \"https://doi.org/{}\", \"title\": \"{url}\"}`, a URL template where `{}` is the cell's value and `{url}` the value of the column `url` in the same row. Only `http(s)://` and `mailto:` URLs make links (anything else stays text, with a warning); they open in a new tab.",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
         "name": {
           "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
           "anyOf": [

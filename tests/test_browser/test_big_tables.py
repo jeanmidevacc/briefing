@@ -20,9 +20,10 @@ from tests.test_browser.conftest import Viewer
 
 
 def _cells(page: Page) -> list[list[t.Any]]:
-    """Each row on show: its cells' text and data-sort key."""
+    """Each row on show: its cells' text, data-sort key and link (#33)."""
     rows: list[list[t.Any]] = page.locator(".bf-dt__table tbody tr").evaluate_all(
-        "rs => rs.map(r => Array.from(r.cells).map(c => [c.textContent, c.getAttribute('data-sort')]))"
+        "rs => rs.map(r => Array.from(r.cells).map(c => [c.textContent, c.getAttribute('data-sort'),"
+        " c.querySelector('a') && [c.querySelector('a').getAttribute('href'), c.querySelector('a').target]]))"
     )
     return rows
 
@@ -50,7 +51,8 @@ def _walk(page: Page) -> list[t.Any]:
 
 
 def test_a_packed_table_behaves_like_one_in_the_html(viewer: Viewer, monkeypatch: pytest.MonkeyPatch) -> None:
-    report = bf.Briefing(bf.DataTable(big_frame(1_500)))
+    report = bf.Briefing(bf.DataTable(big_frame(1_500), formats={"x": "{:.2f}"},
+                                      links={"id": "https://example.org/rows/{}"}))
     packed = viewer.open(report)
     assert packed.locator("script.bf-dt__data").count() == 1
     expected = _walk(packed)
@@ -59,6 +61,8 @@ def test_a_packed_table_behaves_like_one_in_the_html(viewer: Viewer, monkeypatch
     assert in_html.locator("script.bf-dt__data").count() == 0
     assert _walk(in_html) == expected
     assert expected[1] == ("1500 rows", "1–25 of 1500")
+    assert expected[0][0][0] == ["0", None, ["https://example.org/rows/0", "_blank"]]  # a link, formatted x next
+    assert expected[0][1][1][0] == f"{big_frame(2)['x'][1]:.2f}"
     assert expected[-2] == "Printed 1,000 of 1,500 rows."
 
 
