@@ -125,6 +125,7 @@ _REPORT_ID = re.compile(r"\bbf-r[0-9a-f]{8}-")
 def _copy_data_marker(match: re.Match[str]) -> str:
     payload = json.loads(gzip.decompress(base64.b64decode(match[2])))
     payload["version"] = "{version}"
+    payload["footer"] = payload["footer"].replace(f"briefing {bf.__version__}", "briefing {version}")
     payload["body"] = mask(payload["body"])
     digest = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:12]
     return f"{match[1]}/* golden: copy-embed data for {len(payload['blocks'])} blocks, sha256 {digest} */{match[3]}"
