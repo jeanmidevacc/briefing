@@ -140,7 +140,21 @@ SCENARIOS: dict[str, Build] = {
         for fixture in FRAME_FIXTURES
     },
     **{f"{kind}-infinite": _over_infinite(make) for kind, make in FRAME_BLOCKS.items()},
-    "datatable-big": lambda _: bf.Briefing(bf.DataTable(big_frame(), caption="Packed rows", name="rows")),
+    "datatable-big": lambda _: bf.Briefing(bf.DataTable(
+        big_frame(), caption="Packed rows", name="rows", formats={"x": "{:.2f}"},
+        links={"id": "https://example.org/rows/{}"})),
+    "datatable-formats": lambda _: bf.Briefing(bf.DataTable(
+        pd.DataFrame({
+            "title": ["Graphs", "Ranking", "Bandits"],
+            "url": ["https://example.org/a", "https://example.org/b", None],
+            "doi": ["10.1000/a", None, "10.1000/c"],
+            "citations": [12345, 678, 9],
+            "share": [0.1234, 0.5, None],
+            "published": pd.to_datetime(pd.Series(["2024-01-05", "2023-11-30", None])),
+        }),
+        formats={"citations": "{:,}", "share": "{:.1%}", "published": "{:%d %b %Y}"},
+        links={"doi": "https://doi.org/{}", "title": "{url}"},
+    )),
     "calendar": lambda df: bf.Briefing(bf.lab.CalendarHeatmap(
         df("df_pipeline_log"), date="run_at", value="rows", group="team", expected=500, events=df("df_events"),
         views=("days", "hours"), tz="America/Montreal", on_click="rows")),

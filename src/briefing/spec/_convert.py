@@ -53,6 +53,8 @@ def _plain(value: object) -> t.Any:
         return number
     if isinstance(value, tuple | list):
         return [_plain(v) for v in value]
+    if isinstance(value, dict) and all(isinstance(k, str) for k in value):
+        return {k: _plain(v) for k, v in value.items()}
     raise _NoJSON
 
 

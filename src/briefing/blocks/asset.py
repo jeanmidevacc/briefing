@@ -9,9 +9,12 @@ pandas DataFrame.
 """
 from __future__ import annotations
 
+import string
 import typing as t
 import warnings
+from collections.abc import Callable
 
+from briefing._error import BriefingError
 from briefing._frames import is_pandas_dataframe, to_pandas
 from briefing.blocks.base import _MAX_CAPTION_LEN, Block, BlockId, _truncate
 
@@ -109,12 +112,20 @@ class DataTable(Block):
             interchange protocol, or a dict of columns.
         caption: Optional caption below the table.
         max_rows: Rows beyond this are dropped with a warning.
+        formats: How to show a column's values: ``{"revenue": "€ {:,.0f}", "share": "{:.1%}",
+            "day": "{:%d %b %Y}"}``, Python format strings (as in pandas' ``Styler.format``)
+            or functions. Cells still sort by their raw value; missing values stay empty.
+        links: Columns whose cells link somewhere: ``{"doi": "https://doi.org/{}", "title":
+            "{url}"}``, a URL template where ``{}`` is the cell's value and ``{url}`` the value
+            of the column ``url`` in the same row. Only ``http(s)://`` and ``mailto:`` URLs
+            make links (anything else stays text, with a warning); they open in a new tab.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
 
         bf.DataTable(df, caption="Top 1 000 orders")
+        bf.DataTable(papers, formats={"citations": "{:,}"}, links={"doi": "https://doi.org/{}"})
     """
 
     embed_noun: t.ClassVar[str | None] = "table"
@@ -131,11 +142,15 @@ class DataTable(Block):
         df: pd.DataFrame | t.Any,
         caption: str | None = None,
         max_rows: int = MAX_ROWS,
+        formats: dict[str, str | Callable[[t.Any], str]] | None = None,
+        links: dict[str, str] | None = None,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
         super().__init__(name=name, label=label)
         df = to_pandas(df, block="DataTable")
+        self.formats = _check_formats(formats, df) if formats else None
+        self.links = _check_links(links, df) if links else None
 
         if len(df) > max_rows:
             warnings.warn(
@@ -148,6 +163,55 @@ class DataTable(Block):
         self.df = df
         self.caption = _truncate(caption, _MAX_CAPTION_LEN) if caption else caption
         self.max_rows = max_rows
+
+
+def _columns_named(option: str, names: t.Iterable[t.Any], df: pd.DataFrame) -> None:
+    for column in names:
+        if column not in df.columns:
+            raise BriefingError(
+                f"DataTable: {option} names the column {column!r}, which the table doesn't have. "
+                f"Its columns: {', '.join(map(str, df.columns)) or 'none'}."
+            )
+
+
+def _fields(template: str, option: str) -> list[str]:
+    """The replacement fields of a format string or URL template (``""`` for ``{}``)."""
+    try:
+        return [field for _, field, _, _ in string.Formatter().parse(template) if field is not None]
+    except ValueError as exc:
+        raise BriefingError(f"DataTable: {option} {template!r} isn't a valid template: {exc}.") from exc
+
+
+def _check_formats(formats: t.Any, df: pd.DataFrame) -> dict[str, str | Callable[[t.Any], str]]:
+    if not isinstance(formats, dict):
+        raise BriefingError(f"DataTable: formats is a dict of columns and formats such as {{'revenue': '{{:,.0f}}'}}, "
+                            f"not {type(formats).__name__}.")
+    _columns_named("formats", formats, df)
+    for column, how in formats.items():
+        if callable(how):
+            continue
+        if not isinstance(how, str) or [f for f in _fields(how, "format") if f not in ("", "0")] or not _fields(
+            how, "format"
+        ):
+            raise BriefingError(
+                f"DataTable: the format of {column!r} must be a format string with one {{}} for the value, "
+                f"such as '{{:,.0f}}' or '€ {{:.2f}}', or a function; not {how!r}."
+            )
+    return dict(formats)
+
+
+def _check_links(links: t.Any, df: pd.DataFrame) -> dict[str, str]:
+    if not isinstance(links, dict):
+        raise BriefingError(f"DataTable: links is a dict of columns and URL templates such as "
+                            f"{{'doi': 'https://doi.org/{{}}'}}, not {type(links).__name__}.")
+    _columns_named("links", links, df)
+    for column, template in links.items():
+        if not isinstance(template, str):
+            raise BriefingError(f"DataTable: the link of {column!r} must be a URL template such as "
+                                f"'https://doi.org/{{}}' or '{{url}}', not {template!r}.")
+        named = [f for f in _fields(template, "link") if f not in ("", "0")]
+        _columns_named(f"the link of {column!r}", named, df)
+    return dict(links)
 
 
 # ── public re-exports ─────────────────────────────────────────────────────────

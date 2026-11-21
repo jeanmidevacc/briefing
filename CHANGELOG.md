@@ -56,6 +56,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   newer browser feature: a report with one Plotly chart goes from 4.9 MB to 2.0 MB, one
   with an Altair chart from 0.9 MB to 0.5 MB. Fragments, `embed_assets` and copy-embed
   copies carry them the same way, and charts look and behave as before.
+- Number formats and links in `DataTable` cells (#33). `formats={"revenue": "€ {:,.0f}",
+  "share": "{:.1%}", "day": "{:%d %b %Y}"}` shows a column with a Python format string or a
+  function, while cells still sort by their value. `links={"doi": "https://doi.org/{}",
+  "title": "{url}"}` makes a column's cells links, from the cell's value or another column
+  of the row; only `http(s)://` and `mailto:` URLs become links (the rest stays text, with
+  a warning), and they open in a new tab. Big tables pack the formatted text and the links.
 
 ### Changed
 

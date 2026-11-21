@@ -140,7 +140,7 @@
 
   // The rows of a table, by number: the <tr>s of its HTML, or for a table of more than
   // DataTable.HTML_ROWS rows the cells packed as JSON in script.bf-dt__data (#38), whose
-  // <tr>s are made as they show. Each row has the key it sorts by in a column (the
+  // <tr>s are made as they show, link cells (#33) as links. Each row has the key it sorts by in a column (the
   // data-sort key Python wrote for numbers, dates and durations, else its text) and the
   // text a search looks into.
   function tableRows(container, tbody) {
@@ -160,7 +160,7 @@
       };
     }
     var table = JSON.parse(window.briefingUnpack(JSON.parse(data.textContent), Number(data.getAttribute('data-size'))));
-    var columns = table.text, keys = table.keys, made = [];
+    var columns = table.text, keys = table.keys, links = table.links || {}, made = [];
     return {
       count: table.rows,
       element: function (i) {
@@ -169,7 +169,17 @@
           columns.forEach(function (column, col) {
             var td = document.createElement('td');
             var key = keys[col] ? keys[col][i] : null;
-            td.textContent = column[i];
+            var href = links[col] ? links[col][i] : null;  // a link column (#33)
+            if (href) {
+              var a = document.createElement('a');
+              a.setAttribute('href', href);
+              a.setAttribute('target', '_blank');
+              a.setAttribute('rel', 'noopener noreferrer');
+              a.textContent = column[i];
+              td.appendChild(a);
+            } else {
+              td.textContent = column[i];
+            }
             if (key !== null && key !== column[i]) td.setAttribute('data-sort', key);
             tr.appendChild(td);
           });

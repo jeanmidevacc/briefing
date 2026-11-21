@@ -161,6 +161,8 @@ Interactive, sortable and searchable table rendered from a pandas DataFrame.
 - `df` (required): a table {"columns": [...], "rows": [[...]]}. The data: pandas, polars, pyarrow, anything with the dataframe interchange protocol, or a dict of columns.
 - `caption`: text. Optional caption below the table.
 - `max_rows`: a whole number, default `10000`. Rows beyond this are dropped with a warning.
+- `formats`: an object {"<column>": text}. How to show a column's values: `{"revenue": "€ {:,.0f}", "share": "{:.1%}", "day": "{:%d %b %Y}"}`, Python format strings (as in pandas' `Styler.format`) or functions. Cells still sort by their raw value; missing values stay empty.
+- `links`: an object {"<column>": text}. Columns whose cells link somewhere: `{"doi": "https://doi.org/{}", "title": "{url}"}`, a URL template where `{}` is the cell's value and `{url}` the value of the column `url` in the same row. Only `http(s)://` and `mailto:` URLs make links (anything else stays text, with a warning); they open in a new tab.
 
 ### Code
 

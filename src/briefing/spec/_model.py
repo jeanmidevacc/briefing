@@ -201,7 +201,12 @@ _SIMPLE = ("string", "integer", "number", "boolean", "null")
 def _to_schema(hint: t.Any, choices: tuple[str, ...] | None = None) -> dict[str, t.Any]:
     origin, args = t.get_origin(hint), t.get_args(hint)
     if origin in (t.Union, types.UnionType):
-        return _union([_to_schema(a, choices) for a in args if a not in (t.Any, _Series, _Styler)])
+        return _union([
+            _to_schema(a, choices) for a in args
+            if a not in (t.Any, _Series, _Styler) and t.get_origin(a) is not collections.abc.Callable  # by reference
+        ])
+    if origin is dict:
+        return {"type": "object", "additionalProperties": _to_schema(args[1], choices)}
     if hint is type(None):
         return {"type": "null"}
     if hint is bool:
