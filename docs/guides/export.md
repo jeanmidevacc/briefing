@@ -101,8 +101,7 @@ opt-in: a report without `export=` contains no export code.
 
 To print, readers use the browser's own print (Ctrl+P or ⌘P): it gets the full
 print layout described under Printing above. `export="pdf"` used to add a
-"Print" button that did the same; it is deprecated, warns and adds nothing, and from
-0.4.0 it raises an error.
+"Print" button that did the same; it was removed in 0.4.0 and raises an error.
 
 ```{briefing-example}
 :title: A report with the export menu

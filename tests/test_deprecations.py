@@ -70,17 +70,13 @@ def test_the_day_calendar_alone_does_not_warn(df_pipeline_log: t.Any) -> None:
         bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", views=("days",))
 
 
-# ── Briefing(export="pdf"): the "Print" button ────────────────────────────────
+# ── Briefing(export="pdf"): the "Print" button, removed in 0.4.0 ──────────────────────────
 
 
 @pytest.mark.parametrize("export", ["pdf", ("png", "pdf"), ["pdf", "png", "pdf"]])
-def test_export_pdf_warns_once_and_adds_no_button(export: t.Any) -> None:
-    expected = r"export='pdf'.*deprecated.*Ctrl\+P.*bf\.save_pdf.*0\.4\.0"
-    with pytest.warns(DeprecationWarning, match=expected) as caught:
-        report = bf.Briefing(bf.Text("x"), export=export)
-    assert len(caught) == 1
-    assert caught[0].filename == __file__  # points at the caller's line (stacklevel=3)
-    assert "pdf" not in report.export
+def test_export_pdf_was_removed_in_0_4_and_says_what_to_use(export: t.Any) -> None:
+    with pytest.raises(bf.BriefingError, match=r"export='pdf'\) was removed in 0\.4\.0.*Ctrl\+P.*bf\.save_pdf"):
+        bf.Briefing(bf.Text("x"), export=export)
 
 
 def test_export_png_alone_does_not_warn() -> None:
