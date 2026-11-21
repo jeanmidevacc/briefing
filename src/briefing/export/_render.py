@@ -48,10 +48,12 @@ _PAGES_JS = """() => {
   return sel ? [...sel.querySelectorAll(':scope > .bf-select__tablist > .bf-select__tab')].map(t => t.textContent) : [];
 }"""
 
-# While exporting, the root tab bar (one page is shown at a time) and the in-report
-# export menu (#100) are controls, not content.
+# While exporting, the root tab bar (one page is shown at a time), the in-report export
+# menu (#100), the copy-embed buttons (#124) and tables' CSV buttons (#34) are controls,
+# not content.
 _EXPORT_CSS = (
-    ".bf-blocks > .bf-select:only-child > .bf-select__tablist, .bf-export, .bf-copy { display: none !important; }"
+    ".bf-blocks > .bf-select:only-child > .bf-select__tablist, .bf-export, .bf-copy, .bf-dt__csv, "
+    ".bf-dt__csv-note { display: none !important; }"
 )
 
 

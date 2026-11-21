@@ -202,6 +202,7 @@ def render_datatable(block: DataTable) -> str:
         f'<div class="bf-dt__toolbar">'
         f'<input class="bf-dt__search" type="search" placeholder="Search…" aria-label="Search table" />'
         f'<span class="bf-dt__count"></span>'
+        f"{_csv_button(block)}"
         f"</div>"
         f'<div class="bf-dt__scroll">'
         f'<table class="bf-dt__table">'
@@ -218,6 +219,19 @@ def render_datatable(block: DataTable) -> str:
         f"{caption_html}"
         f"{data_html}"
         f"</div>"
+    )
+
+
+def _csv_button(block: DataTable) -> str:
+    """The "CSV" button of a table with ``download=True`` (#34), and where it says what it did."""
+    if not block.download:
+        return ""
+    base = block.name or block.caption or "table"
+    name = re.sub(r"[^A-Za-z0-9]+", "-", base).strip("-").lower()[:60] or "table"
+    return (
+        f'<button class="bf-dt__csv" type="button" data-bf-filename="{_html.escape(name)}.csv" '
+        'title="Download the rows matching the search, in their order, as CSV">CSV</button>'
+        '<span class="bf-dt__csv-note" aria-live="polite"></span>'
     )
 
 

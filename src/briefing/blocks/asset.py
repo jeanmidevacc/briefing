@@ -119,6 +119,9 @@ class DataTable(Block):
             "{url}"}``, a URL template where ``{}`` is the cell's value and ``{url}`` the value
             of the column ``url`` in the same row. Only ``http(s)://`` and ``mailto:`` URLs
             make links (anything else stays text, with a warning); they open in a new tab.
+        download: Put a "CSV" button above the table: it downloads the rows matching the
+            reader's search, in their order, with their raw values (not the formatted
+            text), as a file named after the table's ``name`` or caption.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
@@ -126,6 +129,7 @@ class DataTable(Block):
 
         bf.DataTable(df, caption="Top 1 000 orders")
         bf.DataTable(papers, formats={"citations": "{:,}"}, links={"doi": "https://doi.org/{}"})
+        bf.DataTable(orders, download=True)  # readers can take the data out
     """
 
     embed_noun: t.ClassVar[str | None] = "table"
@@ -144,11 +148,15 @@ class DataTable(Block):
         max_rows: int = MAX_ROWS,
         formats: dict[str, str | Callable[[t.Any], str]] | None = None,
         links: dict[str, str] | None = None,
+        download: bool = False,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
         super().__init__(name=name, label=label)
         df = to_pandas(df, block="DataTable")
+        if not isinstance(download, bool):
+            raise BriefingError(f"DataTable: download is True or False, not {download!r}.")
+        self.download = download
         self.formats = _check_formats(formats, df) if formats else None
         self.links = _check_links(links, df) if links else None
 

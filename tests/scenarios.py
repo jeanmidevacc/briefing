@@ -154,6 +154,7 @@ SCENARIOS: dict[str, Build] = {
         }),
         formats={"citations": "{:,}", "share": "{:.1%}", "published": "{:%d %b %Y}"},
         links={"doi": "https://doi.org/{}", "title": "{url}"},
+        download=True,
     )),
     "calendar": lambda df: bf.Briefing(bf.lab.CalendarHeatmap(
         df("df_pipeline_log"), date="run_at", value="rows", group="team", expected=500, events=df("df_events"),

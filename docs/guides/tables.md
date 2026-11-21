@@ -62,9 +62,19 @@ table = bf.DataTable(
     papers,
     formats={"citations": "{:,}", "share": "{:.1%}", "published": "{:%d %b %Y}"},
     links={"doi": "https://doi.org/{}"},
+    download=True,
 )
 bf.save(table, "datatable-formats.html", name="Papers")
 ```
+
+### Letting readers download the data
+
+`download=True` puts a "CSV" button above the table. It downloads the rows matching the
+reader's search, in the order they sorted them, every page of them, with their raw values
+(`0.1234`, not `12.3%`; dates as ISO timestamps). The file is UTF-8 with a byte-order mark,
+so spreadsheets read accents, and text a spreadsheet would run as a formula (`=SUM(...)`)
+starts with a `'`. It is named after the table's `name` or caption, and made in the
+reader's browser: no server. The button never prints or appears in exports.
 
 ## Static tables with `Table`
 

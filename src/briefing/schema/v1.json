@@ -1084,6 +1084,18 @@
           ],
           "default": null
         },
+        "download": {
+          "description": "Put a \"CSV\" button above the table: it downloads the rows matching the reader's search, in their order, with their raw values (not the formatted text), as a file named after the table's `name` or caption.",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": false
+        },
         "name": {
           "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
           "anyOf": [

@@ -12,11 +12,13 @@
   }
 
   // Copy a node with its computed styles inlined, so it renders the same inside an SVG.
-  // Hidden elements, scripts, the menu itself and the copy-embed buttons (#124) are left out.
+  // Hidden elements, scripts, the menu itself, the copy-embed buttons (#124) and tables' CSV
+  // buttons (#34) are left out.
   function cloneWithStyles(node) {
     if (node.nodeType === 3) return node.cloneNode(false);
     if (node.nodeType !== 1 || node.tagName === 'SCRIPT' || node.classList.contains('bf-export') ||
-        node.classList.contains('bf-copy')) return null;
+        node.classList.contains('bf-copy') || node.classList.contains('bf-dt__csv') ||
+        node.classList.contains('bf-dt__csv-note')) return null;
     var style = getComputedStyle(node);
     if (style.display === 'none') return null;
     var css = '';
