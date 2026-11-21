@@ -1,8 +1,6 @@
 """The opt-in export menu: bf.Briefing(..., export="png") (#49, #119)."""
 from __future__ import annotations
 
-import warnings
-
 import pytest
 
 import briefing as bf
@@ -48,27 +46,9 @@ def test_export_is_kept_when_a_briefing_is_rewrapped() -> None:
     assert bf.Briefing.wrap(inner).export == ("png",)
 
 
-# ── export="pdf": the "Print" button is gone (deprecated) ────────────────────
+# ── export="pdf": the "Print" button is gone (removed in 0.4.0, tests/test_deprecations.py) ──
 
 
-def test_pdf_adds_no_print_button() -> None:
-    with pytest.warns(DeprecationWarning):
-        report = bf.Briefing(bf.Text("x"), export=("png", "pdf"))
-    assert report.export == ("png",)
-    soup = parse(bf.stringify(report, name="Q1"))
+def test_there_is_only_a_save_as_png_button() -> None:
+    soup = parse(bf.stringify(bf.Briefing(bf.Text("x"), export="png"), name="Q1"))
     assert [b.get_text() for b in soup.select(".bf-export button")] == ["Save as PNG"]
-
-
-def test_pdf_alone_leaves_no_menu_and_no_export_code() -> None:
-    with pytest.warns(DeprecationWarning):
-        report = bf.Briefing(bf.Text("x"), export="pdf")
-    html = bf.stringify(report, name="Q1")
-    assert "bf-export" not in html and EXPORT_JS_MARKER not in html
-
-
-def test_rewrapping_a_briefing_does_not_warn_twice() -> None:
-    with pytest.warns(DeprecationWarning):
-        inner = bf.Briefing(bf.Text("x"), export=("png", "pdf"))
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        assert bf.Briefing(inner).export == ("png",)

@@ -206,11 +206,10 @@ class Page(ContainerBlock):
         self.title = title
 
 
-EXPORT_PDF_DEPRECATION = (
-    "Briefing(export='pdf') is deprecated and no longer adds a 'Print' button: it only opened the browser's "
-    "print dialog, which Ctrl+P (Cmd+P on a Mac) opens with the same print layout. For a PDF file, use "
-    "bf.save_pdf(report, 'report.pdf'). From 0.4.0, export='pdf' raises an error; pass export='png' for the "
-    "'Save as PNG' button, or leave export out."
+EXPORT_PDF_REMOVED = (
+    "Briefing(export='pdf') was removed in 0.4.0 (deprecated since 0.2.4): the 'Print' button only opened the "
+    "browser's print dialog, which Ctrl+P (Cmd+P on a Mac) opens with the same print layout. For a PDF file, use "
+    "bf.save_pdf(report, 'report.pdf'). Pass export='png' for the 'Save as PNG' button, or leave export out."
 )
 
 
@@ -233,8 +232,8 @@ class Briefing(ContainerBlock):
             ``</>`` button on each page, labelled group, chart, table, text,
             number, alert and banner: it copies that part as an embed fragment, as
             :func:`~briefing.stringify` makes with ``full_html=False``, to paste
-            into another page. *Deprecated:* ``"pdf"`` (the "Print" button) raises
-            a ``DeprecationWarning`` and adds nothing; it will be rejected from 0.4.0.
+            into another page. ``"pdf"`` (the "Print" button) was removed in 0.4.0:
+            print with Ctrl+P, or save a file with :func:`~briefing.save_pdf`.
         footer: Text to put before the report's footer line, such as a team name. Every
             report ends with "Made with briefing" and its version; that line can't be
             turned off.
@@ -255,7 +254,9 @@ class Briefing(ContainerBlock):
     #: The actions export= accepts, in menu order.
     EXPORTS: t.ClassVar[tuple[str, ...]] = ("png", "embed")
     #: Accepted with a DeprecationWarning, and dropped: they add no button.
-    DEPRECATED_EXPORTS: t.ClassVar[dict[str, str]] = {"pdf": EXPORT_PDF_DEPRECATION}
+    DEPRECATED_EXPORTS: t.ClassVar[dict[str, str]] = {}
+    #: Rejected with what to use instead.
+    REMOVED_EXPORTS: t.ClassVar[dict[str, str]] = {"pdf": EXPORT_PDF_REMOVED}
     export: tuple[str, ...]
     footer: str | None
 
@@ -280,6 +281,10 @@ class Briefing(ContainerBlock):
     @classmethod
     def _check_export(cls, export: object) -> tuple[str, ...]:
         actions = (export,) if isinstance(export, str) else export
+        if isinstance(actions, Sequence):
+            removed = next((a for a in actions if a in cls.REMOVED_EXPORTS), None)
+            if removed is not None:
+                raise BriefingError(cls.REMOVED_EXPORTS[removed])
         if not isinstance(actions, Sequence) or any(
             a not in cls.EXPORTS and a not in cls.DEPRECATED_EXPORTS for a in actions
         ):

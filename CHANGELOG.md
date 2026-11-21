@@ -72,6 +72,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Banner` no longer warns about images over 2 MB on its own: the size budget names a
   heavy image when the report is over it (#38). `Banner.MAX_IMAGE_BYTES` is gone.
 
+### Removed
+
+- `Briefing(export="pdf")`, deprecated since 0.2.4, now raises an error that says what to use
+  instead: Ctrl+P (or ⌘P) to print, with the same print layout, or `bf.save_pdf` for a file.
+
 ## [0.3.0] - 2026-11-20
 
 ### Added
