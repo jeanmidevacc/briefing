@@ -63,9 +63,19 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
 
   docs:
-    # The release's documentation: rebuild `stable` and `latest` on Read the Docs.
+    # The release's documentation: rebuild `stable` and `latest` on Read the Docs. docs.yml
+    # runs on its own (as `gh workflow run docs.yml` does by hand), because the RTD_TOKEN
+    # secret of the `pypi` environment doesn't reach it when it is called as a reusable
+    # workflow (the 0.4.0 release found that). A workflow_dispatch from GITHUB_TOKEN does run.
     needs: pypi
-    uses: ./.github/workflows/docs.yml
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Start the Docs workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run docs.yml --repo "$GITHUB_REPOSITORY" --ref main
 
   testpypi:
     needs: build

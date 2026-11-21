@@ -1,9 +1,10 @@
 name: Docs
 
 # Rebuilds the documentation on Read the Docs: `stable` (the newest release) and
-# `latest` (main). publish.yml runs it after every release, once PyPI has the
+# `latest` (main). publish.yml starts it after every release, once PyPI has the
 # package; run it by hand from Actions → Docs → Run workflow, or with
-# `gh workflow run docs.yml`.
+# `gh workflow run docs.yml`. It isn't a reusable workflow: called that way, the
+# environment secret below came through empty.
 #
 # The Read the Docs API token is the secret RTD_TOKEN of the repository's `pypi`
 # environment (Settings → Environments → pypi), next to the release that triggers
@@ -12,7 +13,6 @@ name: Docs
 
 on:
   workflow_dispatch: {}
-  workflow_call: {}
 
 permissions: {}
 
