@@ -2,8 +2,8 @@ briefing.lab
 ============
 
 Richer, more specialised blocks. They plug into the same report, and their
-JavaScript is inlined only in reports that use them. Install with
-``pip install "briefing[lab]"``.
+JavaScript is inlined only in reports that use them. They come with briefing;
+``pip install "briefing[lab]"`` still works and adds nothing today.
 
 .. currentmodule:: briefing.lab
 

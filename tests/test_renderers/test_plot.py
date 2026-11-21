@@ -393,3 +393,30 @@ def test_a_chart_report_weighs_what_38s_spec_said(library: str, spec_size: float
     from briefing import stringify
 
     assert len(stringify(Plot(figure)).encode()) < spec_size * 1.1  # the runtime packed (#38)
+
+
+# ── library versions (#40) ────────────────────────────────────────────────────
+
+
+def test_a_chart_from_a_library_too_old_says_which_version_it_needs(monkeypatch: pytest.MonkeyPatch) -> None:
+    go = pytest.importorskip("plotly.graph_objects")
+    import importlib.metadata
+
+    real = importlib.metadata.version
+    monkeypatch.setattr(importlib.metadata, "version", lambda name: "4.14.3" if name == "plotly" else real(name))
+    html = render_figure(Plot(go.Figure()))
+    assert "briefing needs plotly 5.0 or newer; this is 4.14.3. Upgrade it: pip install -U plotly" in html
+    assert 'class="bf-placeholder"' in html
+
+
+def test_supported_versions_pass(monkeypatch: pytest.MonkeyPatch) -> None:
+    import importlib.metadata
+
+    from briefing.renderers.plot import MIN_VERSIONS, check_version
+
+    for library, (major, minor) in MIN_VERSIONS.items():
+        monkeypatch.setattr(importlib.metadata, "version", lambda _, v=f"{major}.{minor}.0rc1": v)
+        check_version(library)  # the minimum itself, even a release candidate of it
+    monkeypatch.setattr(importlib.metadata, "version", lambda _: "3.6.9")
+    with pytest.raises(BriefingError, match="briefing needs matplotlib 3.7 or newer; this is 3.6.9"):
+        check_version("matplotlib")

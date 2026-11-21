@@ -63,6 +63,29 @@ def detect_library(fig: t.Any) -> str:
     )
 
 
+#: The oldest version of each chart library briefing renders (#40).
+MIN_VERSIONS: dict[str, tuple[int, int]] = {"plotly": (5, 0), "altair": (5, 0), "bokeh": (3, 0), "matplotlib": (3, 7)}
+
+
+def check_version(library: str) -> None:
+    """Raise when the installed *library* is older than briefing supports, naming the version it needs."""
+    from importlib.metadata import PackageNotFoundError, version
+
+    if library not in MIN_VERSIONS:
+        return
+    try:
+        installed = version(library)
+    except PackageNotFoundError:  # a figure from a library pip doesn't know: nothing to compare
+        return
+    found = tuple(int(n) for n in re.findall(r"\d+", installed)[:2])
+    needed = MIN_VERSIONS[library]
+    if found < needed:
+        raise BriefingError(
+            f"briefing needs {library} {needed[0]}.{needed[1]} or newer; this is {installed}. "
+            f"Upgrade it: pip install -U {library}"
+        )
+
+
 # ── tree scan (pre-pass) ──────────────────────────────────────────────────────
 
 
@@ -315,6 +338,7 @@ def render_figure(block: Plot, idgen: IdGen | None = None) -> str:
 
     try:
         lib = detect_library(fig)
+        check_version(lib)
     except BriefingError as exc:
         return (
             f'<div class="bf-placeholder">'
@@ -344,4 +368,4 @@ def render_figure(block: Plot, idgen: IdGen | None = None) -> str:
     return f'<figure class="bf-block bf-plot">{inner}{caption_html}</figure>'
 
 
-__all__ = ["detect_library", "get_runtime_scripts", "render_figure", "scan_for_plots"]
+__all__ = ["MIN_VERSIONS", "check_version", "detect_library", "get_runtime_scripts", "render_figure", "scan_for_plots"]

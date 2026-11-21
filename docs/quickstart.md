@@ -3,21 +3,21 @@
 ## Install
 
 ```bash
-pip install briefing            # the block grammar and the HTML renderer
-pip install "briefing[pandas]"  # tables from dataframes
+pip install briefing            # every block, HTML reports and fragments, tables
+pip install "briefing[altair]"  # for Altair charts: the Vega runtime they embed
+pip install "briefing[image]"   # save_image and save_pdf (then, once: playwright install chromium)
 ```
 
-The core has no plotting or dataframe dependency. Install the extra for what you
-use: `[pandas]`, `[lab]`, `[plotly]`, `[altair]`, `[bokeh]`, `[matplotlib]`, `[charts]`
-(every chart library) or `[image]` (image and PDF export).
+briefing installs pandas, for tables, but no chart library: `Plot` renders the figure
+you pass, from the library you already have (Plotly 5+, Altair 5+, Matplotlib 3.7+,
+Bokeh 3+), and says so when that library is too old. Polars and pyarrow tables are
+converted for you.
 
 | Extra | Adds |
 | --- | --- |
-| `briefing[pandas]` | pandas, for `Table` and `DataTable` |
-| `briefing[lab]` | the {doc}`briefing.lab <guides/lab>` blocks |
-| `briefing[plotly]`, `[altair]`, `[bokeh]`, `[matplotlib]` | the matching backend for `Plot` |
-| `briefing[charts]` | all four `Plot` backends at once |
+| `briefing[altair]` | vl-convert-python, which embeds the Vega runtime so Altair charts work offline |
 | `briefing[image]` | Playwright, for {doc}`save_image and save_pdf <guides/export>` |
+| `briefing[lab]` | nothing today: the {doc}`briefing.lab <guides/lab>` blocks come with briefing |
 
 ## A first report
 

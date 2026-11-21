@@ -24,16 +24,14 @@ briefing is built to close all three gaps at once: a block grammar solid enough 
 ## Install
 
 ```bash
-pip install briefing                 # the block grammar and the HTML renderer
-pip install "briefing[pandas]"       # tables from dataframes
-pip install "briefing[lab]"          # DataProfile, DataDive, CalendarHeatmap
+pip install briefing                 # every block (lab included), HTML reports, tables
+pip install "briefing[altair]"       # for Altair charts: the Vega runtime they embed
 pip install "briefing[image]"        # save_image / save_pdf (then: playwright install chromium)
 ```
 
-The core has no plotting or dataframe dependency. `Plot` takes a Plotly, Altair, Matplotlib or
-Bokeh figure and imports only the library you pass; install `[plotly]`, `[altair]`, `[bokeh]`,
-`[matplotlib]` or all of them with `[charts]`. Python 3.11+, pandas 2 and 3; polars and pyarrow
-tables are converted for you.
+briefing installs pandas, for tables, but no chart library: `Plot` takes a Plotly, Altair,
+Matplotlib or Bokeh figure and imports only the library you pass, which you already have.
+Python 3.11+, pandas 2 and 3; polars and pyarrow tables are converted for you.
 
 ## Quick start
 

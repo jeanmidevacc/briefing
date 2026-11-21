@@ -69,10 +69,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- pandas is a core dependency (#40): `Table`, `DataTable`, the lab blocks and tables written
+  in JSON need it, even for polars data. `import briefing` still imports it only when a
+  table needs it. A chart from a library older than briefing supports (Plotly 5, Altair 5,
+  Matplotlib 3.7, Bokeh 3) shows which version it needs in place of the chart.
+
 - `Banner` no longer warns about images over 2 MB on its own: the size budget names a
   heavy image when the report is over it (#38). `Banner.MAX_IMAGE_BYTES` is gone.
 
 ### Removed
+
+- The extras that added nothing (#40): `[pandas]` (pandas is in the core), `[plotly]`, `[bokeh]`,
+  `[matplotlib]` and `[charts]` (`Plot` uses the library you already have), and `[email]`
+  (there is no email feature yet; it comes back with it). An old `pip install
+  "briefing[plotly]"` still installs briefing, with a warning from pip. `[altair]`, `[lab]`,
+  `[image]`, `[docs]` and `[dev]` stay.
 
 - `Briefing(export="pdf")`, deprecated since 0.2.4, now raises an error that says what to use
   instead: Ctrl+P (or ⌘P) to print, with the same print layout, or `bf.save_pdf` for a file.
