@@ -6,9 +6,10 @@ a short marker, so that snapshots only change when briefing's own output does:
 - **briefing's static files** (``static/report.css``, ``lab/static/lab.js``, …),
   inlined verbatim, become ``/* golden: static/report.js sha256 … */``. A change
   to the file still changes every snapshot that inlines it, by that one line.
-- **chart libraries' output** (the Plotly and Vega runtimes, Matplotlib's SVG, a
-  Plotly figure, an Altair spec) becomes a marker without a hash: it changes with
-  the library's release, not with briefing. Ids that briefing gives a chart stay.
+- **chart libraries' output** (the Plotly and Vega runtimes, packed since #38,
+  Matplotlib's SVG, a Plotly figure, an Altair spec) becomes a marker without a hash:
+  it changes with the library's release, not with briefing. Ids that briefing gives a
+  chart stay.
 - **briefing's version** in ``<meta name="generator">`` and the footer becomes
   ``{version}``, so a release doesn't rewrite every snapshot.
 - **the copy-embed data** (#124), gzip in base64, becomes a hash of its JSON with
@@ -65,19 +66,24 @@ def static_marker(path: str, content: str) -> str:
 
 @functools.cache
 def _runtimes() -> tuple[tuple[str, str], ...]:
-    """The chart runtimes a report can inline, as (exact text, marker), for the libraries installed."""
+    """The chart runtimes a report can inline, as (exact text, marker), for the libraries installed.
+
+    A runtime is inlined packed (#38): the text is its packed data, in quotes, and its size.
+    """
+    from briefing.renderers.plot import _vega_bundle, packed_runtime
+
     found: list[tuple[str, str]] = []
     try:
         from plotly.offline import get_plotlyjs
     except ImportError:
         pass
     else:
-        found.append((get_plotlyjs(), "/* golden: plotly.js runtime from the plotly package */"))
-    from briefing.renderers.plot import _vega_bundle
-
+        data, size = packed_runtime(get_plotlyjs())
+        found.append((f'"{data}", {size}', '"/* golden: plotly.js runtime, packed */", {size}'))
     vega = _vega_bundle()
     if vega is not None:
-        found.append((vega, "/* golden: Vega runtime from vl-convert-python */"))
+        data, size = packed_runtime(vega)
+        found.append((f'"{data}", {size}', '"/* golden: Vega runtime from vl-convert-python, packed */", {size}'))
     return tuple(found)
 
 

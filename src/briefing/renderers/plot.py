@@ -29,6 +29,7 @@ import re
 import typing as t
 
 from briefing._error import BriefingError
+from briefing.renderers.pack import UNPACK_JS, pack
 from briefing.renderers.registry import IdGen
 from briefing.renderers.script_json import script_json
 
@@ -93,12 +94,40 @@ def get_runtime_scripts(libraries: set[str], tagged: bool = False) -> str:
 
     Plotly and Altair (Vega) need a bundled runtime; other libraries either
     need no JS (Matplotlib/SVG) or embed their runtime per-figure (Bokeh/iframe).
-    *tagged* names each tag's global (``data-bf-runtime="Plotly"``), so the
-    copy-embed button can put it into a copied fragment (#124).
+    Each tag holds :func:`runtime_script`. *tagged* names each tag's global
+    (``data-bf-runtime="Plotly"``), so the copy-embed button can put it into a
+    copied fragment as it is (#124).
     """
     return "\n".join(
-        f'<script data-bf-runtime="{defined}">{source}</script>' if tagged else f"<script>{source}</script>"
+        f'<script data-bf-runtime="{defined}">{runtime_script(defined, source)}</script>'
+        if tagged else f"<script>{runtime_script(defined, source)}</script>"
         for defined, source in runtime_sources(libraries)
+    )
+
+
+@functools.cache
+def packed_runtime(source: str) -> tuple[str, int]:
+    """A chart runtime packed for ``briefingUnpack`` (#38), inside a function that hides
+    RequireJS's ``define`` (and CommonJS's ``module``/``exports``) from it, so it defines its
+    global even on a page that loads RequireJS (a notebook, a docs site)."""
+    return pack(f"(function (define, module, exports) {{\n{source}\n}}).call(window);")
+
+
+def runtime_script(defined: str, source: str) -> str:
+    """The text of the ``<script>`` that defines a chart runtime's global, once per page (#38).
+
+    It carries ``unpack.js`` and the runtime packed (about 40 % of its size); as it runs, it
+    unpacks the runtime and puts it in a ``<script>`` right after itself, which runs at once,
+    before any chart below it. Reports, fragments and copy-embed copies all use this text.
+    """
+    data, size = packed_runtime(source)
+    return (
+        f"{UNPACK_JS}\n"
+        f"if (!window.{defined}) (function (script, here) {{\n"
+        f'  script.text = window.briefingUnpack("{data}", {size});\n'
+        "  if (here && here.parentNode) here.parentNode.insertBefore(script, here.nextSibling);\n"
+        "  else document.head.appendChild(script);\n"
+        "})(document.createElement('script'), document.currentScript);"
     )
 
 

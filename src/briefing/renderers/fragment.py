@@ -35,7 +35,7 @@ from briefing.renderers.html import (
     render_content,
 )
 from briefing.renderers.normalize import normalize
-from briefing.renderers.plot import runtime_sources, scan_for_plots
+from briefing.renderers.plot import runtime_script, runtime_sources, scan_for_plots
 from briefing.renderers.registry import IdGen
 from briefing.renderers.size import RUNTIME_NAMES, Part, block_parts
 
@@ -50,11 +50,8 @@ def embed_css() -> str:
 
 
 def _runtime(defined: str, source: str) -> str:
-    """A chart runtime that defines itself once per page, also where RequireJS is loaded."""
-    return (
-        f"<script>if (!window.{defined}) (function (define, module, exports) {{\n{source}\n}}).call(window);"
-        "</script>\n"
-    )
+    """A chart runtime that defines itself once per page, also where RequireJS is loaded (#38)."""
+    return f"<script>{runtime_script(defined, source)}</script>\n"
 
 
 def asset_tags(roots: Iterable[Block]) -> str:
@@ -117,7 +114,7 @@ def render_fragment(
     if parts is not None:
         parts += block_parts(blocks, idgen.weights or {})
         if include_assets:
-            parts += [Part(RUNTIME_NAMES.get(defined, defined), len(source.encode()))
+            parts += [Part(RUNTIME_NAMES.get(defined, defined), len(runtime_script(defined, source).encode()))
                       for defined, source in runtime_sources(scan_for_plots(normalised))]
     header_html = ""
     if header:

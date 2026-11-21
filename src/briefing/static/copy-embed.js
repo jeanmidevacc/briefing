@@ -57,10 +57,10 @@
     });
     var html = block.outerHTML.split(data.prefix).join(id + '-');
     var info = data.blocks[n];
+    // A runtime's tag defines its global once per page and unpacks itself (#38): copied as it is.
     var runtimes = info.runtimes.map(function (name) {
       var source = root.querySelector('script[data-bf-runtime="' + name + '"]');
-      return source ? LT + 'script>if (!window.' + name + ') (function (define, module, exports) {\n' +
-        source.textContent + '\n}).call(window);' + LT + '/script>\n' : '';
+      return source ? LT + 'script>' + source.textContent + LT + '/script>\n' : '';
     }).join('');
     var scripts = info.scripts.map(function (i) {
       return root.querySelector('script[data-bf-script="' + i + '"]').textContent;

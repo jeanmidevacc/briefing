@@ -10,7 +10,18 @@ from briefing.blocks.layout import Briefing
 from briefing.renderers.plot import detect_library, render_figure, scan_for_plots
 from tests.html_helpers import attr, classes, find_one
 
+
+def _unpacked_runtimes(html: str) -> str:
+    """The chart runtimes a report carries, unpacked as the page does (#38)."""
+    import re
+
+    from briefing.renderers.pack import unpack
+
+    return "".join(unpack(data, int(size)) for data, size in re.findall(r'briefingUnpack\("([^"]+)", (\d+)\)', html))
+
+
 # ── detect_library ────────────────────────────────────────────────────────────
+
 
 
 class TestDetectLibrary:
@@ -235,14 +246,16 @@ class TestRenderAltair:
         from briefing.renderers.html import render_report
 
         html = render_report(Briefing(Plot(_altair_chart("a")), Plot(_altair_chart("b"))))
-        assert html.count("window.vegaEmbed=") == 1
+        assert html.count("if (!window.vegaEmbed) (function (script, here) {") == 1  # packed (#38)
+        assert "window.vegaEmbed=" in _unpacked_runtimes(html)
         assert len(BeautifulSoup(html, "html.parser").select("div.bf-altair")) == 2
 
     def test_no_runtime_without_altair_charts(self):
         from briefing.blocks.text import Text
         from briefing.renderers.html import render_report
 
-        assert "vegaEmbed=" not in render_report(Briefing(Text("no charts")))
+        html = render_report(Briefing(Text("no charts")))
+        assert "(function (script, here)" not in html  # no runtime loader at all
 
     def test_missing_vl_convert_shows_install_hint(self, monkeypatch):
         import builtins
@@ -307,8 +320,11 @@ class TestRenderReportWithPlot:
 
         fig = go.Figure()
         html = render_report(Briefing(Plot(fig), Plot(go.Figure())))
-        # plotlyjs bundle should appear exactly once in <head>
-        assert html.count("var Plotly") <= 1
+        # The plotly.js bundle appears once in <head>, packed (#38), and unpacks to itself.
+        assert html.count("if (!window.Plotly) (function (script, here) {") == 1
+        from plotly.offline import get_plotlyjs
+
+        assert get_plotlyjs() in _unpacked_runtimes(html)
 
 
 def test_script_json_round_trips_and_has_no_angle_brackets():
@@ -365,3 +381,15 @@ class TestMatplotlibIds:
 
         fig = self._figure("line")
         assert render_report(Briefing(Plot(fig))) == render_report(Briefing(Plot(fig)))
+
+
+@pytest.mark.parametrize(("library", "spec_size"), [("plotly", 2.0e6), ("altair", 0.45e6)])
+def test_a_chart_report_weighs_what_38s_spec_said(library: str, spec_size: float) -> None:
+    from tests.scenarios import altair_chart, plotly_figure
+
+    if library == "altair":
+        pytest.importorskip("vl_convert")
+    figure = plotly_figure() if library == "plotly" else altair_chart()
+    from briefing import stringify
+
+    assert len(stringify(Plot(figure)).encode()) < spec_size * 1.1  # the runtime packed (#38)

@@ -36,7 +36,8 @@ bf.save(bf.Plot(fig, caption="Daily orders, last 90 days"), "matplotlib.html", n
 ## Plotly
 
 Plotly charts keep their hover, zoom and legend. The Plotly runtime adds about
-4.6 MB to the report, once, however many Plotly charts it holds.
+2 MB to the report (compressed; the report unpacks it as it opens), once, however many
+Plotly charts it holds.
 
 ```{briefing-example}
 :title: A Plotly chart
