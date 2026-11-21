@@ -18,7 +18,10 @@ from briefing.renderers.registry import IdGen
 from briefing.renderers.script_json import script_json
 
 if t.TYPE_CHECKING:
-    from briefing.lab._blocks import CalendarHeatmap
+    from briefing.lab._blocks import CalendarHeatmap, TimeHeatmap
+
+    #: The heatmaps that share these helpers: the calendar, and the time-pattern grid (#111).
+    Heatmap = CalendarHeatmap | TimeHeatmap
 
 #: GitHub's contribution greens, from the lowest non-zero level to the highest.
 GITHUB = ["#9be9a8", "#40c463", "#30a14e", "#216e39"]
@@ -60,7 +63,7 @@ def _local_dates(series: t.Any) -> t.Any:
     return stamps.dt.date
 
 
-def _stamps(block: CalendarHeatmap) -> t.Any:
+def _stamps(block: Heatmap) -> t.Any:
     """The block's timestamps; with ``tz``, aware ones are converted and naive ones left as local."""
     import pandas as pd
 
@@ -70,7 +73,7 @@ def _stamps(block: CalendarHeatmap) -> t.Any:
     return stamps
 
 
-def _aggregate(block: CalendarHeatmap, keys: dict[str, t.Any]) -> dict[str | None, dict[t.Any, float]]:
+def _aggregate(block: Heatmap, keys: dict[str, t.Any]) -> dict[str | None, dict[t.Any, float]]:
     """Per group (or ``None``), the aggregated value of each key (a day, or a weekday-hour)."""
     import pandas as pd
 
@@ -146,7 +149,7 @@ def _mix(a: str, b: str, f: float) -> str:
     return "#{:02x}{:02x}{:02x}".format(*(round(x + (y - x) * f) for x, y in ((r1, r2), (g1, g2), (b1, b2))))
 
 
-def _scale(block: CalendarHeatmap, values: list[float]) -> Callable[[float], tuple[str, str]]:
+def _scale(block: Heatmap, values: list[float]) -> Callable[[float], tuple[str, str]]:
     """Map a value to (fill, extra class). ``"github"`` keeps zero (and below) as its own grey level."""
     if not values:
         return lambda v: ("", "bf-cal__day--zero")
@@ -179,11 +182,11 @@ def _scale(block: CalendarHeatmap, values: list[float]) -> Callable[[float], tup
 # ── drawing ───────────────────────────────────────────────────────────────────
 
 
-def _clickable(block: CalendarHeatmap) -> str:
+def _clickable(block: Heatmap) -> str:
     return ' role="button" tabindex="0"' if block.on_click == "rows" else ""
 
 
-def _group_attr(block: CalendarHeatmap, group: str | None) -> str:
+def _group_attr(block: Heatmap, group: str | None) -> str:
     return f' data-group="{_html.escape(group)}"' if block.on_click == "rows" and group is not None else ""
 
 
@@ -202,7 +205,7 @@ def _fmt(v: float) -> str:
     return f"{v:.4g}" if abs(v) >= 1e-4 else f"{v:.2e}"
 
 
-def _what(block: CalendarHeatmap) -> str:
+def _what(block: Heatmap) -> str:
     if block.value is None:
         return "rows"
     return block.value if block.agg == "sum" else f"{block.agg} {block.value}"
@@ -314,12 +317,13 @@ def _days_svg(
 
 
 def _legend(
-    block: CalendarHeatmap,
+    block: Heatmap,
     values: list[float],
     colour: Callable[[float], tuple[str, str]],
     events: list[_Event],
     *,
     targets: bool,
+    blank: bool = False,
 ) -> str:
     def swatch(fill: str, cls: str = "") -> str:
         style = f' style="background:{fill}"' if fill else ""
@@ -336,6 +340,8 @@ def _legend(
         steps = [lo + (hi - lo) * i / 4 for i in range(5)]
         items.append(item(f"{_fmt(lo)} " + "".join(swatch(colour(v)[0]) for v in steps) + f" {_fmt(hi)}"))
     items.append(item(swatch("", "bf-cal__swatch--empty") + "no data"))
+    if blank:
+        items.append(item(swatch("", "bf-cal__swatch--blank") + "no such date"))
     if targets:
         items.append(item(swatch("", "bf-cal__swatch--below") + "below target"))
     for event in events:

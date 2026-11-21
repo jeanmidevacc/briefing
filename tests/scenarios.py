@@ -162,6 +162,12 @@ SCENARIOS: dict[str, Build] = {
     "calendar-diverging": lambda df: bf.Briefing(
         bf.lab.CalendarHeatmap(df("df_signed"), date="day", value="balance", center=0,
                                colors=["#d73027", "#f7f7f7", "#1a9850"], week_start="sunday")),
+    "time-heatmap": lambda df: bf.Briefing(bf.lab.TimeHeatmap(
+        df("df_pipeline_log"), date="run_at", rows="weekday", columns="hour", value="rows", group="team",
+        on_click="rows")),
+    "time-heatmap-months": lambda df: bf.Briefing(bf.lab.TimeHeatmap(
+        df("df_signed"), date="day", rows="day", columns="month", value="balance", agg="mean", center=0,
+        colors=["#d73027", "#f7f7f7", "#1a9850"], week_start="sunday")),
     "banner": lambda _: bf.Briefing(
         bf.Banner("# Cover\n\nA **subtitle**.", image=RED_SVG, text_position=55, opacity=80),
         bf.Banner("## Left", image=RED_SVG, side="left", text_position=40, focus=(20, 80), alt="A red field"),

@@ -162,9 +162,9 @@ class DataDive(Block):
 #: Shown once per CalendarHeatmap built with the hour view (#111).
 HOURS_VIEW_DEPRECATION = (
     "CalendarHeatmap: the hour view (views=('hours',) or ('days', 'hours')) is deprecated since briefing "
-    "0.2.2. A dedicated time-pattern heatmap (weekday x hour, weekday x month, ...) will replace it, and the "
-    "hour view will be removed in 0.4.0 at the earliest, never before that replacement ships. Follow "
-    "https://github.com/jeanmidevacc/briefing/issues/111; use views=('days',) for the day calendar alone."
+    "0.2.2 and will be removed in 0.5.0. Use bf.lab.TimeHeatmap(df, date=..., rows='weekday', columns='hour') "
+    "for the weekday-by-hour grid (and other time patterns, "
+    "https://github.com/jeanmidevacc/briefing/issues/111), and views=('days',) for the day calendar alone."
 )
 
 
@@ -278,17 +278,114 @@ class CalendarHeatmap(Block):
         self.events = _check_events(events)
 
 
+class TimeHeatmap(Block):
+    """When something usually happens: a grid that crosses two units of one date column.
+
+    Where :class:`CalendarHeatmap` shows what happened on which date, this shows a time
+    pattern: weekday by hour (when do runs happen?), weekday by month (seasonality), day
+    of the month by month (month-end effects), month by year (year over year). Counts and
+    sums are averaged per occurrence of their cell in the data's date range ("Monday
+    09:00" occurs once per Monday), so a weekday that appears five times in a month
+    doesn't outweigh one that appears four times; means, medians, minimums and maximums
+    aggregate the cell's rows directly. Cells that can't exist (31 February), cells with
+    no data and zeros look different. Hovering a cell shows its value, its total and how
+    many times it occurs.
+
+    Args:
+        df: The data, as any dataframe briefing accepts (pandas, polars, pyarrow…).
+        date: Column holding the date or timestamp of each row.
+        rows: The unit down the side: ``"hour"`` (0–23), ``"weekday"``, ``"day"`` (of the
+            month), ``"week"`` (ISO week), ``"month"``, ``"quarter"`` or ``"year"``.
+        columns: The unit across the top, one of the same, and not the same as ``rows``.
+        value: Column to aggregate per cell; ``None`` counts the rows.
+        agg: How to aggregate ``value``: ``"sum"``, ``"mean"``, ``"median"``, ``"min"``,
+            ``"max"`` or ``"count"``. Sums and counts are averaged per occurrence.
+        group: Column to split by: one grid per group, stacked, on one shared colour scale.
+        tz: A time zone such as ``"America/Montreal"``. Converts timezone-aware
+            timestamps only; naive timestamps and plain dates are taken as already local.
+        colors: ``"github"`` (GitHub's green scale) or a list of CSS colours, low to high.
+        center: A midpoint for a diverging scale (e.g. ``0``); ``colors`` is then three
+            hex colours: below, at and above it.
+        week_start: ``"monday"`` or ``"sunday"``: the first weekday of a ``weekday`` axis.
+        on_click: ``"rows"`` lists the rows behind a cell in a panel when it is clicked
+            (up to ``ROWS_PER_CELL`` rows per cell, embedded in the report); ``None``
+            (default) for no click action.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
+        label: Tab or dropdown label when the block is inside a ``Select``.
+
+    Example::
+
+        bf.lab.TimeHeatmap(runs, date="run_at", rows="weekday", columns="hour")
+        bf.lab.TimeHeatmap(sales, date="day", rows="month", columns="year", value="revenue")
+    """
+
+    embed_noun: t.ClassVar[str | None] = "heatmap"
+
+    UNITS: t.ClassVar[tuple[str, ...]] = ("hour", "weekday", "day", "week", "month", "quarter", "year")
+    AGGS: t.ClassVar[tuple[str, ...]] = CalendarHeatmap.AGGS
+    #: Rows embedded per cell for on_click="rows"; the panel says when there are more.
+    ROWS_PER_CELL: t.ClassVar[int] = 50
+
+    def __init__(
+        self,
+        df: pd.DataFrame | t.Any,
+        date: str,
+        rows: str,
+        columns: str,
+        value: str | None = None,
+        agg: str = "sum",
+        group: str | None = None,
+        tz: str | None = None,
+        colors: str | list[str] = "github",
+        center: float | None = None,
+        week_start: str = "monday",
+        on_click: str | None = None,
+        name: BlockId | None = None,
+        label: str | None = None,
+    ) -> None:
+        super().__init__(name=name, label=label)
+        frame = to_pandas(df, block="TimeHeatmap")
+        for role, column in (("date", date), ("value", value), ("group", group)):
+            if column is not None and column not in frame.columns:
+                raise BriefingError(
+                    f"TimeHeatmap: column {column!r} (passed as {role}=) not found. Available: {list(frame.columns)}"
+                )
+        for role, unit in (("rows", rows), ("columns", columns)):
+            if unit not in self.UNITS:
+                raise BriefingError(f"TimeHeatmap: {role} must be one of {', '.join(self.UNITS)}, not {unit!r}.")
+        if rows == columns:
+            raise BriefingError(f"TimeHeatmap: rows and columns must be two different units, not both {rows!r}.")
+        if agg not in self.AGGS:
+            raise BriefingError(f"TimeHeatmap: agg must be one of {', '.join(self.AGGS)}, not {agg!r}.")
+        if on_click not in (None, "rows"):
+            raise BriefingError(f"TimeHeatmap: on_click must be 'rows' or None, not {on_click!r}.")
+        if week_start not in ("monday", "sunday"):
+            raise BriefingError(f"TimeHeatmap: week_start must be 'monday' or 'sunday', not {week_start!r}.")
+        if tz is not None:
+            _check_tz(tz, "TimeHeatmap")
+        if "hour" in (rows, columns) and not _has_times(frame[date]):
+            raise BriefingError(
+                f"TimeHeatmap: an hour axis needs a time of day, but {date!r} holds dates only. "
+                "Pass timestamps, or other units."
+            )
+        self.colors = _check_colors(colors, center, "TimeHeatmap")
+        self.df = frame
+        self.date, self.rows, self.columns = date, rows, columns
+        self.value, self.agg, self.group = value, agg, group
+        self.tz, self.center, self.week_start, self.on_click = tz, center, week_start, on_click
+
+
 _HEX = re.compile(r"^#(?:[0-9a-fA-F]{3}){1,2}$")
 
 
-def _check_tz(tz: str) -> None:
+def _check_tz(tz: str, block: str = "CalendarHeatmap") -> None:
     import zoneinfo
 
     try:
         zoneinfo.ZoneInfo(tz)
     except (zoneinfo.ZoneInfoNotFoundError, ValueError) as exc:
         raise BriefingError(
-            f"CalendarHeatmap: unknown time zone {tz!r}; use an IANA name such as 'Europe/Paris'."
+            f"{block}: unknown time zone {tz!r}; use an IANA name such as 'Europe/Paris'."
         ) from exc
 
 
@@ -302,22 +399,22 @@ def _has_times(column: t.Any) -> bool:
     return bool(len(stamps)) and bool((stamps.dt.normalize() != stamps).any())
 
 
-def _check_colors(colors: str | list[str], center: float | None) -> str | list[str]:
+def _check_colors(colors: str | list[str], center: float | None, block: str = "CalendarHeatmap") -> str | list[str]:
     if colors == "github":
         if center is not None:
-            raise BriefingError("CalendarHeatmap: center= needs colors= as three hex colours: below, at and above it.")
+            raise BriefingError(f"{block}: center= needs colors= as three hex colours: below, at and above it.")
         return colors
     if isinstance(colors, str) or not isinstance(colors, list | tuple) or len(colors) < 2:
         raise BriefingError(
-            f"CalendarHeatmap: colors must be 'github' or a list of at least two colours, not {colors!r}."
+            f"{block}: colors must be 'github' or a list of at least two colours, not {colors!r}."
         )
     if center is not None:
         if len(colors) != 3:
             raise BriefingError(
-                "CalendarHeatmap: with center=, colors must be exactly three colours: below, at, above."
+                f"{block}: with center=, colors must be exactly three colours: below, at, above."
             )
         if not all(isinstance(c, str) and _HEX.match(c) for c in colors):
-            raise BriefingError("CalendarHeatmap: with center=, colors must be hex colours such as '#d73027'.")
+            raise BriefingError(f"{block}: with center=, colors must be hex colours such as '#d73027'.")
     return [str(c) for c in colors]
 
 
@@ -360,4 +457,4 @@ def _check_events(events: t.Any) -> t.Any:
 
 # ── public re-exports ─────────────────────────────────────────────────────────
 
-__all__: list[str] = ["CalendarHeatmap", "DataDive", "DataProfile"]
+__all__: list[str] = ["CalendarHeatmap", "DataDive", "DataProfile", "TimeHeatmap"]

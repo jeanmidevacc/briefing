@@ -6,6 +6,7 @@ so it stays small and dependency-free:
 * :class:`DataProfile` — per-column statistics with inline SVG mini-charts.
 * :class:`DataDive` — Facets Dive-style interactive dot explorer.
 * :class:`CalendarHeatmap` — GitHub-style calendar of daily activity.
+* :class:`TimeHeatmap` — when something usually happens: weekday by hour, month by year…
 
 Install with ``pip install briefing[lab]``. Importing this module registers the
 blocks with the renderer, so ``briefing.stringify``/``briefing.save`` can render
@@ -28,10 +29,11 @@ from __future__ import annotations
 
 from importlib.resources import files
 
-from briefing.lab._blocks import CalendarHeatmap, DataDive, DataProfile
+from briefing.lab._blocks import CalendarHeatmap, DataDive, DataProfile, TimeHeatmap
 from briefing.lab._render_calendar import render_calendar
 from briefing.lab._render_datadive import render_datadive
 from briefing.lab._render_profile import render_profile
+from briefing.lab._render_timeheatmap import render_timeheatmap
 from briefing.renderers.registry import IdGen, register_renderer
 
 _LAB_JS = (files("briefing.lab") / "static" / "lab.js").read_text(encoding="utf-8")
@@ -56,4 +58,12 @@ def _render_calendar_block(block: CalendarHeatmap, idgen: IdGen) -> str:
 _CALENDAR_JS = (files("briefing.lab") / "static" / "calendar.js").read_text(encoding="utf-8")
 register_renderer(CalendarHeatmap, _render_calendar_block, js_asset=_CALENDAR_JS)
 
-__all__ = ["CalendarHeatmap", "DataDive", "DataProfile"]
+
+def _render_timeheatmap_block(block: TimeHeatmap, _: IdGen) -> str:
+    return render_timeheatmap(block)
+
+
+# The time-pattern grid shares the calendar's script: sizing, tooltips, the rows panel (#111).
+register_renderer(TimeHeatmap, _render_timeheatmap_block, js_asset=_CALENDAR_JS)
+
+__all__ = ["CalendarHeatmap", "DataDive", "DataProfile", "TimeHeatmap"]

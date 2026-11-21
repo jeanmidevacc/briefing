@@ -1,5 +1,5 @@
-/* briefing lab: CalendarHeatmap — sizing, hover tooltip, and on_click="rows" (click a day or an hour to
-   list its rows). Vanilla JS. */
+/* briefing lab: CalendarHeatmap and TimeHeatmap (#111) — sizing, hover tooltip, and on_click="rows"
+   (click a day, an hour or a cell to list its rows). Vanilla JS. */
 (function () {
   'use strict';
 
@@ -9,7 +9,7 @@
   // swatches follow the cells (--bf-cal-k), and labels change size at half the cells' rate, so
   // they stay readable when the calendar grows or shrinks (--bf-cal-text, in the SVG's units).
   function measure(view) {
-    var svg = view.querySelector('svg.bf-cal__days, svg.bf-cal__hours');
+    var svg = view.querySelector('svg.bf-cal__days, svg.bf-cal__hours, svg.bf-cal__grid');
     var natural = svg ? parseFloat(svg.getAttribute('width')) : 0;
     var shown = svg ? svg.getBoundingClientRect().width : 0;
     if (!(natural > 0 && shown > 0)) return;  // a hidden tab: measured once it is shown
@@ -63,7 +63,8 @@
     tip.hidden = true;
     figure.appendChild(tip);
     tips.push(tip);
-    figure.querySelectorAll('rect.bf-cal__day, rect.bf-cal__hour, g.bf-cal__event').forEach(function (cell) {
+    figure.querySelectorAll('rect.bf-cal__day, rect.bf-cal__hour, rect.bf-cal__cell, g.bf-cal__event')
+      .forEach(function (cell) {
       var title = cell.querySelector('title');
       if (!title) return;
       cell.setAttribute('data-tip', title.textContent);
@@ -98,8 +99,9 @@
     function open(cell) {
       var calendar = cell.closest('.bf-cal__calendar');
       var group = calendar ? calendar.getAttribute('data-group') : null;
-      var date = cell.getAttribute('data-date');
-      var key = (date ? 'd|' + date : 'h|' + cell.getAttribute('data-hour')) + (group !== null ? '|' + group : '');
+      var date = cell.getAttribute('data-date'), grid = cell.getAttribute('data-cell');
+      var key = (date ? 'd|' + date : grid ? 'c|' + grid : 'h|' + cell.getAttribute('data-hour')) +
+        (group !== null ? '|' + group : '');
       var entry = data.cells[key];
       var when = (cell.getAttribute('data-tip') || '').split(' \u00b7 ')[0];
       var count = entry ? entry.total + (entry.total === 1 ? ' row' : ' rows') : 'no rows';
@@ -133,7 +135,8 @@
       panel.hidden = false;
     }
 
-    figure.querySelectorAll('rect.bf-cal__day[role="button"], rect.bf-cal__hour[role="button"]').forEach(function (cell) {
+    figure.querySelectorAll('rect.bf-cal__day[role="button"], rect.bf-cal__hour[role="button"], ' +
+      'rect.bf-cal__cell[role="button"]').forEach(function (cell) {
       cell.addEventListener('click', function () { open(cell); });
       cell.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(cell); }
