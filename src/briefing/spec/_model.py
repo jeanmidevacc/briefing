@@ -27,7 +27,7 @@ from briefing.blocks.base import _NAME_RE, Block, ContainerBlock
 from briefing.blocks.files import Attachment, Image
 from briefing.blocks.layout import Briefing, Group, Page, Select, Toggle
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
-from briefing.lab._blocks import CalendarHeatmap, DataDive, DataProfile
+from briefing.lab._blocks import CalendarHeatmap, DataDive, DataProfile, TimeHeatmap
 
 #: The format version this briefing reads and writes (``"briefing": 1``). It changes only
 #: when JSON written for an older version would stop working.
@@ -54,6 +54,7 @@ _TYPES: tuple[tuple[str, type[Block]], ...] = (
     ("lab.DataProfile", DataProfile),
     ("lab.DataDive", DataDive),
     ("lab.CalendarHeatmap", CalendarHeatmap),
+    ("lab.TimeHeatmap", TimeHeatmap),
 )
 
 #: Options whose value is stored under another attribute than their own name.
@@ -77,6 +78,11 @@ _CHOICES: dict[tuple[str, str], tuple[str, ...]] = {
     ("lab.CalendarHeatmap", "views"): ("days", "hours"),
     ("lab.CalendarHeatmap", "week_start"): ("monday", "sunday"),
     ("lab.CalendarHeatmap", "on_click"): ("rows",),
+    ("lab.TimeHeatmap", "rows"): TimeHeatmap.UNITS,
+    ("lab.TimeHeatmap", "columns"): TimeHeatmap.UNITS,
+    ("lab.TimeHeatmap", "agg"): TimeHeatmap.AGGS,
+    ("lab.TimeHeatmap", "week_start"): ("monday", "sunday"),
+    ("lab.TimeHeatmap", "on_click"): ("rows",),
 }
 
 _DEFS = "#/$defs/"

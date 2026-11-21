@@ -129,6 +129,9 @@
         },
         {
           "$ref": "#/$defs/lab.CalendarHeatmap"
+        },
+        {
+          "$ref": "#/$defs/lab.TimeHeatmap"
         }
       ]
     },
@@ -2008,6 +2011,242 @@
         "type",
         "df",
         "date"
+      ],
+      "additionalProperties": false
+    },
+    "lab.TimeHeatmap": {
+      "description": "When something usually happens: a grid that crosses two units of one date column.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "lab.TimeHeatmap"
+        },
+        "df": {
+          "description": "The data, as any dataframe briefing accepts (pandas, polars, pyarrow…).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/table"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "date": {
+          "description": "Column holding the date or timestamp of each row.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "rows": {
+          "description": "The unit down the side: `\"hour\"` (0–23), `\"weekday\"`, `\"day\"` (of the month), `\"week\"` (ISO week), `\"month\"`, `\"quarter\"` or `\"year\"`.",
+          "anyOf": [
+            {
+              "enum": [
+                "hour",
+                "weekday",
+                "day",
+                "week",
+                "month",
+                "quarter",
+                "year"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "columns": {
+          "description": "The unit across the top, one of the same, and not the same as `rows`.",
+          "anyOf": [
+            {
+              "enum": [
+                "hour",
+                "weekday",
+                "day",
+                "week",
+                "month",
+                "quarter",
+                "year"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "value": {
+          "description": "Column to aggregate per cell; `None` counts the rows.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "agg": {
+          "description": "How to aggregate `value`: `\"sum\"`, `\"mean\"`, `\"median\"`, `\"min\"`, `\"max\"` or `\"count\"`. Sums and counts are averaged per occurrence.",
+          "anyOf": [
+            {
+              "enum": [
+                "sum",
+                "mean",
+                "median",
+                "min",
+                "max",
+                "count"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": "sum"
+        },
+        "group": {
+          "description": "Column to split by: one grid per group, stacked, on one shared colour scale.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "tz": {
+          "description": "A time zone such as `\"America/Montreal\"`. Converts timezone-aware timestamps only; naive timestamps and plain dates are taken as already local.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "colors": {
+          "description": "`\"github\"` (GitHub's green scale) or a list of CSS colours, low to high.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": "github"
+        },
+        "center": {
+          "description": "A midpoint for a diverging scale (e.g. `0`); `colors` is then three hex colours: below, at and above it.",
+          "anyOf": [
+            {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "week_start": {
+          "description": "`\"monday\"` or `\"sunday\"`: the first weekday of a `weekday` axis.",
+          "anyOf": [
+            {
+              "enum": [
+                "monday",
+                "sunday"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": "monday"
+        },
+        "on_click": {
+          "description": "`\"rows\"` lists the rows behind a cell in a panel when it is clicked (up to `ROWS_PER_CELL` rows per cell, embedded in the report); `None` (default) for no click action.",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "enum": [
+                "rows"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "df",
+        "date",
+        "rows",
+        "columns"
       ],
       "additionalProperties": false
     },

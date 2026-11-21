@@ -241,6 +241,23 @@ GitHub-style calendar heatmap: one cell per day, weeks as columns.
 - `events`: a list of texts or a table {"columns": [...], "rows": [[...]]}. Dates to mark: a list of dates, or a DataFrame with `start`, optional `end` and `label` columns; spans draw as bands.
 - `on_click`: one of "rows". `"rows"` lists the rows behind a day or an hour in a panel when it is clicked (up to `ROWS_PER_CELL` rows per cell, embedded in the report); `None` (default) for no click action.
 
+### lab.TimeHeatmap
+
+When something usually happens: a grid that crosses two units of one date column.
+
+- `df` (required): a table {"columns": [...], "rows": [[...]]}. The data, as any dataframe briefing accepts (pandas, polars, pyarrow…).
+- `date` (required): text. Column holding the date or timestamp of each row.
+- `rows` (required): one of "hour", "weekday", "day", "week", "month", "quarter", "year". The unit down the side: `"hour"` (0–23), `"weekday"`, `"day"` (of the month), `"week"` (ISO week), `"month"`, `"quarter"` or `"year"`.
+- `columns` (required): one of "hour", "weekday", "day", "week", "month", "quarter", "year". The unit across the top, one of the same, and not the same as `rows`.
+- `value`: text. Column to aggregate per cell; `None` counts the rows.
+- `agg`: one of "sum", "mean", "median", "min", "max", "count", default `"sum"`. How to aggregate `value`: `"sum"`, `"mean"`, `"median"`, `"min"`, `"max"` or `"count"`. Sums and counts are averaged per occurrence.
+- `group`: text. Column to split by: one grid per group, stacked, on one shared colour scale.
+- `tz`: text. A time zone such as `"America/Montreal"`. Converts timezone-aware timestamps only; naive timestamps and plain dates are taken as already local.
+- `colors`: text or a list of texts, default `"github"`. `"github"` (GitHub's green scale) or a list of CSS colours, low to high.
+- `center`: a number. A midpoint for a diverging scale (e.g. `0`); `colors` is then three hex colours: below, at and above it.
+- `week_start`: one of "monday", "sunday", default `"monday"`. `"monday"` or `"sunday"`: the first weekday of a `weekday` axis.
+- `on_click`: one of "rows". `"rows"` lists the rows behind a cell in a panel when it is clicked (up to `ROWS_PER_CELL` rows per cell, embedded in the report); `None` (default) for no click action.
+
 ## Diagnostics
 
 `validate` lists every problem with a severity, a code, a path (a JSON Pointer such as

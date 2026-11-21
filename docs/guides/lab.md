@@ -1,4 +1,4 @@
-# The lab: DataProfile, DataDive, CalendarHeatmap
+# The lab: DataProfile, DataDive, CalendarHeatmap, TimeHeatmap
 
 `briefing.lab` holds richer, more specialised blocks. They plug into the same
 report and follow the theme, and their JavaScript is inlined only in reports that
@@ -99,11 +99,10 @@ bf.save(report, "calendar.html", name="Pipeline runs")
 ```
 
 :::{note}
-The weekday-by-hour grid, `views=("days", "hours")`, is **deprecated since 0.2.2**:
-it still works, with a `DeprecationWarning`. A dedicated block for time patterns
-(weekday × hour, weekday × month, day of the month × month, …) is planned to replace
-it; follow [issue #111](https://github.com/jeanmidevacc/briefing/issues/111). The hour
-view will not be removed before 0.4.0, and never before its replacement ships.
+The weekday-by-hour grid, `views=("days", "hours")`, is **deprecated since 0.2.2** and
+goes in 0.5.0: it still works, with a `DeprecationWarning`. Use
+[`TimeHeatmap`](#timeheatmap-when-does-it-usually-happen) with `rows="weekday"` and
+`columns="hour"` instead, which draws other time patterns too.
 :::
 
 For values that go negative, such as a daily balance, `center=0` switches to a
@@ -128,3 +127,40 @@ bf.save(
     name="Daily balance",
 )
 ```
+
+## `TimeHeatmap`: when does it usually happen?
+
+Where the calendar shows what happened on which date, `TimeHeatmap` shows a time
+pattern: it crosses two units of one date column, `rows` down the side and `columns`
+across. Weekday by hour shows when runs happen; weekday by month, seasonality; day of the
+month by month, month-end effects; month by year, year over year. The units are `hour`,
+`weekday`, `day` (of the month), `week` (ISO), `month`, `quarter` and `year`.
+
+```{briefing-example}
+:title: A TimeHeatmap
+:height: 300
+
+import numpy as np
+import pandas as pd
+import briefing as bf
+
+rng = np.random.default_rng(111)
+# Four weeks of pipeline runs, busier on weekday mornings.
+starts = pd.date_range("2026-01-05", periods=28 * 24, freq="h")
+weight = np.where((starts.day_of_week < 5) & (starts.hour >= 7) & (starts.hour < 12), 6, 1)
+runs = pd.DataFrame({"run_at": starts.repeat(rng.poisson(weight))})
+
+bf.save(bf.lab.TimeHeatmap(runs, date="run_at", rows="weekday", columns="hour"), "time-heatmap.html",
+        name="When do runs happen?")
+```
+
+Counts and sums are **averaged per occurrence** of their cell in the data's date range:
+"Monday 09:00" occurs once per Monday, so a weekday that appears five times in a month
+doesn't outweigh one that appears four times. Hovering a cell shows its average, its
+total and how many times it occurs. Means, medians, minimums and maximums (`agg=`)
+aggregate the cell's rows directly. Cells that can't exist, such as 31 February, are left
+blank; cells with no data have a dashed outline; zeros are grey.
+
+It takes the calendar's other options too: `value` and `agg`, `colors` and `center=`,
+`tz=`, `week_start=` (the first weekday of a `weekday` axis), `group=` (one grid per
+group, on one colour scale) and `on_click="rows"`.

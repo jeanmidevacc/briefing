@@ -56,7 +56,7 @@ def test_plot_scale_is_gone() -> None:
 
 @pytest.mark.parametrize("views", [("hours",), ("days", "hours"), ["hours", "days"]])
 def test_the_calendar_hour_view_warns_and_still_renders(views: tuple[str, ...], df_pipeline_log: t.Any) -> None:
-    expected = r"hour view .* deprecated since briefing 0\.2\.2.*issues/111"
+    expected = r"hour view .* deprecated since briefing 0\.2\.2 and will be removed in 0\.5\.0\. Use bf\.lab\.TimeHeat"
     with pytest.warns(DeprecationWarning, match=expected) as caught:
         block = bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", views=views)
     assert caught[0].filename == __file__  # points at the caller's line (stacklevel=2)

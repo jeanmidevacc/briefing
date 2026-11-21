@@ -73,6 +73,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for readers to download, with no server: any file type, text files stored compressed, a
   dataframe as the same CSV as a `DataTable`'s button. Both have a JSON form, a copy-embed
   button, and count towards the size budget.
+- `lab.TimeHeatmap`, for time patterns (#111). `bf.lab.TimeHeatmap(df, date=, rows="weekday",
+  columns="hour")` crosses two units of one date column (`hour`, `weekday`, `day`, `week`,
+  `month`, `quarter`, `year`): when runs happen, seasonality, month-end effects, year over
+  year. Counts and sums are averaged per occurrence of their cell, so a weekday that
+  appears more often doesn't count double; cells that can't exist (31 February) are left
+  blank. It shares the calendar's options, legend, tooltip, width fitting and
+  `on_click="rows"`.
 
 ### Changed
 
@@ -83,6 +90,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `Banner` no longer warns about images over 2 MB on its own: the size budget names a
   heavy image when the report is over it (#38). `Banner.MAX_IMAGE_BYTES` is gone.
+
+### Deprecated
+
+- `CalendarHeatmap`'s hour view (`views=("hours",)`), deprecated since 0.2.2, now has its
+  replacement, `lab.TimeHeatmap(rows="weekday", columns="hour")`, and goes in 0.5.0 (#111).
 
 ### Removed
 

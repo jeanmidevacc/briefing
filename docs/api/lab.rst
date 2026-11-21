@@ -8,5 +8,6 @@ JavaScript is inlined only in reports that use them. They come with briefing;
 .. currentmodule:: briefing.lab
 
 .. autoclass:: CalendarHeatmap
+.. autoclass:: TimeHeatmap
 .. autoclass:: DataProfile
 .. autoclass:: DataDive
