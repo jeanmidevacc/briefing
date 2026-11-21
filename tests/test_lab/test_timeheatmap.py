@@ -62,6 +62,8 @@ def test_cells_that_cant_exist_are_left_blank() -> None:
     assert "no such date" in find_one(parse(html), ".bf-cal__legend").get_text()
     hours = bf.stringify(bf.lab.TimeHeatmap(_runs(), date="run_at", rows="weekday", columns="hour"))
     assert "no such date" not in hours  # every hour of every weekday exists
+    by_year = bf.stringify(bf.lab.TimeHeatmap(days, date="day", rows="month", columns="year"))
+    assert "no such date" not in by_year  # every month of every year exists, so nothing is blank
 
 
 def test_the_axes_follow_their_units() -> None:
