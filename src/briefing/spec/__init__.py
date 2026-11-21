@@ -15,6 +15,7 @@ from collections.abc import Mapping
 from importlib.resources import files
 
 from briefing.blocks.layout import Briefing
+from briefing.renderers.size import DEFAULT_MAX_SIZE
 from briefing.spec import _convert, _validate
 from briefing.spec._diagnostic import Diagnostic
 from briefing.spec._model import FORMAT_VERSION
@@ -80,7 +81,9 @@ def from_spec(spec: object, data: Mapping[str, t.Any] | None = None) -> Briefing
     return _convert.from_spec(spec, data)
 
 
-def validate(report_or_spec: object, data: Mapping[str, t.Any] | None = None) -> list[Diagnostic]:
+def validate(
+    report_or_spec: object, data: Mapping[str, t.Any] | None = None, max_size: int | str | None = DEFAULT_MAX_SIZE
+) -> list[Diagnostic]:
     """Every problem in a report or its JSON form, as a list; never raises.
 
     Checks the JSON's blocks and options against the format, each block's own checks,
@@ -90,13 +93,15 @@ def validate(report_or_spec: object, data: Mapping[str, t.Any] | None = None) ->
     Errors stop the report from being built or rendered: unknown block types and options,
     wrong types, missing options, unknown references, duplicate names, ``Page`` blocks
     mixed with others or nested, empty containers. Warnings don't: a ``Select`` with
-    fewer than two panels or without labels, deprecated options, and the warnings blocks
-    give (rows dropped, a sample drawn…).
+    fewer than two panels or without labels, deprecated options, the warnings blocks give
+    (rows dropped, a sample drawn…), and a report bigger than *max_size*.
 
     Args:
         report_or_spec: A :class:`Briefing`, a block or a list of blocks, or a JSON form:
             a dict, JSON text, or the path of a ``.json`` file.
         data: The objects the JSON's references name, as for :func:`from_spec`.
+        max_size: Warn (``too-big``) when the rendered report is bigger than this, as
+            :func:`save` does; ``None`` doesn't check the size.
 
     Returns:
         The problems found, errors and warnings, each with where it is; empty when the
@@ -110,7 +115,7 @@ def validate(report_or_spec: object, data: Mapping[str, t.Any] | None = None) ->
         for p in problems:
             print(p)  # error unknown-option at /blocks/0/colums: Group has no option "colums". ...
     """
-    return _validate.validate(report_or_spec, data)
+    return _validate.validate(report_or_spec, data, max_size)
 
 
 @functools.cache

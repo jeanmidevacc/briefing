@@ -65,3 +65,15 @@ kilobytes. The chart runtimes are embedded once per report, and only in reports 
 
 `DataTable` keeps at most `max_rows` rows (10,000 by default), and `lab.DataDive`
 samples down to its `max_rows`; both warn when they drop rows.
+
+`bf.save` and `bf.stringify` warn when a report is bigger than 10 MB, and name its
+largest parts with where they are in the report (the path `bf.to_spec` gives them):
+
+```text
+UserWarning: The report is 14.2 MB, over max_size (10.0 MB); its largest parts:
+DataTable "orders" at /blocks/2 (9.1 MB), the Plotly runtime (4.8 MB), Banner at /blocks/0 (0.3 MB).
+```
+
+`max_size="25 MB"` (or a number of bytes) changes the limit, and `max_size=None` turns
+the warning off. Chart runtimes and the copy-embed data count, since they are in the file.
+`bf.validate(report)` reports the same as a `too-big` warning.

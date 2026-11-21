@@ -38,18 +38,23 @@ class IdGen:
     rendering; a name used twice within a page is an error.
     """
 
-    def __init__(self, prefix: str | None = None, *, prefix_links: bool = True, embeds: bool = False) -> None:
+    def __init__(
+        self, prefix: str | None = None, *, prefix_links: bool = True, embeds: bool = False, weigh: bool = False
+    ) -> None:
         """Start numbering ids.
 
         *prefix_links* ``False`` leaves link ids unprefixed: a report with the copy-embed
         button prefixes its made-up ids but keeps its addresses (``#detail/x``). With
-        *embeds*, :attr:`embeds` collects the blocks that get that button (#124).
+        *embeds*, :attr:`embeds` collects the blocks that get that button (#124). With
+        *weigh*, :attr:`weights` records the bytes of each block's own HTML (#38).
         """
         self._counter = itertools.count(1)
         self._prefix = f"{prefix}-" if prefix else ""
         self._link_prefix = self._prefix if prefix_links else ""
         #: What each block with a copy-embed button needs, in the order they render.
         self.embeds: list[dict[str, t.Any]] | None = [] if embeds else None
+        #: id(block) -> the UTF-8 bytes of its rendered HTML, for each block that isn't a container.
+        self.weights: dict[int, int] | None = {} if weigh else None
         self._made: list[str] = []
         self._links: dict[int, str] = {}  # id(block) -> its link id
         self._pages: dict[int, str | None] = {}  # id(block) -> the name of its page

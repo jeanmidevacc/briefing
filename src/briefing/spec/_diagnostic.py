@@ -38,6 +38,8 @@ CODES: dict[str, tuple[Severity, str]] = {
     "block-warning": ("warning", "What a block warns about: rows dropped, a sample drawn, LaTeX it "
                                  "can't convert..."),
     "placeholder": ("warning", "A block with nothing to draw shows a warning box instead."),
+    "too-big": ("warning", "The rendered report is bigger than max_size (10 MB by default); the message "
+                           "names its largest parts."),
 }
 
 

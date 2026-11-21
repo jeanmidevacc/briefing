@@ -39,6 +39,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `skill --install`, which writes a Claude Code skill pointing to the reference into
   `.claude/skills/briefing/`. The docs publish the reference as `llms-full.txt`, with an
   `llms.txt` index.
+- A size budget (#38). `bf.save` and `bf.stringify` warn when a report is bigger than
+  `max_size`, 10 MB by default, and name its largest parts with their place in the
+  report: `DataTable "orders" at /blocks/2 (9.1 MB), the Plotly runtime (4.8 MB)`. Chart
+  runtimes and the copy-embed data count. `max_size="25 MB"` or a number of bytes changes
+  it, `None` turns it off. `bf.validate` and `python -m briefing validate --max-size`
+  report it as a `too-big` warning.
+
+### Changed
+
+- `Banner` no longer warns about images over 2 MB on its own: the size budget names a
+  heavy image when the report is over it (#38). `Banner.MAX_IMAGE_BYTES` is gone.
 
 ## [0.3.0] - 2026-11-20
 

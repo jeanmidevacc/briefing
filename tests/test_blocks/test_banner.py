@@ -51,9 +51,12 @@ def test_image_from_a_file(tmp_path: Path) -> None:
         bf.Banner("x", image=tmp_path / "missing.png")
 
 
-def test_large_images_warn() -> None:
+def test_large_images_no_longer_warn_on_their_own() -> None:
+    import warnings
+
     big = PNG_MAGIC + b"\x00" * (2 * 1024 * 1024)
-    with pytest.warns(UserWarning, match=r"2\.0 MB"):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # the report's size budget names it instead (#38)
         bf.Banner("x", image=big)
 
 
