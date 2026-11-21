@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import re
 import typing as t
-import warnings
 from pathlib import Path
 
 from briefing._error import BriefingError
@@ -67,9 +66,6 @@ class Banner(Block):
 
     embed_noun: t.ClassVar[str | None] = "banner"
 
-    #: Images above this size warn: the report embeds them (until #38 adds a size budget).
-    MAX_IMAGE_BYTES: t.ClassVar[int] = 2 * 1024 * 1024
-
     def __init__(
         self,
         text: str,
@@ -95,13 +91,6 @@ class Banner(Block):
         mime = _image_type(data)
         if mime is None:
             raise BriefingError("Banner: the image must be a PNG, JPEG, GIF, WebP or SVG file (or its bytes).")
-        if len(data) > self.MAX_IMAGE_BYTES:
-            warnings.warn(
-                f"Banner: the image is {len(data) / 1024 / 1024:.1f} MB and is embedded in the report; "
-                "consider a smaller or more compressed image.",
-                UserWarning,
-                stacklevel=2,
-            )
         if side not in ("left", "right"):
             raise BriefingError(f"Banner: side must be 'left' or 'right', not {side!r}.")
         css_height = f"{height}px" if isinstance(height, int) and not isinstance(height, bool) else height

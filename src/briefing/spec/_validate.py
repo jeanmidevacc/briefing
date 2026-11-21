@@ -24,19 +24,24 @@ from briefing._error import BriefingError
 from briefing.blocks.asset import Plot
 from briefing.blocks.base import Block, ContainerBlock
 from briefing.blocks.layout import Briefing, Page
-from briefing.renderers.html import render_content
+from briefing.renderers.html import render_content, render_report
 from briefing.renderers.normalize import normalize
 from briefing.renderers.registry import IdGen, clash_message, lookup_renderer
+from briefing.renderers.size import DEFAULT_MAX_SIZE, Part, over_budget, parse_size
 from briefing.spec._convert import Reader, load, to_spec
 from briefing.spec._diagnostic import Diagnostic
 
 _ISSUES = "https://github.com/jeanmidevacc/briefing/issues"
 
 
-def validate(report_or_spec: object, data: Mapping[str, t.Any] | None = None) -> list[Diagnostic]:
+def validate(
+    report_or_spec: object, data: Mapping[str, t.Any] | None = None, max_size: int | str | None = DEFAULT_MAX_SIZE
+) -> list[Diagnostic]:
     """Every problem :func:`briefing.validate` reports; never raises."""
     try:
-        found = _validate(report_or_spec, data)
+        found = _validate(report_or_spec, data, parse_size(max_size))
+    except BriefingError as exc:  # a max_size it can't read: the caller's mistake, said the same way
+        found = [Diagnostic("error", "wrong-type", "", str(exc))]
     except RecursionError:
         found = [Diagnostic("error", "too-deep", "", "The blocks nest too deeply to check.",
                             "Flatten the report: a few levels of Group, Select and Toggle are plenty.")]
@@ -58,7 +63,7 @@ def _unique(found: list[Diagnostic]) -> list[Diagnostic]:
     return kept
 
 
-def _validate(report_or_spec: object, data: Mapping[str, t.Any] | None) -> list[Diagnostic]:
+def _validate(report_or_spec: object, data: Mapping[str, t.Any] | None, limit: int | None) -> list[Diagnostic]:
     if isinstance(report_or_spec, Block | list):
         try:
             spec, data = to_spec(report_or_spec)
@@ -80,7 +85,26 @@ def _validate(report_or_spec: object, data: Mapping[str, t.Any] | None) -> list[
     found += _draw_each(report, paths)
     if not any(d.severity == "error" for d in found):
         found += _render(report, paths)
+    if limit is not None and not any(d.severity == "error" for d in found):
+        found += _weigh(report, paths, limit)
     return found
+
+
+def _weigh(report: Briefing, paths: dict[int, str], limit: int) -> list[Diagnostic]:
+    """A ``too-big`` warning when the rendered report is over *limit* bytes (#38)."""
+    parts: list[Part] = []
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            html = render_report(report, parts=parts, paths=paths)
+        except Exception as exc:  # noqa: BLE001 — reported, not raised
+            return [Diagnostic("error", "render-error", "", f"{type(exc).__name__}: {exc}")]
+    message = over_budget(len(html.encode()), parts, limit)
+    if message is None:
+        return []
+    return [Diagnostic("warning", "too-big", "", message,
+                       "Make it lighter (fewer rows with DataTable's max_rows=, smaller images), or pass "
+                       "max_size= to change the limit.")]
 
 
 def _paths(report: Briefing, built: dict[int, str]) -> dict[int, str]:

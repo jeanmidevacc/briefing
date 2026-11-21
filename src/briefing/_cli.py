@@ -15,8 +15,20 @@ from pathlib import Path
 
 from briefing._error import BriefingError
 from briefing.export import PAPERS, PRESETS, save_image, save_pdf
+from briefing.renderers.size import DEFAULT_MAX_SIZE, parse_size
 
 _FORMATS = ("png", "jpg", "webp")
+
+
+def _max_size(value: str) -> str | None:
+    """``--max-size``: a size such as "25 MB", or "none"."""
+    if value.strip().lower() in ("none", "off"):
+        return None
+    try:
+        parse_size(value)
+    except BriefingError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
+    return value
 
 
 def _page(value: str) -> str | int:
@@ -49,12 +61,14 @@ def _parser() -> argparse.ArgumentParser:
                         description="Print briefing's reference for agents, for the version installed here.")
 
     data_help = "an object the JSON names by reference, as name=file.csv or name=file.parquet (repeatable)"
+    size_help = 'warn when the report is bigger than this, such as "25 MB" (default: 10 MB; "none": never)'
     validate = commands.add_parser("validate", help="check a report's JSON and list its problems",
                                    description="Check a report's JSON (see bf.validate). Exits with status 1 "
                                    "when there is an error.")
     validate.add_argument("spec", help='the report\'s JSON file, or "-" to read it from standard input')
     validate.add_argument("--data", action="append", default=[], metavar="NAME=FILE", help=data_help)
     validate.add_argument("--json", action="store_true", help="print the problems as a JSON list")
+    validate.add_argument("--max-size", type=_max_size, default=DEFAULT_MAX_SIZE, metavar="SIZE", help=size_help)
 
     render = commands.add_parser("render", help="render a report's JSON to an HTML file",
                                  description="Build a report from its JSON (see bf.from_spec) and save it as HTML.")
@@ -62,6 +76,7 @@ def _parser() -> argparse.ArgumentParser:
     render.add_argument("-o", "--output", type=Path, help="the HTML file to write (default: next to the JSON)")
     render.add_argument("--name", default="Report", help="the report's title (default: Report)")
     render.add_argument("--data", action="append", default=[], metavar="NAME=FILE", help=data_help)
+    render.add_argument("--max-size", type=_max_size, default=DEFAULT_MAX_SIZE, metavar="SIZE", help=size_help)
 
     skill = commands.add_parser("skill", help="print, or install, a Claude Code skill that points to the reference",
                                 description="Print a Claude Code skill for briefing, or install it into "
@@ -172,7 +187,7 @@ def _validate(args: argparse.Namespace) -> int:
 
     spec = _spec(args.spec)
     data = _data(args.data)
-    problems = validate(spec, data)
+    problems = validate(spec, data, max_size=args.max_size)
     if args.json:
         print(json.dumps([p.to_dict() for p in problems], indent=2, ensure_ascii=False))
     else:
@@ -200,7 +215,7 @@ def _render(args: argparse.Namespace) -> int:
         if "was passed in data" in str(exc):
             raise BriefingError(f"{exc}\nPass referenced tables as --data name=file.csv.") from exc
         raise
-    save(report, str(output), name=args.name)
+    save(report, str(output), name=args.name, max_size=args.max_size)
     print(output)
     return 0
 

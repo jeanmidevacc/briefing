@@ -37,6 +37,7 @@ from briefing.renderers.html import (
 from briefing.renderers.normalize import normalize
 from briefing.renderers.plot import runtime_sources, scan_for_plots
 from briefing.renderers.registry import IdGen
+from briefing.renderers.size import RUNTIME_NAMES, Part, block_parts
 
 #: Stands for the embed id while the fragment is rendered, until a hash of it names it.
 _TOKEN = "bfembedidtoken"
@@ -99,18 +100,25 @@ def render_fragment(
     include_assets: bool = True,
     embed_id: str | None = None,
     header: bool = False,
+    parts: list[Part] | None = None,
 ) -> str:
     """Render *blocks* as an HTML fragment: one ``<div class="bf-embed">``, see the module docstring.
 
     *embed_id* defaults to the report's name, else the name of its only block, else
     ``bf-e`` and 8 hex digits of a hash of the fragment. *name* shows only with *header*.
+    *parts*, when given, is filled as by :func:`~briefing.renderers.html.render_report`.
     """
     fmt = formatting or Formatting()
     normalised = normalize(blocks)
     known = check_embed_id(embed_id) if embed_id else _named(normalised)
 
-    idgen = IdGen(prefix=known or _TOKEN)
+    idgen = IdGen(prefix=known or _TOKEN, weigh=parts is not None)
     content_html = _prefix_links(render_content(normalised, idgen), idgen)
+    if parts is not None:
+        parts += block_parts(blocks, idgen.weights or {})
+        if include_assets:
+            parts += [Part(RUNTIME_NAMES.get(defined, defined), len(source.encode()))
+                      for defined, source in runtime_sources(scan_for_plots(normalised))]
     header_html = ""
     if header:
         when = _resolve_now(now)

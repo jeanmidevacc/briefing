@@ -65,6 +65,7 @@ from briefing.renderers.formatting import Formatting, TextAlignment, Width
 # ── renderer ──────────────────────────────────────────────────────────────────
 from briefing.renderers.fragment import render_embed_assets, render_fragment
 from briefing.renderers.html import render_report
+from briefing.renderers.size import DEFAULT_MAX_SIZE, Part, check_size, parse_size
 
 # ── the report as JSON: to_spec / from_spec / validate (#31) ─────────────────
 from briefing.spec import Diagnostic, from_spec, schema, to_spec, validate
@@ -81,8 +82,11 @@ def _render(
     include_assets: bool,
     embed_id: str | None,
     header: bool | None,
+    max_size: int | str | None,
 ) -> str:
-    """A full report, or with ``full_html=False`` a fragment (#122)."""
+    """A full report, or with ``full_html=False`` a fragment (#122), checked against *max_size* (#38)."""
+    limit = parse_size(max_size)
+    parts: list[Part] | None = [] if limit is not None else None
     wrapped = Briefing.wrap(blocks)
     if full_html:
         options = {"include_assets": not include_assets, "embed_id": embed_id, "header": header}
@@ -91,11 +95,14 @@ def _render(
             raise BriefingError(
                 f"{', '.join(given)} only apply to a fragment: pass full_html=False as well, or leave them out."
             )
-        return render_report(wrapped, name=name, formatting=formatting, now=now)
-    return render_fragment(
-        wrapped, name=name, formatting=formatting, now=now,
-        include_assets=include_assets, embed_id=embed_id, header=bool(header),
-    )
+        html = render_report(wrapped, name=name, formatting=formatting, now=now, parts=parts)
+    else:
+        html = render_fragment(
+            wrapped, name=name, formatting=formatting, now=now,
+            include_assets=include_assets, embed_id=embed_id, header=bool(header), parts=parts,
+        )
+    check_size(html, parts or [], limit, stacklevel=3)  # 3: _render <- save/stringify <- the caller
+    return html
 
 
 def save(
@@ -110,6 +117,7 @@ def save(
     include_assets: bool = True,
     embed_id: str | None = None,
     header: bool | None = None,
+    max_size: int | str | None = DEFAULT_MAX_SIZE,
 ) -> None:
     """Save *blocks* as a self-contained HTML file at *path*, or as a fragment to embed.
 
@@ -129,13 +137,17 @@ def save(
         embed_id: With ``full_html=False``: the fragment's id, which starts every id
             in it. Defaults to the name of its only block, else a hash of it.
         header: With ``full_html=False``: ``True`` shows *name* and the date above it.
+        max_size: Warn when the file is bigger than this: a number of bytes or a size
+            such as ``"25 MB"``; ``None`` never warns. The warning names the largest
+            parts: blocks (with their path, as :func:`to_spec` writes it), chart
+            runtimes, copy-embed data.
 
     Example::
 
         bf.save(report, "analysis.html", name="Q1 Analysis", open=True)
         bf.save(chart, "revenue-embed.html", full_html=False)
     """
-    html = _render(blocks, name, formatting, now, full_html, include_assets, embed_id, header)
+    html = _render(blocks, name, formatting, now, full_html, include_assets, embed_id, header, max_size)
     dest = Path(path)
     dest.write_text(html, encoding="utf-8")
     if open:
@@ -152,6 +164,7 @@ def stringify(
     include_assets: bool = True,
     embed_id: str | None = None,
     header: bool | None = None,
+    max_size: int | str | None = DEFAULT_MAX_SIZE,
 ) -> str:
     """Render *blocks* to a self-contained HTML string, or to a fragment to embed.
 
@@ -178,6 +191,7 @@ def stringify(
             in it. Defaults to the name of its only block, else ``bf-e`` and 8 hex
             digits of a hash of the fragment. Two fragments on a page need two ids.
         header: With ``full_html=False``: ``True`` shows *name* and the date above it.
+        max_size: Warn when the result is bigger than this, as for :func:`save`.
 
     Returns:
         The complete HTML document, or the fragment.
@@ -188,7 +202,7 @@ def stringify(
         email_body = html  # or write it anywhere a string goes
         fragment = bf.stringify(bf.Plot(fig, name="revenue"), full_html=False)  # <div id="revenue" …>
     """
-    return _render(blocks, name, formatting, now, full_html, include_assets, embed_id, header)
+    return _render(blocks, name, formatting, now, full_html, include_assets, embed_id, header, max_size)
 
 
 def embed_assets(blocks: Briefing | list[t.Any] | object) -> str:

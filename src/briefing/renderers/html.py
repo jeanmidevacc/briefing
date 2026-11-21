@@ -31,7 +31,7 @@ from jinja2 import Environment, PackageLoader
 from briefing._version import __version__
 from briefing.blocks.asset import DataTable, Plot, Table
 from briefing.blocks.banner import Banner
-from briefing.blocks.base import Block
+from briefing.blocks.base import Block, ContainerBlock
 from briefing.blocks.layout import Briefing, Group, Select, SelectType, Toggle, VAlign
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
 from briefing.renderers.copy_embed import RUNTIME_GLOBALS, embed_label
@@ -40,7 +40,7 @@ from briefing.renderers.formula import latex_to_mathml
 from briefing.renderers.links import claim_links
 from briefing.renderers.markup import close_open_markup
 from briefing.renderers.normalize import normalize
-from briefing.renderers.plot import get_runtime_scripts, render_figure, scan_for_plots
+from briefing.renderers.plot import get_runtime_scripts, render_figure, runtime_sources, scan_for_plots
 from briefing.renderers.registry import (
     IdGen as _IdGen,
 )
@@ -50,6 +50,7 @@ from briefing.renderers.registry import (
     lookup_renderer,
     renderer_for,
 )
+from briefing.renderers.size import RUNTIME_NAMES, Part, block_parts
 from briefing.renderers.table import render_datatable, render_table
 
 # ── package resource loading ──────────────────────────────────────────────────
@@ -415,6 +416,8 @@ def _render_block(block: Block, idgen: _IdGen) -> str:
 
     renderer = lookup_renderer(block)
     html = renderer(block, idgen) if renderer is not None else _render_placeholder(block, idgen)
+    if idgen.weights is not None and not isinstance(block, ContainerBlock):
+        idgen.weights[id(block)] = len(html.encode())  # the size budget's parts (#38)
     link = idgen.link(block)
     marks = ""
     if idgen.embeds is not None and (label := embed_label(block, page=idgen.is_page(block))) is not None:
@@ -467,11 +470,17 @@ def render_report(
     name: str = "Report",
     formatting: Formatting | None = None,
     now: datetime | None = None,
+    *,
+    parts: list[Part] | None = None,
+    paths: dict[int, str] | None = None,
 ) -> str:
     """Render *blocks* to a fully self-contained HTML string.
 
     Pass *now* (or set ``SOURCE_DATE_EPOCH``) to pin the header timestamp and
-    get byte-identical output for identical input.
+    get byte-identical output for identical input. *parts*, when given, is filled
+    with what the report is made of and its bytes (#38): each block, at its place
+    in *paths* (by default its place in *blocks*), each chart runtime, the
+    copy-embed data.
     """
     fmt = formatting or Formatting()
     normalised = normalize(blocks)
@@ -503,14 +512,22 @@ def render_report(
         # it becomes a fragment by renaming that prefix; links keep their addresses.
         from briefing.renderers.fragment import copy_data
 
-        idgen = _IdGen(prefix=_REPORT_TOKEN, prefix_links=False, embeds=True)
+        idgen = _IdGen(prefix=_REPORT_TOKEN, prefix_links=False, embeds=True, weigh=parts is not None)
         content_html = render_content(normalised, idgen)
         report_id = "bf-r" + hashlib.sha256(content_html.encode()).hexdigest()[:8]
         content_html = content_html.replace(_REPORT_TOKEN, report_id)
         embeds = idgen.embeds or []
         embed_data = copy_data(normalised, fmt, content_html, f"{report_id}-", embeds, scripts) + "\n  "
     else:
-        content_html = render_content(normalised, _IdGen())
+        idgen = _IdGen(weigh=parts is not None)
+        content_html = render_content(normalised, idgen)
+
+    if parts is not None:
+        parts += block_parts(blocks, idgen.weights or {}, paths)
+        parts += [Part(RUNTIME_NAMES.get(defined, defined), len(source.encode()))
+                  for defined, source in runtime_sources(libraries)]
+        if embed_data:
+            parts.append(Part("the copy-embed data", len(embed_data.encode())))
 
     now = _resolve_now(now)
     template = _jinja_env.get_template("report.html.j2")

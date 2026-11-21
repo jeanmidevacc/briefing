@@ -76,5 +76,5 @@ bf.save(report, "banner-uniform.html", name="Banner")
 ```
 
 The image is embedded once, as a data URI, at its original size: briefing doesn't
-resize it. Files over 2 MB trigger a warning, since they make the report heavy;
-see {doc}`assets`.
+resize it. A large image makes the report heavy: when the report is over its size
+budget (10 MB by default), the warning names the banner; see {doc}`assets`.

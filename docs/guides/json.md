@@ -112,6 +112,7 @@ renders its blocks to be sure.
 | `too-few-panels`, `missing-label` | warning | A `Select` with fewer than two panels, or a panel or page without a label |
 | `deprecated` | warning | An option that will go away |
 | `block-warning`, `placeholder` | warning | What a block warns about (rows dropped, a sample drawn…), or a block with nothing to draw |
+| `too-big` | warning | The rendered report is bigger than `max_size` (10 MB by default); the message names its largest parts |
 
 Without `data`, references aren't checked, and neither is rendering: `validate(spec)`
 checks the JSON alone. A Python report works too: `bf.validate(report)` checks it through
