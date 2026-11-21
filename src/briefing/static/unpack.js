@@ -164,7 +164,8 @@
   }
 
   function utf8(bytes) {
-    if (typeof TextDecoder !== 'undefined') return new TextDecoder('utf-8').decode(bytes);
+    // ignoreBOM keeps a leading byte-order mark, which a CSV for spreadsheets needs (#36).
+    if (typeof TextDecoder !== 'undefined') return new TextDecoder('utf-8', { ignoreBOM: true }).decode(bytes);
     var text = '', i, step = 8192;
     for (i = 0; i < bytes.length; i += step) text += String.fromCharCode.apply(null, bytes.subarray(i, i + step));
     return decodeURIComponent(escape(text));

@@ -24,6 +24,7 @@ from pathlib import Path
 from briefing.blocks.asset import DataTable, Plot, Table
 from briefing.blocks.banner import Banner
 from briefing.blocks.base import _NAME_RE, Block, ContainerBlock
+from briefing.blocks.files import Attachment, Image
 from briefing.blocks.layout import Briefing, Group, Page, Select, Toggle
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
 from briefing.lab._blocks import CalendarHeatmap, DataDive, DataProfile
@@ -42,6 +43,8 @@ _TYPES: tuple[tuple[str, type[Block]], ...] = (
     ("BigNumber", BigNumber),
     ("Alert", Alert),
     ("Banner", Banner),
+    ("Image", Image),
+    ("Attachment", Attachment),
     ("Plot", Plot),
     ("Table", Table),
     ("DataTable", DataTable),
@@ -87,6 +90,8 @@ def _ref(name: str) -> dict[str, t.Any]:
 _OVERRIDES: dict[tuple[str, str], dict[str, t.Any]] = {
     ("Plot", "figure"): _ref("figure"),
     ("Banner", "image"): _ref("image"),
+    ("Image", "image"): _ref("image"),
+    ("Attachment", "file"): {"anyOf": [_ref("file"), _ref("table")]},
     ("lab.CalendarHeatmap", "events"): {
         "anyOf": [{"type": "array", "items": {"type": "string"}}, _ref("table"), {"type": "null"}]
     },
@@ -392,6 +397,10 @@ def build_schema() -> dict[str, t.Any]:
         "image": {
             "description": "An image file's path, or the image as a data: URI "
             "(data:image/png;base64,...).",
+            "type": "string",
+        },
+        "file": {
+            "description": "A file's path, or its content as a data: URI (data:application/pdf;base64,...).",
             "type": "string",
         },
     }

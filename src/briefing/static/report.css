@@ -713,6 +713,34 @@ html.bf-printing .bf-heading-actions { display: none; }
   text-align: center;
 }
 
+/* Image and Attachment (#36) */
+.bf-image { margin: 0; }
+.bf-image__img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+.bf-image__caption {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--bf-muted);
+  text-align: center;
+}
+.bf-attachment { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.bf-attachment__button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--bf-border);
+  border-radius: var(--bf-radius);
+  background: var(--bf-surface);
+  color: var(--bf-accent);
+  font: inherit;
+  cursor: pointer;
+}
+.bf-attachment__button::before { content: "⤓"; }
+.bf-attachment__button:hover, .bf-attachment__button:focus-visible { border-color: var(--bf-accent); }
+.bf-attachment__meta { color: var(--bf-muted); font-size: 0.8rem; }
+.bf-attachment__meta::before { content: "· "; }
+.bf-attachment__note { color: var(--bf-muted); font-size: 0.8rem; }
+
 /* ── placeholder (Phase 3–6 blocks) ──────────────────────────────────────── */
 .bf-placeholder {
   background: var(--bf-surface);
@@ -810,6 +838,7 @@ html.bf-printing .bf-heading-actions { display: none; }
 html.bf-printing .bf-report { width: var(--bf-print-width, 180mm); max-width: var(--bf-print-width, 180mm); }
 html.bf-printing .bf-select__tablist,
 html.bf-printing .bf-select__select,
+html.bf-printing .bf-attachment__note,
 html.bf-printing .bf-dt__toolbar,
 html.bf-printing .bf-dt__footer,
 html.bf-printing .bf-dd__controls,

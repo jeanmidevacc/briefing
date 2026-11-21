@@ -25,6 +25,7 @@ import warnings
 from collections.abc import Callable
 from datetime import UTC, datetime
 from importlib.resources import files
+from pathlib import Path
 
 from jinja2 import Environment, PackageLoader
 
@@ -32,6 +33,7 @@ from briefing._version import __version__
 from briefing.blocks.asset import DataTable, Plot, Table
 from briefing.blocks.banner import Banner
 from briefing.blocks.base import Block, ContainerBlock
+from briefing.blocks.files import Attachment, Image
 from briefing.blocks.layout import Briefing, Group, Select, SelectType, Toggle, VAlign
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
 from briefing.renderers.copy_embed import RUNTIME_GLOBALS, embed_label
@@ -40,7 +42,7 @@ from briefing.renderers.formula import latex_to_mathml
 from briefing.renderers.links import claim_links
 from briefing.renderers.markup import close_open_markup
 from briefing.renderers.normalize import normalize
-from briefing.renderers.pack import UNPACK_JS
+from briefing.renderers.pack import UNPACK_JS, pack
 from briefing.renderers.plot import (
     get_runtime_scripts,
     render_figure,
@@ -57,8 +59,8 @@ from briefing.renderers.registry import (
     lookup_renderer,
     renderer_for,
 )
-from briefing.renderers.size import RUNTIME_NAMES, Part, block_parts
-from briefing.renderers.table import from_json, render_datatable, render_table
+from briefing.renderers.size import RUNTIME_NAMES, Part, block_parts, format_size
+from briefing.renderers.table import csv_text, from_json, render_datatable, render_table
 
 # ── package resource loading ──────────────────────────────────────────────────
 
@@ -186,6 +188,59 @@ def _render_banner(block: Banner, idgen: _IdGen) -> str:
         f'<img class="bf-banner__image" src="{src}" {alt}>'
         f'<div class="bf-banner__veil" style="{_veil(block)}"></div>'
         f'<div class="bf-banner__text bf-text">{_markdown(block.text, _headings_of(block, idgen))}</div>'
+        f"</div>"
+    )
+
+
+@renderer_for(Image)
+def _render_image(block: Image, _: _IdGen) -> str:
+    src = f"data:{block.mime};base64,{base64.b64encode(block.image).decode('ascii')}"
+    alt = block.alt if block.alt is not None else (block.caption or "")
+    style = f' style="width: {block.width}"' if block.width else ""
+    caption = (
+        f'<figcaption class="bf-image__caption">{_html.escape(block.caption)}</figcaption>' if block.caption else ""
+    )
+    return (
+        f'<figure class="bf-block bf-image"><img class="bf-image__img" src="{src}" alt="{_html.escape(alt)}"'
+        f"{style}>{caption}</figure>"
+    )
+
+
+#: Types an attachment stores as packed text (#38), besides text/*.
+_TEXT_TYPES = {"application/json", "application/xml", "image/svg+xml", "application/javascript", "application/sql"}
+
+
+def attachment_content(block: Attachment) -> tuple[bytes, bool]:
+    """What an attachment downloads, and whether it is text (stored packed)."""
+    if not isinstance(block.file, bytes):
+        return csv_text(block.file).encode(), True
+    if not (block.mime.startswith("text/") or block.mime in _TEXT_TYPES):
+        return block.file, False
+    try:
+        block.file.decode()
+    except UnicodeDecodeError:
+        return block.file, False
+    return block.file, True
+
+
+@renderer_for(Attachment)
+def _render_attachment(block: Attachment, _: _IdGen) -> str:
+    data, text = attachment_content(block)
+    if text:
+        encoded, size = pack(data.decode())
+        stored = f'data-size="{size}" data-packed'
+    else:
+        encoded, stored = base64.b64encode(data).decode("ascii"), f'data-size="{len(data)}"'
+    kind = Path(block.filename).suffix.lstrip(".").upper() or "File"
+    return (
+        f'<div class="bf-block bf-attachment">'
+        f'<button class="bf-attachment__button" type="button" data-bf-filename="{_html.escape(block.filename)}" '
+        f'data-bf-type="{_html.escape(block.mime)}">'
+        f'<span class="bf-attachment__label">{_html.escape(block.label or block.filename)}</span>'
+        f'<span class="bf-attachment__meta">{_html.escape(kind)}, {format_size(len(data))}</span>'
+        f"</button>"
+        f'<span class="bf-attachment__note" aria-live="polite"></span>'
+        f'<script type="application/json" class="bf-attachment__data" {stored}>"{encoded}"</script>'
         f"</div>"
     )
 
@@ -567,6 +622,8 @@ def block_scripts(root: Block) -> list[str]:
         js = asset_js_for(block)
         if js is None and isinstance(block, DataTable) and from_json(block):
             js = UNPACK_JS  # a big table's rows are packed (#38)
+        if js is None and isinstance(block, Attachment) and attachment_content(block)[1]:
+            js = UNPACK_JS  # so is a text attachment (#36)
         if js is not None and js not in scripts:
             scripts.append(js)
     return scripts

@@ -98,6 +98,12 @@
           "$ref": "#/$defs/Banner"
         },
         {
+          "$ref": "#/$defs/Image"
+        },
+        {
+          "$ref": "#/$defs/Attachment"
+        },
+        {
           "$ref": "#/$defs/Plot"
         },
         {
@@ -848,6 +854,180 @@
         "type",
         "text",
         "image"
+      ],
+      "additionalProperties": false
+    },
+    "Image": {
+      "description": "A picture: a PNG, JPEG, GIF, WebP or SVG file, embedded in the report.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Image"
+        },
+        "image": {
+          "description": "A file path, or the image's bytes (PNG, JPEG, GIF, WebP or SVG).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/image"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "caption": {
+          "description": "Optional caption below the image.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "alt": {
+          "description": "What the image shows, for readers who can't see it; by default the caption. With neither, the image is decorative.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "width": {
+          "description": "A CSS width such as `\"60%\"` or `\"20rem\"`, or a number of pixels.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "integer",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "image"
+      ],
+      "additionalProperties": false
+    },
+    "Attachment": {
+      "description": "A file readers download from the report: any file, some bytes, or a dataframe as CSV.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Attachment"
+        },
+        "file": {
+          "description": "A file path (any type), bytes (then `filename` is needed), or a dataframe, which downloads as CSV in the format of `DataTable`'s CSV button: raw values, UTF-8 with a byte-order mark.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/file"
+            },
+            {
+              "$ref": "#/$defs/table"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "filename": {
+          "description": "The name the file downloads as; by default the file's own name, or for a dataframe the block's `name` (else `data`) with `.csv`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "The link's text (by default the file name), and its tab title inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "file"
       ],
       "additionalProperties": false
     },
@@ -1910,6 +2090,10 @@
     },
     "image": {
       "description": "An image file's path, or the image as a data: URI (data:image/png;base64,...).",
+      "type": "string"
+    },
+    "file": {
+      "description": "A file's path, or its content as a data: URI (data:application/pdf;base64,...).",
       "type": "string"
     }
   }

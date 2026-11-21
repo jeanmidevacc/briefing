@@ -100,6 +100,7 @@ _SAMPLES = {
     "empty": "",
     "one character": "x",
     "unicode": "héllo wörld ✓ 日本 🎉" * 50,
+    "a byte-order mark": "\ufeffname,n\r\nZoë,3\r\n",  # kept, as a CSV for spreadsheets needs it (#36)
     "repeats (fixed codes)": "abc" * 50_000,
     "noise (stored blocks)": "".join(chr(_RNG.randrange(32, 0x24F)) for _ in range(100_000)),
     "json (dynamic codes)": str([[_RNG.random() for _ in range(8)] for _ in range(3_000)]),

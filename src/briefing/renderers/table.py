@@ -235,6 +235,28 @@ def _csv_button(block: DataTable) -> str:
     )
 
 
+_JS_NUMBER = re.compile(r"^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$|^[+-]?Infinity$")
+
+
+def _csv_field(text: str) -> str:
+    """One CSV field, as report.js's ``csvField`` writes it (#34)."""
+    if re.match(r"[=+\-@\t\r]", text) and not _JS_NUMBER.match(text.strip()):
+        text = "'" + text  # a spreadsheet would run it as a formula; a number such as -5 stays
+    return '"' + text.replace('"', '""') + '"' if re.search(r'[",\r\n]', text) else text
+
+
+def csv_text(df: t.Any) -> str:
+    """*df* as the CSV a DataTable's button downloads (#34): raw values, UTF-8 with a BOM, CRLF."""
+    show_index = _use_index(df)
+    names = ([str(df.index.name or "")] if show_index else []) + [str(c) for c in df.columns]
+    columns = ([df.index.tolist()] if show_index else []) + [df.iloc[:, j].tolist() for j in range(df.shape[1])]
+    lines = [",".join(_csv_field(n.strip()) for n in names)]
+    for i in range(len(df)):
+        raw = [(_sort_key(c[i]) if _sort_key(c[i]) is not None else _fmt(c[i]).strip()) for c in columns]
+        lines.append(",".join(_csv_field(str(v)) for v in raw))
+    return "\ufeff" + "\r\n".join(lines) + "\r\n"
+
+
 #: Rows a page of a DataTable shows (``PAGE_SIZE`` in report.js): what a big table keeps in its HTML.
 PAGE_ROWS = 25
 
@@ -345,4 +367,4 @@ def _payload(rows: int, columns: list[_Column]) -> dict[str, t.Any]:
     return payload
 
 
-__all__ = ["PAGE_ROWS", "from_json", "render_datatable", "render_table"]
+__all__ = ["PAGE_ROWS", "csv_text", "from_json", "render_datatable", "render_table"]

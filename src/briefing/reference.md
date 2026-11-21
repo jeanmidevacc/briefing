@@ -139,6 +139,22 @@ Markdown text over a background image: a report cover, a section opener or a soc
 - `focus`: a list of 2 numbers, default `[50, 50]`. `(x, y)` in percent: the point of the image kept in view when it is cropped.
 - `alt`: text. A description of the image; by default it is decorative.
 
+### Image
+
+A picture: a PNG, JPEG, GIF, WebP or SVG file, embedded in the report.
+
+- `image` (required): an image file path or a data: URI. A file path, or the image's bytes (PNG, JPEG, GIF, WebP or SVG).
+- `caption`: text. Optional caption below the image.
+- `alt`: text. What the image shows, for readers who can't see it; by default the caption. With neither, the image is decorative.
+- `width`: text or a whole number. A CSS width such as `"60%"` or `"20rem"`, or a number of pixels.
+
+### Attachment
+
+A file readers download from the report: any file, some bytes, or a dataframe as CSV.
+
+- `file` (required): a file path or a data: URI or a table {"columns": [...], "rows": [[...]]}. A file path (any type), bytes (then `filename` is needed), or a dataframe, which downloads as CSV in the format of `DataTable`'s CSV button: raw values, UTF-8 with a byte-order mark.
+- `filename`: text. The name the file downloads as; by default the file's own name, or for a dataframe the block's `name` (else `data`) with `.csv`.
+
 ### Plot
 
 Chart / figure block — library agnostic.
