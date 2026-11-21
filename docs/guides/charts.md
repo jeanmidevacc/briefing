@@ -5,12 +5,14 @@ too) or Bokeh. briefing finds the library from the figure, and imports only that
 one. Size the figure in its own library; with `responsive=True` (the default) it
 fills the width of its column.
 
-| Library | In the report | Extra |
+| Library | In the report | Needs |
 | --- | --- | --- |
-| Plotly | interactive; the Plotly runtime is embedded once per report | `[plotly]` |
-| Altair / Vega-Lite | interactive; the Vega runtime is embedded once per report | `[altair]` |
-| Matplotlib, Seaborn, Plotnine | inline SVG | `[matplotlib]` |
-| Bokeh | interactive, in a frame with Bokeh's resources inlined | `[bokeh]` |
+| Plotly | interactive; the Plotly runtime is embedded once per report | plotly 5.0+ |
+| Altair / Vega-Lite | interactive; the Vega runtime is embedded once per report | altair 5.0+ and `briefing[altair]` |
+| Matplotlib, Seaborn, Plotnine | inline SVG | matplotlib 3.7+ |
+| Bokeh | interactive, in a frame with Bokeh's resources inlined | bokeh 3.0+ |
+
+An older version shows, in place of the chart, which version briefing needs.
 
 ## Matplotlib
 
@@ -73,7 +75,7 @@ from bokeh.plotting import figure
 
 p = figure(height=300)
 p.line([1, 2, 3], [4, 6, 5])
-bf.Plot(p)                              # needs briefing[bokeh]
+bf.Plot(p)                              # needs bokeh 3.0+
 ```
 
 Printing, `save_pdf` and the in-report "Save as PNG" button handle each library

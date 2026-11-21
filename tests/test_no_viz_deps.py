@@ -67,3 +67,9 @@ def test_core_imports_and_renders_without_viz_libraries() -> None:
         f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )
     assert result.stdout.startswith("OK ")
+
+
+def test_importing_briefing_doesnt_import_pandas() -> None:
+    # pandas is a core dependency (#40), but a report without tables never loads it.
+    script = "import sys, briefing; assert 'pandas' not in sys.modules and 'numpy' not in sys.modules"
+    subprocess.run([sys.executable, "-c", script], check=True)

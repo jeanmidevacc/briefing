@@ -58,6 +58,8 @@ dependencies = [
     "pygments>=2.15",
     # Formula: LaTeX → MathML at render time (pure Python, MIT, no dependencies)
     "latex2mathml>=3.77",
+    # Table, DataTable, the lab blocks and tables written in JSON (#40); imported only when used
+    "pandas>=2.0",
 ]
 
 [project.urls]
@@ -68,21 +70,13 @@ Issues = "https://github.com/jeanmidevacc/briefing/issues"
 Changelog = "https://github.com/jeanmidevacc/briefing/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
-# pip install briefing[pandas] — internal engine for Table / DataTable
-pandas = ["pandas>=2.0"]
-# pip install briefing[lab] — briefing.lab custom-visualisation blocks
-#   (DataProfile, DataDive). Pure-SVG today; grows here so the core grammar
-#   stays small.
-lab = ["pandas>=2.0"]
-# The `Plot` block is a bring-your-own-figure escape hatch. Install the plotting
-# library you actually use; briefing never imports one unless you pass its figure.
-plotly = ["plotly>=5.0"]
-# vl-convert-python supplies the Vega runtime that briefing embeds, so charts work offline
+# The `Plot` block is a bring-your-own-figure escape hatch: it renders the figure you pass, from
+# the library you already have, and checks that library's version (#40). Only Altair needs more:
+# vl-convert-python supplies the Vega runtime that briefing embeds, so charts work offline.
 altair = ["altair>=5.0", "vl-convert-python>=1.0"]
-bokeh = ["bokeh>=3.0"]
-matplotlib = ["matplotlib>=3.7"]
-# pip install briefing[charts] — every supported Plot backend at once
-charts = ["plotly>=5.0", "altair>=5.0", "vl-convert-python>=1.0", "bokeh>=3.0", "matplotlib>=3.7"]
+# pip install briefing[lab] — briefing.lab (DataProfile, DataDive, CalendarHeatmap) needs nothing
+#   beyond the core today; the extra stays so existing installs work and lab can grow here.
+lab = []
 # pip install briefing[image] — bf.save_image / bf.save_pdf in headless Chromium;
 #   run `playwright install chromium` once after installing
 image = ["playwright>=1.40"]
@@ -95,11 +89,6 @@ docs = [
     "pandas>=2.0",
     "matplotlib>=3.7",
     "plotly>=5.0",
-]
-# pip install briefing[email]
-email = [
-    "premailer>=3.10",
-    "kaleido>=0.2",
 ]
 # pip install briefing[dev]
 dev = [

@@ -2,7 +2,7 @@
 
 `briefing.lab` holds richer, more specialised blocks. They plug into the same
 report and follow the theme, and their JavaScript is inlined only in reports that
-use them. Install with `pip install "briefing[lab]"`.
+use them. They come with briefing (`pip install "briefing[lab]"` still works, and adds nothing today).
 
 ## `DataProfile`: a card per column
 
