@@ -1175,7 +1175,7 @@
           "const": "Formula"
         },
         "formula": {
-          "description": "A LaTeX expression, without `$` or `\\\\(` delimiters.",
+          "description": "A LaTeX expression, without `$` or `\\(` delimiters.",
           "anyOf": [
             {
               "type": "string"

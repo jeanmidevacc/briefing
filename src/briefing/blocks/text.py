@@ -143,7 +143,7 @@ class Formula(EmbeddedTextBlock):
     visible note and a ``UserWarning``.
 
     Args:
-        formula: A LaTeX expression, without ``$`` or ``\\(`` delimiters.
+        formula: A LaTeX expression, without ``$`` or ``\(`` delimiters.
         caption: Optional caption below the formula.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.

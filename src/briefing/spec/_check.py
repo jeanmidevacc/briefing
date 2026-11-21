@@ -130,6 +130,8 @@ def describe(schema: dict[str, t.Any]) -> str:
 
 
 def _plural(words: str) -> str:
+    if words.startswith("one of "):
+        return "values from " + words.removeprefix("one of ")
     for single, many in (("a whole number", "whole numbers"), ("a number", "numbers"), ("text", "texts")):
         words = words.replace(single, many)
     return words

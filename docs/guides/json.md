@@ -152,6 +152,27 @@ jsonschema.validate(spec, bf.schema())
 `bf.validate` checks more than the schema can say (names, references, each block's own
 checks, rendering), so prefer it when Python is at hand.
 
+## For agents
+
+briefing is newer than most models' training data. An agent can learn it from the
+installed package instead, at the installed version:
+
+| Command | What it does |
+| --- | --- |
+| `python -m briefing reference` | Prints the reference for agents: the format, every block and option with its type, default and description, the diagnostic codes and a complete example. |
+| `python -m briefing validate report.json` | Lists the problems in a report's JSON, one per line (`--json`: as a JSON list), and exits with status 1 when there is an error. |
+| `python -m briefing render report.json -o report.html --name "Q1"` | Builds the report and saves it. |
+| `python -m briefing skill --install` | Writes a Claude Code skill to `.claude/skills/briefing/SKILL.md` in the current project. It tells Claude to read the reference before writing briefing code. |
+
+`validate` and `render` take the tables a JSON names by reference as
+`--data sales=sales.csv` (CSV or Parquet), and read the JSON from standard input when
+given `-`. Without `--data`, `validate` checks the JSON alone and says which references it
+left unchecked.
+
+The documentation publishes the same reference as
+[llms-full.txt](https://briefing.readthedocs.io/en/stable/llms-full.txt), with an index in
+[llms.txt](https://briefing.readthedocs.io/en/stable/llms.txt).
+
 ## An agent's loop
 
 ```{briefing-example}

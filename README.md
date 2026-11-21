@@ -70,7 +70,9 @@ To put a chart, a table or a whole report into another page (a docs site, a note
 A report can also be written as JSON, by a coding agent or any other program:
 `bf.validate(spec)` lists what is wrong in it, each problem with its place, and
 `bf.from_spec(spec, data={"sales": df})` builds the report. `bf.to_spec(report)` gives the
-JSON of a report written in Python, and `bf.schema()` the format's JSON Schema.
+JSON of a report written in Python, and `bf.schema()` the format's JSON Schema. For agents,
+`python -m briefing reference` prints the format and every block's options at the installed
+version, and `python -m briefing validate report.json` checks a report without Python code.
 
 ## Documentation
 

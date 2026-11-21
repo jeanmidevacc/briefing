@@ -21,6 +21,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "myst_parser",
     "briefing_example",  # docs/_ext: live report examples
+    "llms",  # docs/_ext: llms.txt and llms-full.txt, the reference for agents (#32)
 ]
 
 source_suffix = {".rst": "restructuredtext", ".md": "markdown"}

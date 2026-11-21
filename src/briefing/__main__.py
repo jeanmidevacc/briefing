@@ -1,4 +1,4 @@
-"""``python -m briefing``: export saved reports (see :mod:`briefing._cli`)."""
+"""``python -m briefing``: report JSON for agents, and exports of saved reports (see :mod:`briefing._cli`)."""
 from __future__ import annotations
 
 import sys

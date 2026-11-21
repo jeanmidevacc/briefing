@@ -48,9 +48,13 @@ and runs `twine check --strict`.
 and `bf.schema`. `spec/_model.py` reads each block's options from its constructor (names,
 type hints, defaults, `Args:` docstring); `_TYPES` lists the block types, and `_ATTRS`,
 `_KEYS`, `_CHOICES`, `_OVERRIDES` cover what a signature can't say. The JSON Schema built
-from it is checked in as `src/briefing/schema/v1.json`: after changing a block's
-parameters or their docstrings, run `python -m briefing.spec` and commit the file
-(`tests/test_spec/test_schema.py` fails until you do). A new block type goes in `_TYPES`.
+from it is checked in as `src/briefing/schema/v1.json`, and the reference for agents built
+from it (#32, `spec/_reference.py`) as `src/briefing/reference.md`: after changing a block's
+parameters or their docstrings, run `python -m briefing.spec` and commit both files
+(`tests/test_spec/test_schema.py` and `test_reference.py` fail until you do). A new block
+type goes in `_TYPES`; a new diagnostic code in `CODES` (`spec/_diagnostic.py`) and the
+guide's table. `python -m briefing reference|validate|render|skill` (`_cli.py`) serve agents;
+`docs/_ext/llms.py` publishes the reference as `llms-full.txt`.
 `validate` reads the JSON (`spec/_convert.py`), draws each block alone, then renders the
 report with an `IdGen` that records name clashes (`spec/_validate.py`); it never raises.
 
