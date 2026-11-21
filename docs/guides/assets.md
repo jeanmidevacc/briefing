@@ -60,7 +60,7 @@ kilobytes. The chart runtimes are embedded once per report, and only in reports 
 | The base report (styles and scripts for tabs, tables, toggles, print) | 40 KB |
 | A Plotly chart (the runtime, once) | 4.6 MB |
 | An Altair chart (the Vega runtime, once) | 0.9 MB |
-| A `DataTable` | its rows, as JSON |
+| A `DataTable` | its rows: in the HTML up to 1,000, compressed above |
 | A `Banner` or a data-URI image | the image file, plus a third for base64 |
 
 `DataTable` keeps at most `max_rows` rows (10,000 by default), and `lab.DataDive`

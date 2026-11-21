@@ -121,6 +121,10 @@ class DataTable(Block):
 
     #: Maximum rows rendered by default; larger DataFrames are truncated with a warning.
     MAX_ROWS: t.ClassVar[int] = 10_000
+    #: Tables up to this many rows keep every row in the HTML. Bigger ones keep the first
+    #: page there (what a reader without JavaScript sees) and the rows as compressed JSON,
+    #: which the page's script shows, sorts and searches (#38).
+    HTML_ROWS: t.ClassVar[int] = 1_000
 
     def __init__(
         self,

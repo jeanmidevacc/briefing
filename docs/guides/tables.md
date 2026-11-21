@@ -11,6 +11,12 @@ pages long data. Dates and formatted numbers sort by their real value. Rows beyo
 `max_rows` (10,000 by default) are dropped with a warning, because every row is
 embedded in the file.
 
+A table of up to 1,000 rows keeps every row in the HTML. A bigger one keeps its first
+page there and its rows compressed, which the page's script unpacks as the report
+opens: 10,000 rows of numbers weigh a few hundred kilobytes instead of megabytes. It
+sorts, searches, pages and prints (up to 1,000 rows) like a small one; a reader without
+JavaScript sees its first 25 rows and a line saying how many more there are.
+
 ```{briefing-example}
 :title: A DataTable
 :height: 520

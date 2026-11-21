@@ -45,6 +45,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   runtimes and the copy-embed data count. `max_size="25 MB"` or a number of bytes changes
   it, `None` turns it off. `bf.validate` and `python -m briefing validate --max-size`
   report it as a `too-big` warning.
+- Big tables weigh less (#38). A `DataTable` of more than 1,000 rows keeps its first page
+  in the HTML and its rows compressed, unpacked by the page's script as the report opens:
+  10,000 rows × 10 columns of decimals go from 5.0 MB to 1.8 MB, of whole numbers from
+  1.3 MB to 0.3 MB. It sorts, searches, pages and prints as before; without JavaScript it
+  shows its first 25 rows and says how many more there are. Up to 1,000 rows, nothing
+  changes.
 
 ### Changed
 
