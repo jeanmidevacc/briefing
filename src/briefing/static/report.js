@@ -283,6 +283,9 @@
       });
     });
 
+    var csv = container.querySelector('.bf-dt__csv');
+    if (csv) csv.addEventListener('click', function () { downloadCsv(container, csv, headers, rows, filtered); });
+
     if (search) search.addEventListener('input', applyFilter);
     if (prevBtn) prevBtn.addEventListener('click', function () { if (page > 0) { page--; render(); } });
     if (nextBtn) nextBtn.addEventListener('click', function () { page++; render(); });
@@ -303,6 +306,45 @@
     });
 
     render();
+  }
+
+  // ── CSV download (#34) ──────────────────────────────────────────────────────
+
+  // One CSV field: quoted when it holds a quote, a comma or a line break, and with a ' before
+  // text a spreadsheet would run as a formula (but not before a number such as -5).
+  function csvField(value) {
+    var text = String(value);
+    if (/^[=+\-@\t\r]/.test(text) && isNaN(Number(text))) text = "'" + text;
+    return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+  }
+
+  // The rows matching the search, in their order, every page: each cell's raw value (its sort
+  // key: full-precision numbers, ISO dates), not its formatted text (#33). UTF-8 with a BOM, so
+  // spreadsheets read accents; made in the page, with no server.
+  function downloadCsv(container, button, headers, rows, filtered) {
+    var lines = [headers.map(function (th) { return csvField(th.textContent.trim()); }).join(',')];
+    filtered.forEach(function (i) {
+      var cells = [];
+      for (var col = 0; col < headers.length; col++) cells.push(csvField(rows.key(i, col)));
+      lines.push(cells.join(','));
+    });
+    var name = button.getAttribute('data-bf-filename') || 'table.csv';
+    var blob = new Blob(['\ufeff' + lines.join('\r\n') + '\r\n'], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    link.hidden = true;
+    container.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+    var note = container.querySelector('.bf-dt__csv-note');
+    if (note) {
+      note.textContent = 'Downloaded ' + thousands(filtered.length) + ' row' + (filtered.length !== 1 ? 's' : '') +
+        ' as ' + name + '.' + (window.top !== window
+          ? " If no file arrived, this page can't download here: open the report in its own tab." : '');
+    }
   }
 
   // ── Toggle ───────────────────────────────────────────────────────────────────

@@ -62,6 +62,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "title": "{url}"}` makes a column's cells links, from the cell's value or another column
   of the row; only `http(s)://` and `mailto:` URLs become links (the rest stays text, with
   a warning), and they open in a new tab. Big tables pack the formatted text and the links.
+- A CSV download for `DataTable` (#34). `download=True` puts a "CSV" button above the table:
+  it downloads the rows matching the reader's search, in their order, every page, with raw
+  values rather than the formatted text, as UTF-8 with a byte-order mark; formula-like text
+  is escaped. Off by default; it never prints or appears in exports.
 
 ### Changed
 

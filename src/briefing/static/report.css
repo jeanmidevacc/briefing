@@ -496,6 +496,18 @@ html.bf-printing .bf-heading-actions { display: none; }
   min-width: 14rem;
 }
 .bf-dt__search:focus { outline: 2px solid var(--bf-accent); outline-offset: 1px; }
+.bf-dt__csv {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--bf-border);
+  border-radius: 0.375rem;
+  background: var(--bf-surface);
+  color: var(--bf-text);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.bf-dt__csv:hover, .bf-dt__csv:focus-visible { color: var(--bf-accent); border-color: var(--bf-accent); }
+.bf-dt__csv-note { color: var(--bf-muted); font-size: 0.8rem; }
 .bf-dt__count { font-size: 0.8rem; color: var(--bf-muted); margin-left: auto; }
 
 .bf-dt__scroll { overflow-x: auto; }
