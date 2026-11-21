@@ -253,7 +253,8 @@ def render_timeheatmap(block: TimeHeatmap) -> str:
         svg = _grid_svg(block, rows, columns, cells, occurs, possible, colour)
         grids.append(f'<div class="bf-cal__calendar"{_group_attr(block, group)}>{title}'
                      f'<div class="bf-cal__scroll">{svg}</div></div>')
-    legend = _legend(block, values, colour, [], targets=False, blank=possible is not None)
+    blank = possible is not None and any((r, c) not in possible for r in rows for c in columns)
+    legend = _legend(block, values, colour, [], targets=False, blank=blank)
     extra = _PANEL + _rows_data(block, stamps) if block.on_click == "rows" else ""
     return f'<figure class="bf-block bf-calendar bf-timeheatmap">{"".join(grids)}{legend}{extra}</figure>'
 

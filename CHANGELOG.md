@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A wide `DataTable` (long text, many columns) inside a `Group` or a `Page` widened the
   whole report instead of scrolling in its own box, since every page is a `Group`; a
   `Group`'s cells may now shrink below their content's width.
+- `lab.TimeHeatmap`'s legend said "no such date" for grids with no blank cell, such as month
+  by year; it now does only when a cell can't exist.
 
 ## [0.4.0] - 2026-11-20
 
