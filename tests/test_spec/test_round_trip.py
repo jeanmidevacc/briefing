@@ -13,9 +13,7 @@ import pytest
 
 import briefing as bf
 from tests.golden import NOW, mask
-from tests.scenarios import ESCAPE_SCENARIOS, HOUR_VIEW_WARNING, REPORT_NAME, SCENARIOS, Frames
-
-pytestmark = pytest.mark.filterwarnings(HOUR_VIEW_WARNING)
+from tests.scenarios import ESCAPE_SCENARIOS, REPORT_NAME, SCENARIOS, Frames
 
 
 def _render(report: bf.Briefing) -> str:

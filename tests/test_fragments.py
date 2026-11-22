@@ -28,9 +28,7 @@ from tests.contract import (
 )
 from tests.golden import static_files
 from tests.html_helpers import attr, find_one
-from tests.scenarios import ESCAPE_SCENARIOS, HOUR_VIEW_WARNING, SCENARIOS, Frames
-
-pytestmark = pytest.mark.filterwarnings(HOUR_VIEW_WARNING)
+from tests.scenarios import ESCAPE_SCENARIOS, SCENARIOS, Frames
 
 _parsed: dict[str, BeautifulSoup] = {}
 

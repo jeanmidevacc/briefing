@@ -13,9 +13,6 @@ from briefing.lab import CalendarHeatmap
 from briefing.lab._render_calendar import GITHUB, _fmt, render_calendar
 from tests.html_helpers import attr, classes, find_one
 
-# The hour view is deprecated (#111) but still supported: its tests keep running without the warning.
-pytestmark = pytest.mark.filterwarnings("ignore:CalendarHeatmap. the hour view:DeprecationWarning")
-
 
 def _soup(block: CalendarHeatmap) -> BeautifulSoup:
     return BeautifulSoup(render_calendar(block), "html.parser")
@@ -219,7 +216,7 @@ def test_event_labels_only_go_inside_bands_that_fit_them(df_pipeline_log: pd.Dat
     assert wide.find("text") is not None and narrow.find("text") is None
 
 
-# ── time zones and the hour view (part 3b) ────────────────────────────────────
+# ── time zones (part 3b) ──────────────────────────────────────────────────────
 
 
 def _day_values(soup: BeautifulSoup) -> dict[str, str]:
@@ -247,38 +244,10 @@ def test_unknown_time_zone(df_timestamps_near_midnight: pd.DataFrame) -> None:
         CalendarHeatmap(df_timestamps_near_midnight, date="aware", tz="Mars/Olympus")
 
 
-def test_hour_view_is_a_7_by_24_grid(df_pipeline_log: pd.DataFrame) -> None:
-    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", views=("hours",)))
-    cells = soup.select("svg.bf-cal__hours rect.bf-cal__hour")
-    assert len(cells) == 7 * 24 and not soup.select("svg.bf-cal__days")
-    runs = {attr(c, "data-hour"): find_one(c, "title").get_text() for c in cells
-            if "bf-cal__hour--empty" not in classes(c)}
-    assert set(runs) <= {f"{d}-{h}" for d in range(7) for h in (6, 14)}  # runs start at 06:00 or 14:00
-    assert any(t.startswith("Mon 06:00") for t in runs.values())
-
-
-def test_hour_view_follows_tz(df_timestamps_near_midnight: pd.DataFrame) -> None:
-    soup = _soup(CalendarHeatmap(df_timestamps_near_midnight, date="aware", tz="America/Montreal", views=("hours",)))
-    hours = {attr(c, "data-hour") for c in soup.select("rect.bf-cal__hour:not(.bf-cal__hour--empty)")}
-    assert hours == {"4-22", "5-7", "6-23"}  # Fri 22:30, Sat 07:00, Sun 23:59 in Montréal (Mon = 0)
-
-
-def test_both_views_are_tabs(df_pipeline_log: pd.DataFrame) -> None:
-    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", views=("days", "hours")))
-    tabs = soup.select(".bf-calendar .bf-select__tab")
-    assert [t.get_text() for t in tabs] == ["Days", "Hours"]
-    panels = soup.select(".bf-calendar .bf-select__panel")
-    assert panels[0].select("svg.bf-cal__days") and panels[1].select("svg.bf-cal__hours")
-
-
-def test_hour_view_needs_times(df_timestamps_near_midnight: pd.DataFrame) -> None:
-    with pytest.raises(bf.BriefingError, match="time of day"):
-        CalendarHeatmap(df_timestamps_near_midnight, date="plain", views=("days", "hours"))
-
-
-def test_bad_views(df_pipeline_log: pd.DataFrame) -> None:
-    with pytest.raises(bf.BriefingError, match="views"):
-        CalendarHeatmap(df_pipeline_log, date="run_at", views=("weeks",))
+@pytest.mark.parametrize("views", [("weeks",), (), ("days", "days")])
+def test_bad_views(df_pipeline_log: pd.DataFrame, views: tuple[str, ...]) -> None:
+    with pytest.raises(bf.BriefingError, match=r"views is \('days',\), the day calendar"):
+        CalendarHeatmap(df_pipeline_log, date="run_at", views=views)
 
 
 # ── on_click="rows" (part 3c) ─────────────────────────────────────────────────
@@ -297,14 +266,14 @@ def test_rows_data_only_with_on_click(df_pipeline_log: pd.DataFrame) -> None:
         CalendarHeatmap(df_pipeline_log, date="run_at", on_click="line")
 
 
-def test_rows_behind_each_day_and_hour(df_pipeline_log: pd.DataFrame) -> None:
-    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", views=("days", "hours"), on_click="rows"))
+def test_rows_behind_each_day(df_pipeline_log: pd.DataFrame) -> None:
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", on_click="rows"))
     data = _rows(soup)
     assert data["columns"] == ["run_at", "team", "rows"]
     day = data["cells"]["d|2025-12-07"]  # two runs that day
     assert day["total"] == 2 and len(day["rows"]) == 2
     assert day["rows"][0][1] == "ingest"
-    assert data["cells"]["h|0-6"]["total"] > 0  # Mondays at 06:00
+    assert all(key.startswith("d|") for key in data["cells"])
     cell = soup.select_one('rect[data-date="2025-12-07"]')
     assert cell is not None and attr(cell, "role") == "button" and attr(cell, "tabindex") == "0"
 

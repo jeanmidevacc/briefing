@@ -112,10 +112,10 @@ bf.save(report, "calendar.html", name="Pipeline runs")
 ```
 
 :::{note}
-The weekday-by-hour grid, `views=("days", "hours")`, is **deprecated since 0.2.2** and
-goes in 0.5.0: it still works, with a `DeprecationWarning`. Use
-[`TimeHeatmap`](#timeheatmap-when-does-it-usually-happen) with `rows="weekday"` and
-`columns="hour"` instead, which draws other time patterns too.
+The weekday-by-hour grid, `views=("days", "hours")`, was **removed in 0.5.0** (deprecated
+since 0.2.2). Use [`TimeHeatmap`](#timeheatmap-when-does-it-usually-happen) with
+`rows="weekday"` and `columns="hour"`, which draws other time patterns too; put it next
+to the calendar in a `Select` or `Group` to show both.
 :::
 
 For values that go negative, such as a daily balance, `center=0` switches to a

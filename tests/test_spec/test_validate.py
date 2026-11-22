@@ -9,7 +9,6 @@ import pandas as pd
 import pytest
 
 import briefing as bf
-from tests.scenarios import HOUR_VIEW_WARNING
 
 
 def _spec(*blocks: t.Any, **options: t.Any) -> dict[str, t.Any]:
@@ -201,12 +200,23 @@ def test_a_blocks_warnings() -> None:
     assert "truncating to 1" in dropped.message
 
 
-@pytest.mark.filterwarnings(HOUR_VIEW_WARNING)
-def test_deprecated_options(df_pipeline_log: pd.DataFrame) -> None:
-    calendar = bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", views=("days", "hours"))
-    problem = _one(bf.Briefing(calendar))
+def test_deprecated_options(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Nothing is deprecated right now (the calendar's hour view was removed in 0.5.0, #111), so
+    # a stand-in deprecation checks that one is reported as a "deprecated" warning.
+    import functools
+    import warnings
+
+    original = bf.Alert.__init__
+
+    @functools.wraps(original)
+    def deprecated(self: bf.Alert, *args: t.Any, **kwargs: t.Any) -> None:
+        warnings.warn("Alert: this option is deprecated since 0.5.0.", DeprecationWarning, stacklevel=2)
+        original(self, *args, **kwargs)
+
+    monkeypatch.setattr(bf.Alert, "__init__", deprecated)
+    problem = _one(_spec({"type": "Alert", "message": "m"}))
     assert (problem.severity, problem.code, problem.path) == ("warning", "deprecated", "/blocks/0")
-    assert "the hour view" in problem.message
+    assert "deprecated since 0.5.0" in problem.message
 
 
 def test_a_figure_that_cant_be_drawn_is_an_error() -> None:

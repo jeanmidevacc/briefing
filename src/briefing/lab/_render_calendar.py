@@ -80,7 +80,7 @@ def _stamps(block: Heatmap) -> t.Any:
 
 
 def _aggregate(block: Heatmap, keys: dict[str, t.Any]) -> dict[str | None, dict[t.Any, float]]:
-    """Per group (or ``None``), the aggregated value of each key (a day, or a weekday-hour)."""
+    """Per group (or ``None``), the aggregated value of each key (a day, or a time-pattern cell)."""
     import pandas as pd
 
     df = block.df.assign(**keys)
@@ -396,102 +396,34 @@ def _days_view(block: CalendarHeatmap) -> str:
     return "".join(calendars) + _legend(block, values, colour, events, targets=block.expected is not None)
 
 
-_HOUR_STEP = 16
-
-
-def _hours_svg(block: CalendarHeatmap, data: dict[t.Any, float], colour: Callable[[float], tuple[str, str]]) -> str:
-    shift = 0 if block.week_start == "monday" else 1
-    width, height = _LEFT + 24 * _HOUR_STEP, 18 + 7 * _HOUR_STEP
-    parts = [_svg_open("bf-cal__hours", width, height, "Activity by weekday and hour")]
-    for hour in range(0, 24, 3):
-        parts.append(f'<text class="bf-cal__month" x="{_LEFT + hour * _HOUR_STEP}" y="12">{hour:02d}</text>')
-    what = _what(block)
-    for weekday in range(7):
-        row = (weekday + shift) % 7
-        y = 18 + row * _HOUR_STEP
-        parts.append(f'<text class="bf-cal__weekday" x="0" y="{y + _CELL - 1}">{_WEEKDAYS[weekday]}</text>')
-        for hour in range(24):
-            value = data.get((weekday, hour))
-            cls = ["bf-cal__hour"]
-            fill = ""
-            label = f"{_WEEKDAYS[weekday]} {hour:02d}:00–{(hour + 1) % 24:02d}:00"
-            if value is None:
-                cls.append("bf-cal__hour--empty")
-                tip = f"{label} · no data"
-            else:
-                fill, extra = colour(value)
-                if extra:
-                    cls.append(extra.replace("day", "hour"))
-                tip = f"{label} · {_fmt(value)} {what}"
-            fill_attr = f' fill="{fill}"' if fill else ""
-            parts.append(f'<rect class="{" ".join(cls)}" x="{_LEFT + hour * _HOUR_STEP}" y="{y}" width="{_CELL + 2}" '
-                         f'height="{_CELL + 2}" rx="2"{fill_attr}{_clickable(block)} data-hour="{weekday}-{hour}">'
-                         f"<title>{_html.escape(tip)}</title></rect>")
-    parts.append("</svg>")
-    return "".join(parts)
-
-
-def _hours_view(block: CalendarHeatmap) -> str:
-    stamps = _stamps(block)
-    hourly = _aggregate(block, {"_wd": stamps.dt.day_of_week, "_h": stamps.dt.hour})
-    values = [v for cells in hourly.values() for v in cells.values()]
-    colour = _scale(block, values)
-    grids = []
-    for group, data in hourly.items():
-        title = f'<div class="bf-cal__group">{_html.escape(group)}</div>' if group is not None else ""
-        grids.append(f'<div class="bf-cal__calendar"{_group_attr(block, group)}>{title}<div class="bf-cal__scroll">'
-                     f"{_hours_svg(block, data, colour)}</div></div>")
-    # Targets are per day, so the hour legend has no "below target" entry.
-    return "".join(grids) + _legend(block, values, colour, [], targets=False)
-
-
-_VIEW_LABELS = {"days": "Days", "hours": "Hours"}
-
 _PANEL = ('<div class="bf-cal__panel" hidden><div class="bf-cal__panel-head"><span class="bf-cal__panel-title"></span>'
           '<button type="button" class="bf-cal__panel-close" aria-label="Close">×</button></div>'
           '<div class="bf-cal__panel-body"></div></div>')
 
 
 def _rows_data(block: CalendarHeatmap) -> str:
-    """The rows behind each day and hour (up to ROWS_PER_CELL each), for the click panel."""
+    """The rows behind each day (up to ROWS_PER_CELL each), for the click panel."""
     from briefing.renderers.table import _fmt as cell_text
 
     stamps = _stamps(block)
-    df = block.df.assign(_day=stamps.dt.date, _wd=stamps.dt.day_of_week, _h=stamps.dt.hour)
+    df = block.df.assign(_day=stamps.dt.date)
     df = df[df["_day"].notna()]
     columns = [str(c) for c in block.df.columns]
     cells: dict[str, dict[str, t.Any]] = {}
-    keys = {"days": ("d", ["_day"]), "hours": ("h", ["_wd", "_h"])}
-    for view in block.views:
-        prefix, by = keys[view]
-        for key, rows in df.groupby(by + ([block.group] if block.group else []), sort=True):
-            parts: tuple[t.Any, ...] = key if isinstance(key, tuple) else (key,)
-            where = parts[0].isoformat() if view == "days" else f"{parts[0]}-{parts[1]}"
-            name = "|".join([prefix, where] + ([str(parts[-1])] if block.group else []))
-            head = rows[block.df.columns].head(block.ROWS_PER_CELL)
-            cells[name] = {"total": len(rows),
-                           "rows": [[cell_text(v) for v in r] for r in head.itertuples(index=False, name=None)]}
+    for key, rows in df.groupby(["_day"] + ([block.group] if block.group else []), sort=True):
+        parts: tuple[t.Any, ...] = key if isinstance(key, tuple) else (key,)
+        name = "|".join(["d", parts[0].isoformat()] + ([str(parts[-1])] if block.group else []))
+        head = rows[block.df.columns].head(block.ROWS_PER_CELL)
+        cells[name] = {"total": len(rows),
+                       "rows": [[cell_text(v) for v in r] for r in head.itertuples(index=False, name=None)]}
     payload = script_json({"columns": columns, "cells": cells})
     return f'<script type="application/json" class="bf-cal__rows">{payload}</script>'
 
 
 def render_calendar(block: CalendarHeatmap, idgen: IdGen | None = None) -> str:
     """Render a :class:`~briefing.lab.CalendarHeatmap` block to HTML with inline SVG."""
-    views = {"days": _days_view, "hours": _hours_view}
     extra = _PANEL + _rows_data(block) if block.on_click == "rows" else ""
-    if len(block.views) == 1:
-        return f'<figure class="bf-block bf-calendar">{views[block.views[0]](block)}{extra}</figure>'
-    # Both views: the report's own tab markup, so report.js, keyboard navigation and print apply.
-    uid = (idgen or IdGen()).next("cal")
-    tabs, panels = "", ""
-    for i, view in enumerate(block.views):
-        tab_id, panel_id = f"{uid}-tab-{i}", f"{uid}-panel-{i}"
-        tabs += (f'<button class="bf-select__tab" role="tab" id="{tab_id}" aria-controls="{panel_id}">'
-                 f"{_VIEW_LABELS[view]}</button>")
-        panels += (f'<div class="bf-select__panel" role="tabpanel" id="{panel_id}" aria-labelledby="{tab_id}">'
-                   f"{views[view](block)}</div>")
-    return (f'<figure class="bf-block bf-calendar"><div class="bf-select bf-cal__views" id="{uid}">'
-            f'<div class="bf-select__tablist" role="tablist">{tabs}</div>{panels}</div>{extra}</figure>')
+    return f'<figure class="bf-block bf-calendar">{_days_view(block)}{extra}</figure>'
 
 
 __all__ = ["GITHUB", "render_calendar"]

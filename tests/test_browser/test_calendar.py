@@ -10,9 +10,6 @@ from playwright.sync_api import Page
 import briefing as bf
 from tests.test_browser.conftest import Viewer
 
-# The hour view is deprecated (#111) but still supported: its tests keep running without the warning.
-pytestmark = pytest.mark.filterwarnings("ignore:CalendarHeatmap. the hour view:DeprecationWarning")
-
 
 @pytest.mark.parametrize("theme", ["default", "dark"])
 def test_zero_no_data_and_below_target_are_visibly_different(viewer: Viewer, df_pipeline_log: pd.DataFrame,
@@ -53,13 +50,12 @@ def test_a_year_fills_the_width_of_its_block(viewer: Viewer) -> None:
 
 
 def test_a_short_range_grows_to_twice_its_natural_size(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
-    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", views=("days", "hours"))))
+    calendar = bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", label="Calendar")
+    page = viewer.open(bf.Briefing(bf.Select(bf.Text("first", label="Text"), calendar)))
+    page.get_by_role("tab", name="Calendar").click()  # a calendar in a hidden tab is measured once shown
     natural = float(page.locator("svg.bf-cal__days").get_attribute("width") or 0)
     assert _width(page, "svg.bf-cal__days") == pytest.approx(2 * natural, abs=1)
     assert _width(page, 'rect[data-date="2026-01-05"]') == pytest.approx(22, abs=0.5)
-    page.get_by_role("tab", name="Hours").click()  # a hidden view is measured once it is shown
-    natural = float(page.locator("svg.bf-cal__hours").get_attribute("width") or 0)
-    assert _width(page, "svg.bf-cal__hours") == pytest.approx(2 * natural, abs=1)
 
 
 def test_labels_grow_at_half_the_rate_and_swatches_match_cells(viewer: Viewer,
@@ -105,21 +101,6 @@ def test_a_year_prints_without_clipping(viewer: Viewer) -> None:
     assert last["x"] + last["width"] <= scroll["x"] + scroll["width"] + 0.5
 
 
-def test_a_tab_switches_between_the_day_and_hour_views(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
-    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", views=("days", "hours"))))
-    days, hours = page.locator("svg.bf-cal__days"), page.locator("svg.bf-cal__hours")
-    assert days.is_visible() and not hours.is_visible()
-    page.get_by_role("tab", name="Hours").click()
-    assert hours.is_visible() and not days.is_visible()
-    assert page.locator("rect.bf-cal__hour").count() == 7 * 24
-
-
-def test_hour_view_labels_are_small(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
-    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", views=("hours",))))
-    box = page.locator("svg.bf-cal__hours text").first.bounding_box()
-    assert box is not None and box["height"] < 20  # not scaled up with the 2x grid
-
-
 def test_clicking_a_day_lists_its_rows(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
     page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", on_click="rows")))
     panel = page.locator(".bf-cal__panel")
@@ -133,12 +114,12 @@ def test_clicking_a_day_lists_its_rows(viewer: Viewer, df_pipeline_log: pd.DataF
     assert not panel.is_visible()
 
 
-def test_keyboard_opens_the_rows_of_an_hour(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
-    block = bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", views=("hours",), on_click="rows")
+def test_keyboard_opens_the_rows_of_a_day(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
+    block = bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", on_click="rows")
     page = viewer.open(bf.Briefing(block))
-    page.locator('rect[data-hour="0-6"]').focus()
+    page.locator('rect[data-date="2025-12-07"]').focus()
     page.keyboard.press("Enter")
-    assert "Mon 06:00" in page.locator(".bf-cal__panel-title").inner_text()
+    assert "2025-12-07" in page.locator(".bf-cal__panel-title").inner_text()
 
 
 def test_capped_cells_say_so_and_values_stay_text(viewer: Viewer) -> None:
@@ -180,20 +161,16 @@ def test_hovering_a_day_shows_its_exact_value_at_once(viewer: Viewer) -> None:
 
 
 def test_the_native_tooltip_no_longer_doubles_up(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
-    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", views=("days", "hours"))))
+    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at")))
     assert page.locator(".bf-calendar svg title").count() == 0
-    assert page.locator("rect.bf-cal__hour[data-tip]").count() == 7 * 24
+    assert page.locator("rect.bf-cal__day[data-tip]").count() == page.locator("rect.bf-cal__day").count()
 
 
-def test_hour_cells_and_event_bands_have_tooltips(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
+def test_event_bands_have_tooltips(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
     events = pd.DataFrame({"start": ["2025-12-22"], "end": ["2026-01-02"], "label": ["Freeze"]})
-    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", events=events,
-                                                          views=("days", "hours"))))
+    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", events=events)))
     page.locator("g.bf-cal__event").first.hover()
     assert "Freeze" in page.locator(".bf-cal__tip").inner_text()
-    page.get_by_role("tab", name="Hours").click()
-    page.locator('rect[data-hour="0-6"]').hover()
-    assert page.locator(".bf-cal__tip strong").inner_text().startswith("Mon 06:00")
 
 
 def test_keyboard_focus_and_tap_show_the_tooltip(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:

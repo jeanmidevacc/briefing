@@ -47,6 +47,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ocean()` a humanist sans (Seravek, Calibri, Ubuntu) and `warm()` a serif (Charter,
   Cambria). Each stack names a font from macOS, Windows and Linux.
 
+### Removed
+
+- `CalendarHeatmap`'s hour view (`views=("hours",)` or `("days", "hours")`), deprecated
+  since 0.2.2: it raises an error that points to `bf.lab.TimeHeatmap(df, date=...,
+  rows="weekday", columns="hour")`. `views=("days",)` still works (#111).
+
 ### Fixed
 
 - Alerts in dark themes: their backgrounds and text were fixed light colours; each level now
