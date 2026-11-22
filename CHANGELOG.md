@@ -24,6 +24,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Banner(kicker="Data through Nov 20, 2026")`: one short muted line of plain text above
   the banner's text (#155).
 
+### Changed
+
+- Theme presets use only fonts every system has, so a preset looks the same to every reader
+  (#28). Inter, DM Sans, IBM Plex Sans and Lora were named but never embedded, so most
+  readers saw a fallback. The default is now the system UI font; `corporate()` a
+  Helvetica-style sans, `minimal()` a geometric sans (Avenir, Corbel, URW Gothic),
+  `ocean()` a humanist sans (Seravek, Calibri, Ubuntu) and `warm()` a serif (Charter,
+  Cambria). Each stack names a font from macOS, Windows and Linux.
+
 ### Fixed
 
 - Tables read in dark themes: their stripes and the DataTable header hover were fixed light

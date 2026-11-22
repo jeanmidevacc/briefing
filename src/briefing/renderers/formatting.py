@@ -128,7 +128,9 @@ class Formatting:
     surface_color: str = "#f9fafb"
 
     # ── typography & shape ────────────────────────────────────────────────────
-    font: str = "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif"
+    #: Fonts every system has (#28): each preset's stack names a font from macOS, Windows and
+    #: Linux before its generic family, so a preset looks the same to every reader.
+    font: str = "system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Liberation Sans', Arial, sans-serif"
     radius: str = "0.5rem"
 
     # ── layout ────────────────────────────────────────────────────────────────
@@ -189,7 +191,7 @@ class Formatting:
             "border_color": "#e2e8f0", "text_color": "#0f172a",
             "muted_color": "#64748b", "accent_color": "#0369a1",
             "radius": "0.25rem",
-            "font": "'Segoe UI', ui-sans-serif, system-ui, sans-serif",
+            "font": "'Helvetica Neue', Helvetica, Arial, 'Nimbus Sans', 'Liberation Sans', sans-serif",
             **overrides,
         })
 
@@ -201,7 +203,7 @@ class Formatting:
             "border_color": "#d4d4d4", "text_color": "#171717",
             "muted_color": "#737373", "accent_color": "#171717",
             "radius": "0.125rem",
-            "font": "'DM Sans', ui-sans-serif, system-ui, sans-serif",
+            "font": "Avenir, 'Avenir Next', Corbel, 'URW Gothic', 'URW Gothic L', sans-serif",
             **overrides,
         })
 
@@ -212,7 +214,7 @@ class Formatting:
             "bg_color": "#0d2137", "surface_color": "#112d45",
             "border_color": "#1e4060", "text_color": "#e0f2fe",
             "muted_color": "#7ab8d4", "accent_color": "#10b981",
-            "font": "'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif",
+            "font": "Seravek, 'Gill Sans Nova', Calibri, Ubuntu, 'DejaVu Sans', sans-serif",
             **overrides,
         })
 
@@ -223,7 +225,7 @@ class Formatting:
             "bg_color": "#fefce8", "surface_color": "#fef9c3",
             "border_color": "#fde68a", "text_color": "#1c1917",
             "muted_color": "#78716c", "accent_color": "#b45309",
-            "font": "'Lora', Georgia, serif",
+            "font": "Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, 'DejaVu Serif', serif",
             **overrides,
         })
 

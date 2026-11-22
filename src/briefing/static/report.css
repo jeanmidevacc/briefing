@@ -7,7 +7,7 @@
 :root {
   --bf-bg:         #ffffff;
   --bf-accent:     #4F46E5;
-  --bf-font:       Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --bf-font:       system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Liberation Sans', Arial, sans-serif;
   --bf-max-width:  75rem;
   --bf-text-align: left;
   /* derived tokens */

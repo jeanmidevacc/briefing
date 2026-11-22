@@ -10,10 +10,10 @@ block, the lab blocks included, follows the theme.
 | --- | --- |
 | `Formatting()` | the default: white, indigo accent |
 | `Formatting.dark()` | slate dark, for dashboards |
-| `Formatting.corporate()` | clean blue, neutral tones, sharp corners |
-| `Formatting.minimal()` | white space, black text, hairline borders |
-| `Formatting.ocean()` | deep teal, emerald accent |
-| `Formatting.warm()` | cream background, amber accent, serif font |
+| `Formatting.corporate()` | clean blue, neutral tones, sharp corners, Helvetica-style font |
+| `Formatting.minimal()` | white space, black text, hairline borders, geometric font (Avenir, Corbel) |
+| `Formatting.ocean()` | deep teal, emerald accent, humanist font (Seravek, Calibri, Ubuntu) |
+| `Formatting.warm()` | cream background, amber accent, serif font (Charter, Cambria) |
 
 ```{briefing-example}
 :title: The dark preset
@@ -74,10 +74,12 @@ bf.save(report, "custom.html", name="Custom theme", formatting=brand)
 | `muted_color` | `#6b7280` | labels, captions, axis text, icons |
 | `border_color` | `#e5e7eb` | table, card and divider borders |
 | `surface_color` | `#f9fafb` | card, table-header and code backgrounds |
-| `font` | `Inter, ui-sans-serif, …` | CSS `font-family` stack |
+| `font` | `system-ui, -apple-system, 'Segoe UI', …` | CSS `font-family` stack |
 | `radius` | `0.5rem` | corner radius of cards, badges, buttons |
 | `width` | `Width.MEDIUM` | content width: `NARROW` (768 px), `MEDIUM` (1200 px), `FULL`, or any CSS width |
 | `text_alignment` | `left` | paragraph alignment in `Text` |
 
 The font must be installed on the reader's machine; reports embed no web fonts, so
-the stack should end with a generic family such as `sans-serif`.
+the stack should end with a generic family such as `sans-serif`. The presets use only
+fonts that ship with macOS, Windows or common Linux systems, with one for each in every
+stack, so a preset looks the same to everyone.
