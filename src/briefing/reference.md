@@ -328,7 +328,10 @@ place of `"blocks"`; each slide is an object with its own `"blocks"`, written as
 - A slide's `name` is its link (`#summary`) and scopes names as a page does: a block named
   `margin` in that slide links as `#summary/margin`, unique within its slide.
 - Check a deck as a report: `python -m briefing validate deck.json`, or `bf.validate(spec, data)`.
-  Build it with `bf.deck.from_spec(spec, data)`; `bf.to_spec(deck)` writes it.
+- Render it: `python -m briefing render deck.json -o deck.html` (`bf.deck.from_spec(spec, data)`,
+  then `bf.deck.save(deck, "deck.html")`). `python -m briefing pdf deck.html` prints one slide
+  per page. `bf.to_spec(deck)` writes a deck's JSON.
+- Slides are 1280 x 720: keep a slide to a few blocks and under about 120 words of text.
 
 The deck's options:
 

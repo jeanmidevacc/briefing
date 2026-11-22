@@ -189,6 +189,17 @@ def test_render_says_how_to_pass_a_missing_reference(spec: Path, capsys: pytest.
     assert not spec.with_suffix(".html").exists()
 
 
+def test_render_builds_a_deck_from_its_json(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    spec = tmp_path / "q3.json"
+    spec.write_text(json.dumps({"briefing": 1, "slides": [
+        {"title": "Q3"}, {"title": "Regions", "blocks": [{"type": "DataTable", "df": {"ref": "sales"}}]}]}))
+    (tmp_path / "sales.csv").write_text("region,revenue\nSouth,287500\n")
+    assert _cli.main(["render", str(spec), "--data", f"sales={tmp_path / 'sales.csv'}"]) == 0
+    html = spec.with_suffix(".html").read_text(encoding="utf-8")
+    assert "<title>Deck</title>" in html and "data-bf-deck" in html and "South" in html
+    assert capsys.readouterr().out == f"{spec.with_suffix('.html')}\n"
+
+
 def test_render_from_standard_input_needs_an_output(capsys: pytest.CaptureFixture[str]) -> None:
     assert _cli.main(["render", "-"]) == 1
     assert "pass --output report.html" in capsys.readouterr().err

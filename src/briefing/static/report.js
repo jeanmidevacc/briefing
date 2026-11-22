@@ -218,7 +218,8 @@
     var rows      = tableRows(container, tbody);
     var all       = [];
     for (var n = 0; n < rows.count; n++) all.push(n);
-    var PAGE_SIZE = container.closest('.bf-slide') ? 10 : 25;  // PAGE_ROWS in renderers/table.py; a slide shows 10 (#197)
+    var onSlide = !!container.closest('.bf-slide');  // a deck's slide (#197) shows 10 rows and prints them
+    var PAGE_SIZE = onSlide ? 10 : 25;  // PAGE_ROWS in renderers/table.py
     var PRINT_ROWS = 1000;
     var page     = 0;
     var sortCol  = -1;
@@ -299,9 +300,10 @@
     if (prevBtn) prevBtn.addEventListener('click', function () { if (page > 0) { page--; render(); } });
     if (nextBtn) nextBtn.addEventListener('click', function () { page++; render(); });
 
-    // Print every row matching the search, up to PRINT_ROWS, instead of one page.
+    // Print every row matching the search, up to PRINT_ROWS, instead of one page (a slide
+    // prints the page it shows).
     var printNote = null;
-    runtime.onPrint(function () {
+    if (!onSlide) runtime.onPrint(function () {
       show(filtered.slice(0, PRINT_ROWS));
       if (filtered.length > PRINT_ROWS && !printNote) {
         printNote = document.createElement('p');
@@ -417,6 +419,7 @@
     runtime.onPrint(function () {
       flag.classList.add('bf-printing');
       root.querySelectorAll('.bf-select').forEach(function (sel) {
+        if (sel.closest('.bf-slide')) return;  // a slide prints its chosen tab only (#197)
         var labels = sel.classList.contains('bf-select--dropdown')
           ? Array.from(sel.querySelectorAll(':scope > .bf-select__select option'))
           : Array.from(sel.querySelectorAll(':scope > .bf-select__tablist > .bf-select__tab'));

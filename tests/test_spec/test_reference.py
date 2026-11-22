@@ -73,7 +73,7 @@ def test_its_json_examples_are_valid_reports(example: str) -> None:
     spec = json.loads(example)
     assert bf.validate(spec) == []
     if "slides" in spec:  # a deck (#197)
-        assert len(bf.deck.from_spec(spec)) == len(spec["slides"])
+        assert "data-bf-deck" in bf.deck.to_html(bf.deck.from_spec(spec))
     else:
         assert "Made with briefing" in bf.stringify(bf.from_spec(spec))
 
