@@ -31,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Briefing(header=bf.Header(subtitle=, author=, logo=, as_of=, tz=))`: a subtitle with
   inline Markdown, an author, an embedded logo, a "Data as of" date beside the render time,
   and a time zone for the times shown (#25).
+- `BigNumber(prev_value=, change_as=, higher_is_better=, format=, sparkline=)`: the change,
+  its arrow and its colour computed from the previous value (as a percent, an absolute
+  difference or percentage points), the numbers formatted, and a small trend line (#35).
 
 ### Changed
 

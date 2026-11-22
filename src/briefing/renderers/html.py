@@ -312,31 +312,88 @@ def _render_formula(block: Formula, _: _IdGen) -> str:
 
 
 
+def _shown(block: BigNumber, number: t.Any) -> str:
+    """*number* as the BigNumber's ``format`` shows it."""
+    how = block.format
+    if how is None:
+        return str(number)
+    return str(how(number)) if callable(how) else how.format(number)
+
+
+def _computed_change(block: BigNumber) -> tuple[str, bool | None, bool | None]:
+    """The change from ``prev_value`` (#35): its text, whether it went up (``None``: equal), and whether that's good."""
+    raw = t.cast(float, block.value) - t.cast(float, block.prev_value)  # ints stay ints: +5, not +5.0
+    prev, delta = float(t.cast(float, block.prev_value)), float(raw)
+    up = None if delta == 0 else delta > 0
+    sign = "+" if delta > 0 else "-" if delta < 0 else ""
+    if block.change_as == "points":
+        percent_format = isinstance(block.format, str) and "%}" in block.format
+        text = f"{sign}{abs(delta) * (100 if percent_format else 1):.1f} pt"
+    elif block.change_as == "percent" and prev != 0:
+        text = f"{sign}{abs(delta) / abs(prev) * 100:.1f}%"
+    else:  # absolute, or a percent change from zero
+        text = f"{sign}{_shown(block, abs(raw))}"
+    good = None if up is None else up == block.higher_is_better
+    return text, up, good
+
+
+def _sparkline(block: BigNumber) -> str:
+    """The trend line: an SVG path scaled to the card's width; missing values leave gaps."""
+    points = block.sparkline or []
+    known = [p for p in points if p is not None]
+    lo, hi = min(known), max(known)
+    span = hi - lo
+    step = 100 / max(len(points) - 1, 1)
+    path, last = "", (0.0, 0.0)
+    pen_up = True
+    for i, v in enumerate(points):
+        if v is None:
+            pen_up = True
+            continue
+        # 2 units of room at the top and bottom; a flat series runs at mid height.
+        x, y = i * step, (22 - (v - lo) / span * 20) if hi > lo else 12.0
+        path += f"{'M' if pen_up else 'L'}{x:.2f} {y:.2f}"
+        pen_up, last = False, (x, y)
+    from briefing.renderers.table import _fmt as number  # the series may not be in the value's unit
+
+    label = f"Trend of {len(points)} values, from {number(known[0])} to {number(known[-1])}"
+    return (f'<svg class="bf-bignumber__spark" viewBox="0 0 100 24" preserveAspectRatio="none" role="img" '
+            f'aria-label="{_html.escape(label)}"><path d="{path}"/>'
+            f'<path class="bf-bignumber__spark-end" d="M{last[0]:.2f} {last[1]:.2f}h0"/></svg>')
+
+
 @renderer_for(BigNumber)
 def _render_bignumber(block: BigNumber, _: _IdGen) -> str:
     heading = inline_markdown(str(block.heading))
-    value = _html.escape(str(block.value))
+    value = _html.escape(_shown(block, block.value))
+
+    change, up, good = block.change, block.is_upward_change, block.is_positive_intent
+    title = ""
+    if block.prev_value is not None:
+        change, up, good = _computed_change(block)
+        title = f' title="Previous: {_html.escape(_shown(block, block.prev_value))}"'
 
     change_html = ""
-    if block.change is not None:
+    if change is not None:
         # The arrow comes from is_upward_change, the colour from is_positive_intent
         # (falling back to the arrow's --up/--down colour); neither → neutral (#71).
         cls = ["bf-bignumber__change"]
         arrow = ""
-        if block.is_upward_change is not None:
-            cls.append("bf-bignumber__change--up" if block.is_upward_change else "bf-bignumber__change--down")
-            arrow = "▲ " if block.is_upward_change else "▼ "
-        if block.is_positive_intent is not None:
-            cls.append("bf-bignumber__change--good" if block.is_positive_intent else "bf-bignumber__change--bad")
+        if up is not None:
+            cls.append("bf-bignumber__change--up" if up else "bf-bignumber__change--down")
+            arrow = "▲ " if up else "▼ "
+        if good is not None:
+            cls.append("bf-bignumber__change--good" if good else "bf-bignumber__change--bad")
         if len(cls) == 1:
             cls.append("bf-bignumber__change--neutral")
-        change_html = f'<div class="{" ".join(cls)}">{arrow}{_html.escape(block.change)}</div>'
+        change_html = f'<div class="{" ".join(cls)}"{title}>{arrow}{_html.escape(change)}</div>'
 
+    spark = _sparkline(block) if block.sparkline else ""
     return (
         f'<div class="bf-block bf-bignumber">'
         f'<div class="bf-bignumber__heading">{heading}</div>'
         f'<div class="bf-bignumber__value">{value}</div>'
-        f"{change_html}"
+        f"{change_html}{spark}"
         f"</div>"
     )
 

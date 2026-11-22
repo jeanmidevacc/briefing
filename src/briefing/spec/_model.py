@@ -73,6 +73,7 @@ _KEYS: dict[tuple[str, str], str] = {("Select", "type"): "select_type"}
 _CHOICES: dict[tuple[str, str], tuple[str, ...]] = {
     ("Briefing", "export"): Briefing.EXPORTS,
     ("Banner", "side"): ("left", "right"),
+    ("BigNumber", "change_as"): BigNumber.CHANGE_AS,
     ("lab.DataDive", "layout"): ("scatter", "tile"),
     ("lab.CalendarHeatmap", "agg"): CalendarHeatmap.AGGS,
     ("lab.CalendarHeatmap", "views"): ("days",),
