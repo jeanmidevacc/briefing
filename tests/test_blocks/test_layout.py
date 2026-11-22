@@ -7,9 +7,11 @@ import warnings
 import numpy as np
 import pytest
 
+import briefing as bf
 from briefing._error import BriefingError
 from briefing.blocks.layout import Briefing, Group, Page, Select, SelectType, Toggle, VAlign
 from briefing.blocks.text import Text
+from tests.html_helpers import attr, classes, find_one, parse
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -243,3 +245,33 @@ class TestBlocks:
         items = make_texts(3)
         b = Briefing(*items)
         assert list(b) == items
+
+
+# ── Group(min_width=) and the tablet breakpoint (#27) ─────────────────────────
+
+
+@pytest.mark.parametrize(("min_width", "css"), [("16rem", "16rem"), ("12.5em", "12.5em"), (240, "240px"),
+                                                ("200px", "200px")])
+def test_group_min_width(min_width: str | int, css: str) -> None:
+    group = find_one(parse(bf.stringify(bf.Briefing(bf.Group("a", "b", min_width=min_width)))), ".bf-group")
+    assert "bf-group--fit" in classes(group) and attr(group, "style") == f"--bf-min: {css}; --bf-cols: 0;"
+    capped = find_one(parse(bf.stringify(bf.Briefing(bf.Group("a", "b", columns=3, min_width=min_width)))),
+                      ".bf-group")
+    assert attr(capped, "style") == f"--bf-min: {css}; --bf-cols: 3;" and "bf-group--wide" not in classes(capped)
+
+
+@pytest.mark.parametrize("min_width", ["wide", "16", 0, -5, "10%", True, "1rem; color: red"])
+def test_group_min_width_must_be_a_length(min_width: object) -> None:
+    with pytest.raises(bf.BriefingError, match="min_width' must be a CSS length"):
+        bf.Group("a", min_width=min_width)  # type: ignore[arg-type]
+
+
+def test_group_min_width_and_widths_dont_mix() -> None:
+    with pytest.raises(bf.BriefingError, match="'widths' or 'min_width', not both"):
+        bf.Group("a", "b", columns=2, widths=[2, 1], min_width="10rem")
+
+
+@pytest.mark.parametrize(("columns", "wide"), [(1, False), (2, False), (3, True), (5, True)])
+def test_groups_of_three_columns_or_more_are_marked_for_tablets(columns: int, wide: bool) -> None:
+    group = find_one(parse(bf.stringify(bf.Briefing(bf.Group("a", columns=columns)))), ".bf-group")
+    assert ("bf-group--wide" in classes(group)) is wide

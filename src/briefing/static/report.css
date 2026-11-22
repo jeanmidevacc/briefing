@@ -94,6 +94,12 @@ body {
 .bf-group > * { min-width: 0; }
 .bf-group--valign-center { align-items: center; }
 .bf-group--valign-bottom { align-items: end; }
+/* min_width (#27): as many cells per row as fit, each at least --bf-min wide (never wider than
+   the Group); with --bf-cols above 0, a cell is also at least 1/cols of the row, so no more fit. */
+.bf-group--fit {
+  grid-template-columns: repeat(auto-fit, minmax(max(min(var(--bf-min), 100%),
+    (100% - (var(--bf-cols) - 1) * 1rem) / max(var(--bf-cols), 1) * min(var(--bf-cols), 1)), 1fr));
+}
 
 /* ── Text (markdown output) and HTML blocks share their typography ───────── */
 .bf-text { text-align: var(--bf-text-align); }
@@ -806,6 +812,10 @@ html.bf-printing .bf-heading-actions { display: none; }
 }
 
 /* ── responsive ───────────────────────────────────────────────────────────── */
+/* Tablets: a Group of three or more columns shows two per row (#27); not in print. */
+@media screen and (min-width: 641px) and (max-width: 960px) {
+  .bf-group--wide { grid-template-columns: repeat(2, 1fr) !important; }
+}
 @media (max-width: 640px) {
   .bf-group { grid-template-columns: 1fr !important; }
   .bf-bignumber__value { font-size: 1.5rem; }

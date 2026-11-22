@@ -6,7 +6,8 @@ a `Text`, and a dataframe becomes a `DataTable`.
 ## Columns with `Group`
 
 `columns` sets the number of columns, `widths` their relative sizes, and `valign`
-their vertical alignment. On a phone, columns stack.
+their vertical alignment. On a phone, columns stack; on a tablet (up to 960 px wide), a
+Group of three or more columns shows two per row. Print keeps every column.
 
 ```{briefing-example}
 :title: A Group in columns
@@ -20,6 +21,24 @@ report = bf.Group(
     widths=[2, 1],
 )
 bf.save(report, "group.html", name="Group")
+```
+
+`min_width="16rem"` lets the width decide instead: as many cells per row as fit, each
+at least that wide (up to `columns`, when it is above 1). It suits a row of KPIs or cards
+that should reflow on any screen:
+
+```{briefing-example}
+:title: A Group that fits its cells
+:height: 260
+
+import briefing as bf
+
+report = bf.Group(
+    *(bf.BigNumber(region, f"{value:,}") for region, value in
+      [("North", 4120), ("South", 2875), ("East", 3310), ("West", 1990), ("Online", 6045)]),
+    min_width="11rem",
+)
+bf.save(report, "group-fit.html", name="Group with min_width")
 ```
 
 ## Tabs and dropdowns with `Select`

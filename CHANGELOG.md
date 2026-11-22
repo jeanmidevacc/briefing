@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `BigNumber(prev_value=, change_as=, higher_is_better=, format=, sparkline=)`: the change,
   its arrow and its colour computed from the previous value (as a percent, an absolute
   difference or percentage points), the numbers formatted, and a small trend line (#35).
+- `Group(min_width="16rem")`: as many cells per row as fit, each at least that wide, up to
+  `columns` (#27).
 
 ### Changed
 
@@ -43,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to keep it literal (#26).
 - The default report name, "Report", is no longer shown as a title: a report with an export
   menu and no name shows only the date and the menu (#25).
+- On tablets (641–960 px wide, on screen), a `Group` of three or more columns shows two per
+  row instead of squeezing every column; phones still stack, and print keeps every column
+  (#27).
 - Theme presets use only fonts every system has, so a preset looks the same to every reader
   (#28). Inter, DM Sans, IBM Plex Sans and Lora were named but never embedded, so most
   readers saw a fallback. The default is now the system UI font; `corporate()` a
