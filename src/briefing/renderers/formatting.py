@@ -2,8 +2,12 @@
 from __future__ import annotations
 
 import math
+import typing as t
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
+
+from briefing._error import BriefingError
 
 
 class Width(StrEnum):
@@ -181,6 +185,102 @@ class Formatting:
         )
 
     # ── built-in presets ──────────────────────────────────────────────────────
+
+    # ── charts that follow the theme (#39) ────────────────────────────────────
+
+    #: Seven hues for light pages and seven for dark ones, chosen to stay apart for normal vision,
+    #: protanopia and deuteranopia, with 3:1 contrast against a white (or slate) page.
+    CATEGORICAL_LIGHT: t.ClassVar[tuple[str, ...]] = (
+        "#005b8b", "#ee5e23", "#00a16e", "#b56ae7", "#9f0051", "#a44d00", "#6c4bcc")
+    CATEGORICAL_DARK: t.ClassVar[tuple[str, ...]] = (
+        "#00c3fc", "#ee5e23", "#4ca77b", "#a670f3", "#fcdf00", "#ff89bf", "#ffa10e")
+
+    def categorical(self) -> list[str]:
+        """The theme's categorical palette: its accent, then the hues that stay apart from it.
+
+        Example::
+
+            px.bar(df, x="region", y="sales", color="channel",
+                   color_discrete_sequence=bf.Formatting.dark().categorical())
+        """
+        from briefing import color
+
+        dark = color.lightness(color.check_hex(self.bg_color, "bg_color")) < 0.5
+        base = self.CATEGORICAL_DARK if dark else self.CATEGORICAL_LIGHT
+        accent = color.check_hex(self.accent_color, "accent_color")
+
+        def apart(a: str, b: str) -> bool:
+            return color.distance(a, b) >= 14 and all(
+                color.distance(color.simulate(a, k), color.simulate(b, k)) >= 10
+                for k in ("protanopia", "deuteranopia"))
+
+        return [accent, *(c for c in base if apart(accent, c))]
+
+    def _palette(self, palette: t.Any) -> list[str]:
+        from briefing import color
+        from briefing.scale import Scale
+
+        if palette is None:
+            return self.categorical()
+        if isinstance(palette, Scale):
+            return list(palette.colors)
+        if isinstance(palette, str) or not isinstance(palette, Sequence) or not palette:
+            raise BriefingError(f"palette is a bf.Scale or a list of hex colours, not {palette!r}.")
+        return [color.check_hex(c, "palette: each colour") for c in palette]
+
+    def plotly_template(self, palette: t.Any = None) -> t.Any:
+        """A Plotly template in the report's theme: its font, text and border colours, see-through
+        backgrounds, and ``palette`` (or :meth:`categorical`) as the colours of the traces.
+
+        Args:
+            palette: A :class:`~briefing.Scale` (a named palette) or a list of hex colours.
+
+        Example::
+
+            fmt = bf.Formatting.dark()
+            fig = px.line(df, x="day", y="sales", color="region", template=fmt.plotly_template())
+        """
+        import plotly.graph_objects as go
+        import plotly.io as pio
+
+        axis = {"gridcolor": self.border_color, "linecolor": self.border_color,
+                "zerolinecolor": self.border_color, "tickcolor": self.border_color}
+        template = go.layout.Template(pio.templates["plotly_white"])
+        template.layout.update(
+            font={"family": self.font, "color": self.text_color},
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            colorway=self._palette(palette), xaxis=axis, yaxis=axis,
+            hoverlabel={"bgcolor": self.surface_color, "bordercolor": self.border_color,
+                        "font": {"family": self.font, "color": self.text_color}},
+            legend={"bgcolor": "rgba(0,0,0,0)"},
+        )
+        return template
+
+    def mpl_style(self, palette: t.Any = None) -> dict[str, t.Any]:
+        """Matplotlib settings in the report's theme, for ``plt.rc_context(...)`` or ``plt.style.use(...)``.
+
+        Args:
+            palette: A :class:`~briefing.Scale` (a named palette) or a list of hex colours.
+
+        Example::
+
+            with plt.rc_context(bf.Formatting.dark().mpl_style()):
+                fig, ax = plt.subplots()
+        """
+        from cycler import cycler
+
+        families = [f.strip().strip("'\"") for f in self.font.split(",")]
+        generic = "serif" if families[-1] == "serif" else "sans-serif"
+        named = [f for f in families if f not in ("serif", "sans-serif", "system-ui", "-apple-system")]
+        text, border = self.text_color, self.border_color
+        fallback = "DejaVu Serif" if generic == "serif" else "DejaVu Sans"  # Matplotlib's own, always there
+        return {
+            "font.family": generic, f"font.{generic}": [*named, fallback],
+            "text.color": text, "axes.labelcolor": text, "axes.titlecolor": text,
+            "xtick.color": text, "ytick.color": text, "axes.edgecolor": border, "grid.color": border,
+            "figure.facecolor": "none", "axes.facecolor": "none", "savefig.facecolor": "none",
+            "legend.frameon": False, "axes.prop_cycle": cycler(color=self._palette(palette)),
+        }
 
     @classmethod
     def from_accent(cls, accent: str, dark: bool = False, **overrides: str) -> Formatting:

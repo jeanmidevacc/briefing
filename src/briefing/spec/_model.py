@@ -438,11 +438,13 @@ def build_schema() -> dict[str, t.Any]:
         },
         "scale": {
             "description": "A colour scale (bf.Scale): hex colours low to high, mixed in OKLab; domain fixes "
-            "the values they stand for, center makes it diverging, steps makes it classed.",
+            "the values they stand for ([low, high], or category names for a named palette), center makes it "
+            "diverging, steps makes it classed.",
             "type": "object",
             "properties": {
                 "colors": {"type": "array", "items": {"type": "string"}, "minItems": 2},
-                "domain": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                "domain": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string"}]},
+                           "minItems": 2},
                 "center": {"type": "number"},
                 "steps": {"type": "integer"},
             },

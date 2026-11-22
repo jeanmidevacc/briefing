@@ -80,3 +80,45 @@ bf.Plot(p)                              # needs bokeh 3.0+
 
 Printing, `save_pdf` and the in-report "Save as PNG" button handle each library
 differently; see {doc}`export`.
+
+## Charts in the report's theme
+
+A figure is drawn before briefing sees it, so give the theme to the chart library first.
+`Formatting.plotly_template()` is a Plotly template, and `Formatting.mpl_style()` is a dict
+of Matplotlib settings for `plt.rc_context`. Both use the theme's font, text and border
+colours and see-through backgrounds, so the chart sits on the page. Their trace colours
+are the theme's categorical palette (`Formatting.categorical()`: the accent, then hues that
+stay apart for colour-blind readers), or the palette you pass.
+
+A named palette, such as party colours, is a {class}`~briefing.Scale` whose domain names
+the categories. `scale.mapping` is a dict for Plotly's `color_discrete_map`, `scale("NDP")`
+gives one colour, and a {class}`~briefing.Legend` lists them.
+
+```{briefing-example}
+:title: A Plotly chart in the dark theme, with party colours
+:height: 520
+
+import pandas as pd
+import plotly.express as px
+import briefing as bf
+
+theme = bf.Formatting.dark()
+parties = bf.Scale(["#d71920", "#1a4782", "#f37021", "#33a6b2"],
+                   domain=["Liberal", "Conservative", "NDP", "Bloc"])
+seats = pd.DataFrame({"party": parties.domain, "seats": [160, 119, 25, 33]})
+
+fig = px.bar(seats, x="party", y="seats", color="party", template=theme.plotly_template(parties),
+             color_discrete_map=parties.mapping)
+report = [bf.Legend(parties, title="Parties"), bf.Plot(fig, caption="Seats won")]
+bf.save(report, "themed-chart.html", name="Seats", formatting=theme)
+```
+
+With Matplotlib:
+
+```python
+import matplotlib.pyplot as plt
+
+with plt.rc_context(theme.mpl_style(parties)):
+    fig, ax = plt.subplots()
+    ax.bar(seats["party"], seats["seats"], color=[parties(p) for p in seats["party"]])
+```
