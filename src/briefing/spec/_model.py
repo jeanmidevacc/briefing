@@ -98,6 +98,8 @@ _OVERRIDES: dict[tuple[str, str], dict[str, t.Any]] = {
     ("Banner", "image"): _ref("image"),
     ("Image", "image"): _ref("image"),
     ("Attachment", "file"): {"anyOf": [_ref("file"), _ref("table")]},
+    ("lab.CalendarHeatmap", "start"): {"anyOf": [{"type": "string", "format": "date"}, {"type": "null"}]},
+    ("lab.CalendarHeatmap", "end"): {"anyOf": [{"type": "string", "format": "date"}, {"type": "null"}]},
     ("lab.CalendarHeatmap", "events"): {
         "anyOf": [{"type": "array", "items": {"type": "string"}}, _ref("table"), {"type": "null"}]
     },

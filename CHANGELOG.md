@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   instead of making the table scroll sideways (#151).
 - `CalendarHeatmap` events take an optional `color` column (any CSS colour) for their dot,
   band, outline and legend entry; without it they keep the theme's accent (#152).
+- `CalendarHeatmap(start=, end=)`: the first and last day shown, whatever the data covers,
+  so calendars side by side line up week for week. Rows outside the span are left out with
+  a warning naming how many; events outside it aren't drawn (#153).
 
 ### Fixed
 

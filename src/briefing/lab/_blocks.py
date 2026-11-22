@@ -9,6 +9,7 @@ lives in ``briefing/lab/_render_profile.py`` and ``briefing/lab/_render_datadive
 """
 from __future__ import annotations
 
+import datetime as dt
 import re
 import typing as t
 import warnings
@@ -209,12 +210,20 @@ class CalendarHeatmap(Block):
         on_click: ``"rows"`` lists the rows behind a day or an hour in a panel
             when it is clicked (up to ``ROWS_PER_CELL`` rows per cell, embedded in
             the report); ``None`` (default) for no click action.
+        start: The first day shown (``"2026-05-19"`` or a date), whatever the data
+            covers; ``None`` starts at the first day with data or an event. Rows
+            before it are left out, with a warning.
+        end: The last day shown; ``None`` ends at the last day with data or an
+            event. Rows after it are left out, with a warning. Calendars with the
+            same ``start`` and ``end`` line up week for week.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
 
         bf.lab.CalendarHeatmap(runs, date="run_at", value="rows", expected=1000)
+        bf.lab.CalendarHeatmap(searches, date="day", value="interest",
+                               start="2026-05-19", end="2026-12-31")
         bf.lab.CalendarHeatmap(ledger, date="day", value="balance",
                                center=0, colors=["#dc2626", "#f3f4f6", "#16a34a"])
     """
@@ -240,6 +249,8 @@ class CalendarHeatmap(Block):
         expected: float | pd.Series | pd.DataFrame | None = None,
         events: t.Any = None,
         on_click: str | None = None,
+        start: str | dt.date | None = None,
+        end: str | dt.date | None = None,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
@@ -279,6 +290,11 @@ class CalendarHeatmap(Block):
         self.on_click = on_click
         self.expected = _check_expected(expected, date, group)
         self.events = _check_events(events)
+        self.start, self.end = _check_day(start, "start"), _check_day(end, "end")
+        if self.start and self.end and self.start > self.end:
+            raise BriefingError(f"CalendarHeatmap: start ({self.start}) is after end ({self.end}).")
+        if self.start or self.end:
+            self.df = _within_span(self)
 
 
 class TimeHeatmap(Block):
@@ -446,6 +462,39 @@ _CSS_COLOR = re.compile(
     r"|[a-zA-Z]+"  # a named colour
     r"|(?:rgb|rgba|hsl|hsla|oklch|oklab)\([0-9.,%\s/-]+\))$"  # a colour function of plain numbers
 )
+
+
+def _check_day(day: t.Any, role: str) -> str | None:
+    """A day for ``start=`` or ``end=``, as an ISO string (so the JSON form is plain text)."""
+    import pandas as pd
+
+    if day is None:
+        return None
+    try:
+        stamp = pd.Timestamp(day)
+    except (TypeError, ValueError) as exc:
+        raise BriefingError(f"CalendarHeatmap: {role} must be a date such as '2026-05-19', not {day!r}.") from exc
+    if pd.isna(stamp):
+        raise BriefingError(f"CalendarHeatmap: {role} must be a date such as '2026-05-19', not {day!r}.")
+    return stamp.date().isoformat()
+
+
+def _within_span(block: CalendarHeatmap) -> pd.DataFrame:
+    """The block's rows whose local day is within ``start``…``end`` (rows without a date stay), warning if any go."""
+    import pandas as pd
+
+    stamps = pd.to_datetime(block.df[block.date])  # as the renderer reads them: aware ones in tz
+    if block.tz is not None and getattr(stamps.dt, "tz", None) is not None:
+        stamps = stamps.dt.tz_convert(block.tz)
+    days = stamps.dt.strftime("%Y-%m-%d")  # ISO strings compare in date order; NaT stays NaN
+    outside = days.notna() & (((days < block.start) if block.start else False) |
+                              ((days > block.end) if block.end else False))
+    count = int(outside.sum())
+    if count:
+        span = f"{block.start or '…'} to {block.end or '…'}"
+        warnings.warn(f"CalendarHeatmap: {count} row{'s' if count != 1 else ''} outside {span} left out.",
+                      stacklevel=3)
+    return block.df[~outside]
 
 
 def _check_events(events: t.Any) -> t.Any:

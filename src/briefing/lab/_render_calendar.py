@@ -365,16 +365,24 @@ def _legend(
     return f'<div class="bf-cal__legend">{"".join(items)}</div>'
 
 
+def _edge(day: str | None) -> dt.date | None:
+    """``start=`` or ``end=`` (an ISO string) as a date."""
+    return dt.date.fromisoformat(day) if day else None
+
+
 def _days_view(block: CalendarHeatmap) -> str:
     stamps = _stamps(block)
     daily = _aggregate(block, {"_day": stamps.dt.date})
     all_days = [d for days in daily.values() for d in days]
     values = [v for days in daily.values() for v in days.values()]
-    events = _events(block)
-    if not all_days and not events:
-        return '<div class="bf-placeholder">⚠ CalendarHeatmap: no dates to display.</div>'
+    start, end = _edge(block.start), _edge(block.end)
+    # Events outside start…end aren't drawn or listed (#153); those across an edge are clipped when drawn.
+    events = [e for e in _events(block) if (start is None or e.end >= start) and (end is None or e.start <= end)]
     span = all_days + [d for e in events for d in (e.start, e.end)]
-    first, last = min(span), max(span)
+    if not span and (start is None or end is None):
+        return '<div class="bf-placeholder">⚠ CalendarHeatmap: no dates to display.</div>'
+    first = start or min(span)
+    last = end or max(span)
     colour = _scale(block, values)
     calendars = []
     for group, data in daily.items():

@@ -67,6 +67,9 @@ different from days with a zero.
   An optional `color` column (any CSS colour) colours an event's marks and legend entry;
   without it they take the theme's accent.
 - `tz=` converts timezone-aware timestamps before they are placed on a day.
+- `start=` and `end=` fix the first and last day shown, whatever the data covers, so
+  calendars side by side line up week for week. Rows outside the span are left out, with
+  a warning.
 - `on_click="rows"` lists the rows behind a day when it is clicked, up to
   `CalendarHeatmap.ROWS_PER_CELL` per cell.
 - `center=` with three `colors` gives a diverging scale, for values that go negative.
