@@ -14,11 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `DataTable(wrap=["Note"])` (or `wrap=True`): long text wraps within a readable width
   instead of making the table scroll sideways (#151).
+- `CalendarHeatmap` events take an optional `color` column (any CSS colour) for their dot,
+  band, outline and legend entry; without it they keep the theme's accent (#152).
 
 ### Fixed
 
 - Tables read in dark themes: their stripes and the DataTable header hover were fixed light
   greys (`#fafafa`, `#f0f0f0`); they now take the theme's surface and border colours (#150).
+- `CalendarHeatmap`: a multi-day event no longer outlines every day it covers, which hid the
+  data under it; its band says where it runs, and its days still name it in their tooltip (#152).
 
 ## [0.4.1] - 2026-11-20
 

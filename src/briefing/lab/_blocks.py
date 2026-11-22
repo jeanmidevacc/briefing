@@ -202,7 +202,10 @@ class CalendarHeatmap(Block):
             DataFrame with the ``date`` column, an ``expected`` column and, with
             ``group``, the group column.
         events: Dates to mark: a list of dates, or a DataFrame with ``start``,
-            optional ``end`` and ``label`` columns; spans draw as bands.
+            optional ``end``, ``label`` and ``color`` columns. A single day is outlined
+            and dotted under the calendar; a span draws as a band and leaves its days'
+            colours in view. ``color`` (any CSS colour) colours an event's marks and
+            legend entry; by default they take the theme's accent.
         on_click: ``"rows"`` lists the rows behind a day or an hour in a panel
             when it is clicked (up to ``ROWS_PER_CELL`` rows per cell, embedded in
             the report); ``None`` (default) for no click action.
@@ -437,6 +440,14 @@ def _check_expected(expected: t.Any, date: str, group: str | None) -> t.Any:
     )
 
 
+#: A CSS colour an event may take (#152): a hex, a name, or rgb()/hsl()/oklch() with plain numbers.
+_CSS_COLOR = re.compile(
+    r"^(?:#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})"  # #rgb, #rgba, #rrggbb, #rrggbbaa
+    r"|[a-zA-Z]+"  # a named colour
+    r"|(?:rgb|rgba|hsl|hsla|oklch|oklab)\([0-9.,%\s/-]+\))$"  # a colour function of plain numbers
+)
+
+
 def _check_events(events: t.Any) -> t.Any:
     import pandas as pd
 
@@ -445,8 +456,13 @@ def _check_events(events: t.Any) -> t.Any:
     if isinstance(events, pd.DataFrame):
         if "start" not in events.columns:
             raise BriefingError(
-                "CalendarHeatmap: an events DataFrame needs a 'start' column (and optional 'end', 'label')."
+                "CalendarHeatmap: an events DataFrame needs a 'start' column (and optional 'end', 'label', 'color')."
             )
+        if "color" in events.columns:
+            for color in events["color"].dropna():
+                if not isinstance(color, str) or not _CSS_COLOR.match(color.strip()):
+                    raise BriefingError(f"CalendarHeatmap: event colours are CSS colours such as '#2dd4bf', "
+                                        f"'teal' or 'rgb(45, 212, 191)', not {color!r}.")
         return events
     try:
         starts = pd.to_datetime(list(events))

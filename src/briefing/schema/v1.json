@@ -1957,7 +1957,7 @@
           "default": null
         },
         "events": {
-          "description": "Dates to mark: a list of dates, or a DataFrame with `start`, optional `end` and `label` columns; spans draw as bands.",
+          "description": "Dates to mark: a list of dates, or a DataFrame with `start`, optional `end`, `label` and `color` columns. A single day is outlined and dotted under the calendar; a span draws as a band and leaves its days' colours in view. `color` (any CSS colour) colours an event's marks and legend entry; by default they take the theme's accent.",
           "anyOf": [
             {
               "type": "array",
