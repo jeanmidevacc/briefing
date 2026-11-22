@@ -10,6 +10,9 @@ Example::
 """
 from __future__ import annotations
 
+import dataclasses
+import itertools
+import math
 import re
 from collections.abc import Sequence
 
@@ -134,4 +137,151 @@ def lightness(color: str) -> float:
     return to_oklab(color)[0]
 
 
-__all__ = ["along", "check_hex", "from_oklab", "lightness", "mix", "ramp", "to_oklab"]
+# ── checks (#179) ─────────────────────────────────────────────────────────────
+
+
+def _linear_rgb(color: str) -> tuple[float, float, float]:
+    h = check_hex(color).lstrip("#")
+    r, g, b = (_to_linear(int(h[i:i + 2], 16) / 255) for i in (0, 2, 4))
+    return r, g, b
+
+
+def contrast(a: str, b: str) -> float:
+    """The WCAG contrast ratio of two hex colours, from 1 (the same) to 21 (black on white).
+
+    Args:
+        a: A hex colour.
+        b: Another hex colour.
+
+    Example::
+
+        bf.color.contrast("#767676", "#ffffff")  # 4.54: just enough for text
+    """
+    def luminance(color: str) -> float:
+        r, g, b = _linear_rgb(color)
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+    hi, lo = sorted((luminance(a), luminance(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+#: Machado, Oliveira and Fernandes (2009), full severity, on linear RGB.
+_CVD: dict[str, tuple[tuple[float, float, float], ...]] = {
+    "protanopia": ((0.152286, 1.052583, -0.204868), (0.114503, 0.786281, 0.099216),
+                   (-0.003882, -0.048116, 1.051998)),
+    "deuteranopia": ((0.367322, 0.860646, -0.227968), (0.280085, 0.672501, 0.047413),
+                     (-0.011820, 0.042940, 0.968881)),
+    "tritanopia": ((1.255528, -0.076749, -0.178779), (-0.078411, 0.930809, 0.147602),
+                   (0.004733, 0.691367, 0.303900)),
+}
+
+
+def simulate(color: str, condition: str) -> str:
+    """How *color* looks with a colour-vision deficiency, at full severity.
+
+    Args:
+        color: A hex colour.
+        condition: ``"protanopia"``, ``"deuteranopia"`` or ``"tritanopia"``.
+
+    Example::
+
+        bf.color.simulate("#ff0000", "deuteranopia")
+    """
+    if condition not in _CVD:
+        raise BriefingError(f"bf.color.simulate: condition is one of {', '.join(_CVD)}, not {condition!r}.")
+    rgb = _linear_rgb(color)
+    out = [sum(m * c for m, c in zip(row, rgb, strict=True)) for row in _CVD[condition]]
+    return "#" + "".join(f"{round(_to_srgb(c) * 255):02x}" for c in out)
+
+
+def distance(a: str, b: str) -> float:
+    """How different two colours look: their distance in OKLab, times 100 (about 2 is barely visible).
+
+    Args:
+        a: A hex colour.
+        b: Another hex colour.
+
+    Example::
+
+        bf.color.distance("#1b2c80", "#1f40be")
+    """
+    return math.dist(to_oklab(a), to_oklab(b)) * 100
+
+
+@dataclasses.dataclass(frozen=True)
+class Finding:
+    """One thing :func:`check` found about a palette."""
+
+    level: str  # "warning", or "info" for what few readers meet (tritanopia)
+    code: str  # "low-contrast", "too-close", "colour-blind", "lightness-not-monotonic"
+    message: str
+    colors: tuple[str, ...]
+
+
+#: Below this OKLab distance (×100), two colours are hard to tell apart.
+MIN_DISTANCE = 10.0
+#: WCAG's minimum contrast for graphics against their background.
+MIN_GRAPHIC_CONTRAST = 3.0
+
+
+def check(colors: Sequence[str], background: str = "#ffffff", kind: str = "categorical") -> list[Finding]:
+    """What makes a palette hard to read, as a list of findings (empty: nothing found).
+
+    Args:
+        colors: The palette, as hex colours (low to high for a sequential or diverging one).
+        background: The colour they're drawn on, such as the theme's background.
+        kind: ``"categorical"`` (each colour a category: they must stay apart, for
+            colour-blind readers too), ``"sequential"`` (lightness must rise or fall all
+            the way) or ``"diverging"`` (lightness must peak or dip at the middle colour).
+
+    Example::
+
+        for finding in bf.color.check(["#1b2c80", "#f5479a", "#ffc46b"], background="#1a1a1a"):
+            print(finding.message)
+    """
+    palette = [check_hex(c, "bf.color.check: a colour") for c in colors]
+    bg = check_hex(background, "bf.color.check: background")
+    if kind not in ("categorical", "sequential", "diverging"):
+        raise BriefingError(f"bf.color.check: kind is 'categorical', 'sequential' or 'diverging', not {kind!r}.")
+    findings: list[Finding] = []
+    for c in palette:
+        ratio = contrast(c, bg)
+        if ratio < MIN_GRAPHIC_CONTRAST:
+            findings.append(Finding("warning", "low-contrast", f"{c} has a contrast of {ratio:.2f}:1 against {bg}; "
+                                    f"graphics need {MIN_GRAPHIC_CONTRAST:g}:1.", (c, bg)))
+    if kind == "categorical":
+        for a, b in itertools.combinations(palette, 2):
+            if distance(a, b) < MIN_DISTANCE:
+                findings.append(Finding("warning", "too-close", f"{a} and {b} are hard to tell apart "
+                                        f"(OKLab distance {distance(a, b):.1f}).", (a, b)))
+                continue
+            for condition in _CVD:
+                d = distance(simulate(a, condition), simulate(b, condition))
+                if d < MIN_DISTANCE:
+                    # Tritanopia is rare (about 1 in 10,000): worth knowing, not a warning.
+                    level = "info" if condition == "tritanopia" else "warning"
+                    findings.append(Finding(level, "colour-blind", f"{a} and {b} look alike with {condition} "
+                                            f"(OKLab distance {d:.1f}).", (a, b)))
+                    break
+    else:
+        light = [lightness(c) for c in palette]
+        if kind == "sequential":
+            steps = [b - a for a, b in zip(light, light[1:], strict=False)]
+            if not (all(d > 0 for d in steps) or all(d < 0 for d in steps)):
+                findings.append(Finding("warning", "lightness-not-monotonic", "The lightness doesn't rise (or fall) "
+                                        "all the way, so a lighter colour doesn't always mean more.", tuple(palette)))
+        else:
+            mid = len(light) // 2
+            left, right = light[:mid + 1], light[mid:]
+            peak = all(a < b for a, b in zip(left, left[1:], strict=False)) and all(
+                a > b for a, b in zip(right, right[1:], strict=False))
+            dip = all(a > b for a, b in zip(left, left[1:], strict=False)) and all(
+                a < b for a, b in zip(right, right[1:], strict=False))
+            if len(palette) % 2 == 0 or not (peak or dip):
+                findings.append(Finding("warning", "lightness-not-monotonic", "A diverging palette needs an odd number "
+                                        "of colours whose lightness peaks or dips at the middle one.", tuple(palette)))
+    return findings
+
+
+__all__ = ["Finding", "along", "check", "check_hex", "contrast", "distance", "from_oklab", "lightness", "mix",
+           "ramp", "simulate", "to_oklab"]

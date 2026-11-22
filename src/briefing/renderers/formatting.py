@@ -1,6 +1,7 @@
 """Formatting and theming configuration for briefing reports."""
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -180,6 +181,64 @@ class Formatting:
         )
 
     # ── built-in presets ──────────────────────────────────────────────────────
+
+    @classmethod
+    def from_accent(cls, accent: str, dark: bool = False, **overrides: str) -> Formatting:
+        """A whole theme from one brand colour (#179).
+
+        The background, surfaces, borders and text are neutrals tinted a little toward the
+        accent's hue; the accent keeps its hue, its lightness moved until it reads as a
+        link (4.5:1 against the background). Text reaches 7:1 and muted text 4.5:1.
+
+        Args:
+            accent: The brand colour, as hex.
+            dark: A near-black page instead of a near-white one.
+            **overrides: Any token to set by hand, as for the presets.
+
+        Example::
+
+            bf.Formatting.from_accent("#f5479a", dark=True)
+        """
+        from briefing import color
+
+        lightness, a, b = color.to_oklab(color.check_hex(accent, "Formatting.from_accent: accent"))
+        chroma = math.hypot(a, b)
+        da, db = (a / chroma, b / chroma) if chroma > 1e-6 else (0.0, 0.0)
+
+        def tint(level: float, amount: float) -> str:
+            return color.from_oklab((level, da * amount, db * amount))
+
+        def reach(level: float, amount: float, against: str, ratio: float, step: float) -> str:
+            """Move *level* by *step* until the tinted colour has *ratio* contrast against *against*."""
+            for _ in range(200):
+                candidate = tint(level, amount)
+                if color.contrast(candidate, against) >= ratio:
+                    return candidate
+                level = min(1.0, max(0.0, level + step))
+            return candidate
+
+        if dark:
+            bg, surface, border = tint(0.18, 0.012), tint(0.22, 0.015), tint(0.32, 0.018)
+            text = reach(0.93, 0.008, bg, 7.0, 0.01)
+            muted = reach(0.72, 0.014, bg, 4.5, 0.01)
+            step = 0.01
+        else:
+            bg, surface, border = tint(0.995, 0.003), tint(0.975, 0.006), tint(0.91, 0.01)
+            text = reach(0.24, 0.02, bg, 7.0, -0.01)
+            muted = reach(0.54, 0.02, bg, 4.5, -0.01)
+            step = -0.01
+        level = lightness
+        brand = color.from_oklab((level, a, b))
+        for _ in range(200):  # same hue and chroma, lighter or darker until it reads as a link
+            if color.contrast(brand, bg) >= 4.5:
+                break
+            level = min(1.0, max(0.0, level + step))
+            brand = color.from_oklab((level, a, b))
+        return cls(**{
+            "bg_color": bg, "surface_color": surface, "border_color": border,
+            "text_color": text, "muted_color": muted, "accent_color": brand,
+            **overrides,
+        })
 
     @classmethod
     def dark(cls, **overrides: str) -> Formatting:

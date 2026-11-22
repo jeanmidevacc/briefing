@@ -33,6 +33,10 @@ report = [
 bf.save(report, "dark.html", name="Dark preset", formatting=bf.Formatting.dark())
 ```
 
+`Formatting.from_accent("#f5479a", dark=True)` builds a whole theme from one brand
+colour: neutrals tinted toward its hue, and the accent itself made light or dark enough to
+read as a link. Its text, muted text and accent meet WCAG contrast levels (7:1, 4.5:1, 4.5:1).
+
 Every preset accepts the same keywords as `Formatting`, to adjust it:
 
 ```python
@@ -85,3 +89,19 @@ The font must be installed on the reader's machine; reports embed no web fonts, 
 the stack should end with a generic family such as `sans-serif`. The presets use only
 fonts that ship with macOS, Windows or common Linux systems, with one for each in every
 stack, so a preset looks the same to everyone.
+
+## Checking a palette
+
+`bf.color.check(colors, background=..., kind=...)` lists what makes a palette hard to read:
+colours below 3:1 contrast against the background, colours too close to tell apart, pairs
+that look alike to colour-blind readers (protanopia and deuteranopia are warnings,
+tritanopia, which is rare, a note), and a sequential palette whose lightness doesn't rise
+all the way. `bf.color.contrast`, `bf.color.simulate` and `bf.color.distance` are there
+for your own checks.
+
+```python
+import briefing as bf
+
+for finding in bf.color.check(["#2dd4bf", "#60a5fa", "#a3e635"], background="#1a1a1a"):
+    print(finding.level, finding.message)
+```

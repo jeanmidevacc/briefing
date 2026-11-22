@@ -4,7 +4,7 @@ Formatting and themes
 .. currentmodule:: briefing
 
 .. autoclass:: Formatting
-   :no-members:
+   :members: from_accent
 .. autoclass:: Width
    :members:
    :undoc-members:
@@ -20,4 +20,5 @@ Colour scales
 .. autoclass:: Legend
 
 .. automodule:: briefing.color
-   :members: ramp, mix, along, lightness, to_oklab, from_oklab, check_hex
+   :members: ramp, mix, along, lightness, to_oklab, from_oklab, check_hex, check, Finding, contrast,
+             simulate, distance
