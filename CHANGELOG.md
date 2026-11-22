@@ -35,6 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `quality=` to scale a picture down and re-encode it on the way in, with Pillow from a new
   extra, `briefing[pillow]`; the size warning suggests them when a picture is the heaviest
   part (#186).
+- `bf.diff(old, new, keys=)`: what changed between two runs, as a report: numbers with their
+  change, table rows added, removed and changed, text line by line, and blocks added or
+  removed, matched by their link names. A run can be a `Briefing` or the JSON an earlier
+  run saved (#30).
 
 ### Changed
 

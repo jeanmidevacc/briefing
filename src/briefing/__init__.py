@@ -63,6 +63,7 @@ from briefing.blocks import (
     VAlign,
     wrap_block,
 )
+from briefing.diff import diff
 
 # ── export: images and PDFs (Playwright is imported only when called) ────────
 from briefing.export import save_image, save_pdf
@@ -281,6 +282,7 @@ __all__: list[str] = [
     "color",
     "fmt",
     "slug",
+    "diff",
     "TextAlignment",
     "Width",
     # api
