@@ -156,7 +156,7 @@ class Formatting:
 
         Example::
 
-            bf.Formatting.dark().to_css_vars("#revenue")  # '#revenue {\n  --bf-bg: ...'
+            bf.Formatting.dark().to_css_vars("#revenue")  # a "#revenue { --bf-bg: ...; }" rule
         """
         try:
             w = _WIDTH_CSS[Width(self.width)]
