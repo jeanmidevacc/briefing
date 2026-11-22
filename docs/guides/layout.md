@@ -25,7 +25,9 @@ bf.save(report, "group.html", name="Group")
 ## Tabs and dropdowns with `Select`
 
 Each child's `label` is its tab title. `type="dropdown"` gives a menu instead of a
-row of tabs, which suits long lists.
+row of tabs, which suits long lists. A dropdown is named after the Select's own `label`
+for screen readers ("Choose a view" without one), and each panel is announced by its
+option's name.
 
 ```{briefing-example}
 :title: A Select with tabs

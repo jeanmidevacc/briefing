@@ -49,6 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Dropdown Selects are accessible: the menu is named after the Select's `label` ("Choose a
+  view" without one, not "Select view"), each panel is a region named after its option and
+  tied to the menu with `aria-controls`, the keyboard switches panels as it moves through
+  the options, and nested dropdowns keep to their own panels (#29).
 - Tables read in dark themes: their stripes and the DataTable header hover were fixed light
   greys (`#fafafa`, `#f0f0f0`); they now take the theme's surface and border colours (#150).
 - `CalendarHeatmap`: a multi-day event no longer outlines every day it covers, which hid the

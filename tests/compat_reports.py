@@ -38,9 +38,16 @@ def reports() -> dict[str, object]:
 
 
 def body_markup(html: str) -> str:
-    """The <body> of a report without its trailing report script or its version footer (#23)."""
+    """The <body> of a report without its trailing report script or its version footer (#23).
+
+    The accessibility attributes dropdowns gained in 0.5.0 (#29) are taken back out: a name
+    from the Select's label, ``aria-controls``, and named regions for the panels.
+    """
     body = html[html.index("<body>"):html.rindex("</body>")]
     body = re.sub(r'\n\s*<footer class="bf-report__footer">.*?</footer>', "", body, count=1, flags=re.S)
+    body = re.sub(r'(<select class="bf-select__select") aria-label="[^"]*"(?: aria-controls="[^"]*")?',
+                  r'\1 aria-label="Select view"', body)
+    body = re.sub(r'(<div class="bf-select__panel") role="region" id="[^"]*" aria-label="[^"]*"', r"\1", body)
     return re.sub(r"<script>(?:(?!</script>).)*</script>\s*$", "", body, flags=re.S)
 
 

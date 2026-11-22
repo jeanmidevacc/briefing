@@ -403,16 +403,21 @@ def _render_select(block: Select, idgen: _IdGen) -> str:
         )
 
     else:  # DROPDOWN
+        # Named after the Select's label, linked to the panel it shows (#29).
         options_html = ""
         panels_html = ""
         for i, child in enumerate(block.blocks):
             label = _html.escape(child.label or f"Option {i + 1}")
+            panel_id = f"{uid}-panel-{i}"
             options_html += f'<option value="{i}">{label}</option>'
             panel_html = _render_block(child, idgen)
-            panels_html += f'<div class="bf-select__panel">{panel_html}</div>'
+            panels_html += (f'<div class="bf-select__panel" role="region" id="{panel_id}" aria-label="{label}">'
+                            f"{panel_html}</div>")
+        name = _html.escape(block.label or "Choose a view")
+        controls = f' aria-controls="{uid}-panel-0"' if block.blocks else ""
         return (
             f'<div class="bf-block bf-select bf-select--dropdown" id="{uid}">'
-            f'<select class="bf-select__select" aria-label="Select view">'
+            f'<select class="bf-select__select" aria-label="{name}"{controls}>'
             f"{options_html}</select>"
             f"{panels_html}"
             f"</div>"

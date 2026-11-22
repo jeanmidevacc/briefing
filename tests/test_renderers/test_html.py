@@ -481,3 +481,20 @@ class TestPublicAPI:
             formatting=bf.Formatting(width=Width.NARROW),
         )
         assert "48rem" in dest.read_text(encoding="utf-8")
+
+
+def test_a_dropdown_points_only_to_panels_it_has() -> None:
+    # #29: aria-controls names the shown panel; an empty dropdown has none to name.
+    import warnings
+
+    from tests.html_helpers import attr, find_one, parse
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        empty = bf.Select(type="dropdown")
+    select = find_one(parse(bf.stringify(bf.Briefing(empty))), "select.bf-select__select")
+    assert select.get("aria-controls") is None
+    full = parse(bf.stringify(bf.Briefing(bf.Select(bf.Text("a", label="A"), bf.Text("b", label="B"),
+                                                    type="dropdown", label="Pick"))))
+    select = find_one(full, "select.bf-select__select")
+    assert attr(select, "aria-label") == "Pick" and full.find(id=attr(select, "aria-controls")) is not None
