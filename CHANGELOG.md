@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `lightness`, …) (#175).
 - `bf.Legend(scale, title=, events=)`: one legend for the blocks that share a `Scale`, and
   `legend=False` on `CalendarHeatmap` and `TimeHeatmap` to hide their own (#177).
+- `bf.color.check(colors, background=, kind=)`: what makes a palette hard to read (low
+  contrast, colours too close, colour-blind clashes, lightness that doesn't rise), with
+  `bf.color.contrast`, `simulate` and `distance`; and `Formatting.from_accent(colour,
+  dark=)`, a whole theme from one brand colour at WCAG contrast levels (#179).
 
 ### Changed
 
