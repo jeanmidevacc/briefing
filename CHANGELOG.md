@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `BigNumber(accent=)` puts a colour stripe on the card. Both take `"up"`, `"down"`,
   `"accent"` or a CSS colour; `Formatting(up_color=, down_color=)` set the theme's up and
   down colours, which a BigNumber's ▲ and ▼ now use too (#27).
+- `bf.Card(*blocks, title=, icon=, tags=, link=)`: a framed box with a heading line around
+  blocks stacked in one column; with `link=` the whole card leads to a block or heading
+  (#27).
 
 ### Changed
 

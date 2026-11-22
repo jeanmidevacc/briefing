@@ -113,6 +113,9 @@
           "$ref": "#/$defs/Group"
         },
         {
+          "$ref": "#/$defs/Card"
+        },
+        {
           "$ref": "#/$defs/Select"
         },
         {
@@ -313,6 +316,126 @@
               "type": [
                 "string",
                 "integer",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "blocks": {
+          "description": "The child blocks, in order.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/block"
+          }
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "Card": {
+      "description": "A framed box with a title, around blocks stacked in one column.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Card"
+        },
+        "title": {
+          "description": "The card's heading, with inline Markdown as in captions.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "icon": {
+          "description": "A short mark before the title, such as an emoji (up to 8 characters).",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "tags": {
+          "description": "Pills at the bottom of the card: texts or Chip.",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/chip"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "link": {
+          "description": "A block or heading link such as `\"page/name\"` (see the links guide): the whole card leads there. Needs a `title`, which is the link's text.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
                 "null"
               ]
             },

@@ -400,6 +400,29 @@ html.bf-printing .bf-heading-actions { display: none; }
   color: color-mix(in oklab, var(--bf-alert) 55%, var(--bf-text));
 }
 
+/* ── Card (#27) ─────────────────────────────────────────────────────────────── */
+.bf-card { position: relative; display: flex; flex-direction: column; gap: 0.75rem; height: 100%;
+  background: var(--bf-surface); border: 1px solid var(--bf-border); border-radius: var(--bf-radius);
+  padding: 1.1rem 1.25rem; box-sizing: border-box; }
+.bf-card__head { display: flex; align-items: center; gap: 0.6rem; }
+.bf-card__icon { font-size: 1.5rem; line-height: 1; }
+.bf-card__title { font-weight: 600; font-size: 1.05rem; color: var(--bf-text); }
+.bf-card__body { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+.bf-card__body > .bf-text > :first-child { margin-top: 0; }
+.bf-card__body > .bf-text > :last-child { margin-bottom: 0; }
+.bf-card > .bf-card__tags { margin-top: auto; }  /* at the bottom, whatever the card's height */
+/* A BigNumber in a card needs no second frame. */
+.bf-card__body > .bf-bignumber { background: none; border: none; padding: 0; }
+/* A linked card: its title's link covers the card; links and controls inside stay clickable. */
+.bf-card__link { color: inherit; text-decoration: none; }
+.bf-card__link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.bf-card--link .bf-card__body :is(a, button, select, input, summary, [role="button"], [tabindex]) {
+  position: relative; z-index: 1; }
+.bf-card--link { transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+.bf-card--link:hover { border-color: var(--bf-accent); }
+.bf-card--link:has(.bf-card__link:focus-visible) { outline: 2px solid var(--bf-accent); outline-offset: 2px; }
+.bf-card__link:focus-visible { outline: none; }
+
 /* ── Chips (#27) ───────────────────────────────────────────────────────────── */
 .bf-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; margin: 0; padding: 0; }
 .bf-chip { padding: 0.2rem 0.7rem; border-radius: 999px; font-size: 0.8125rem; line-height: 1.4;

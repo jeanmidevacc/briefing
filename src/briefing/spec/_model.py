@@ -26,7 +26,7 @@ from briefing.blocks.banner import Banner
 from briefing.blocks.base import _NAME_RE, Block, ContainerBlock
 from briefing.blocks.chips import Chips
 from briefing.blocks.files import Attachment, Image
-from briefing.blocks.layout import Briefing, Group, Page, Select, TabStyle, Toggle
+from briefing.blocks.layout import Briefing, Card, Group, Page, Select, TabStyle, Toggle
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
 from briefing.lab._blocks import CalendarHeatmap, DataDive, DataProfile, TimeHeatmap
 
@@ -38,6 +38,7 @@ FORMAT_VERSION = 1
 _TYPES: tuple[tuple[str, type[Block]], ...] = (
     ("Text", Text),
     ("Group", Group),
+    ("Card", Card),
     ("Select", Select),
     ("Toggle", Toggle),
     ("Page", Page),
@@ -102,6 +103,8 @@ _OVERRIDES: dict[tuple[str, str], dict[str, t.Any]] = {
     ("Image", "image"): _ref("image"),
     ("Attachment", "file"): {"anyOf": [_ref("file"), _ref("table")]},
     ("Briefing", "tabs"): {"anyOf": [_ref("tab_style"), {"type": "null"}]},
+    ("Card", "tags"): {"anyOf": [{"type": "array", "items": {"anyOf": [{"type": "string"}, _ref("chip")]}},
+                                 {"type": "null"}]},
     ("Chips", "items"): {"type": "array", "minItems": 1, "items": {"anyOf": [{"type": "string"}, _ref("chip")]}},
     ("Briefing", "header"): {"anyOf": [_ref("header"), {"type": "null"}]},
     ("Select", "style"): {"anyOf": [_ref("tab_style"), {"type": "null"}]},

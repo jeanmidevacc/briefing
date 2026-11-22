@@ -91,6 +91,16 @@ Holds `"blocks"`, a list of blocks (it may be empty).
 - `valign`: one of "top", "center", "bottom", default `"top"`. Vertical alignment of the cells: `"top"`, `"center"` or `"bottom"`.
 - `min_width`: text or a whole number. The narrowest a cell may be, such as `"16rem"` (or a number of pixels): as many cells per row as fit, up to `columns` when it is above 1. Not with `widths`.
 
+### Card
+
+A framed box with a title, around blocks stacked in one column.
+Holds `"blocks"`, a list of blocks (at least one).
+
+- `title`: text. The card's heading, with inline Markdown as in captions.
+- `icon`: text. A short mark before the title, such as an emoji (up to 8 characters).
+- `tags`: a list of texts or a chip {"texts": "...", "tooltip": "...", "color": "up"}. Pills at the bottom of the card: texts or Chip.
+- `link`: text. A block or heading link such as `"page/name"` (see the links guide): the whole card leads there. Needs a `title`, which is the link's text.
+
 ### Select
 
 Tab or dropdown selector — shows one child block at a time.
