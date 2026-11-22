@@ -11,7 +11,8 @@ from collections.abc import Mapping, Sequence
 from enum import StrEnum
 
 from briefing._error import BriefingError
-from briefing.blocks.base import _MAX_CAPTION_LEN, BlockId, BlockOrPrimitive, ContainerBlock, _truncate
+from briefing.blocks.base import _MAX_CAPTION_LEN, _NAME_RE, BlockId, BlockOrPrimitive, ContainerBlock, _truncate
+from briefing.blocks.chips import Chip
 from briefing.blocks.header import Header
 
 # ── enums ─────────────────────────────────────────────────────────────────────
@@ -193,6 +194,73 @@ class Group(ContainerBlock):
         self.widths = widths
         self.valign = VAlign(valign)
         self.min_width = min_width
+
+
+class Card(ContainerBlock):
+    """A framed box with a title, around blocks stacked in one column.
+
+    Where :class:`Group` lays blocks out side by side and draws nothing, a Card draws a
+    frame and a heading line around its blocks. Put cards side by side in a Group, best
+    with ``min_width=`` so they reflow on any screen.
+
+    Args:
+        *arg_blocks: The blocks inside the card, one under another; strings become ``Text``.
+        blocks: The blocks as a list, instead of positional arguments.
+        title: The card's heading, with inline Markdown as in captions.
+        icon: A short mark before the title, such as an emoji (up to 8 characters).
+        tags: Pills at the bottom of the card: texts or :class:`Chip`.
+        link: A block or heading link such as ``"page/name"`` (see the links guide): the
+            whole card leads there. Needs a ``title``, which is the link's text.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
+        label: Tab or dropdown label when the block is inside a ``Select``.
+
+    Example::
+
+        bf.Group(
+            bf.Card("Pizza, fast food, delivery and snacks", title="Food and delivery", icon="🍕",
+                    tags=["Pizza", "Uber Eats"], link="food"),
+            bf.Card(bf.BigNumber("Searches", 14), title="Streaming", icon="📺", link="streaming"),
+            min_width="16rem",
+        )
+    """
+
+    embed_noun: t.ClassVar[str | None] = "card"
+
+    min_blocks: t.ClassVar[int] = 0
+
+    def __init__(
+        self,
+        *arg_blocks: BlockOrPrimitive,
+        blocks: Sequence[BlockOrPrimitive] | None = None,
+        title: str | None = None,
+        icon: str | None = None,
+        tags: Sequence[str | Chip | Mapping[str, t.Any]] | None = None,
+        link: str | None = None,
+        name: BlockId | None = None,
+        label: str | None = None,
+    ) -> None:
+        super().__init__(*arg_blocks, blocks=blocks, name=name, label=label)
+        for option, value in (("title", title), ("icon", icon), ("link", link)):
+            if value is not None and not isinstance(value, str):
+                raise BriefingError(f"Card: {option} is text, not {value!r}.")
+        self.title = _truncate(title.strip(), _MAX_CAPTION_LEN) if title and title.strip() else None
+        self.icon = icon.strip() if icon and icon.strip() else None
+        if self.icon is not None and len(self.icon) > 8:
+            raise BriefingError(f"Card: icon is a short mark such as an emoji, not {icon!r}.")
+        if tags is not None and (isinstance(tags, str | bytes | Mapping) or not isinstance(tags, Sequence)):
+            raise BriefingError(f"Card: tags is a list of texts or bf.Chip(...), not {type(tags).__name__}.")
+        self.tags = [Chip.of(tag) for tag in tags] if tags else None
+        if link is not None:
+            parts = link.removeprefix("#").split("/")
+            if len(parts) > 2 or not all(_NAME_RE.match(part) for part in parts):
+                raise BriefingError(f"Card: link is a block or heading link such as 'summary' or 'detail/revenue', "
+                                    f"not {link!r}.")
+            if self.title is None:
+                raise BriefingError("Card: a link needs a title: the title is the link's text.")
+            link = "/".join(parts)
+        self.link = link
+        if not self.blocks and self.title is None and not self.tags:
+            raise BriefingError("Card: give it a title, tags or blocks to frame.")
 
 
 class Select(ContainerBlock):
@@ -437,6 +505,7 @@ class Briefing(ContainerBlock):
 
 __all__: list[str] = [
     "Briefing",
+    "Card",
     "Group",
     "Page",
     "Select",

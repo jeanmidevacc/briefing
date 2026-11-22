@@ -8,7 +8,7 @@ from briefing.blocks.base import Block, BlockId, BlockOrPrimitive, ContainerBloc
 from briefing.blocks.chips import Chip, Chips
 from briefing.blocks.files import Attachment, Image
 from briefing.blocks.header import Header
-from briefing.blocks.layout import Briefing, Group, Page, Select, SelectType, TabStyle, Toggle, VAlign
+from briefing.blocks.layout import Briefing, Card, Group, Page, Select, SelectType, TabStyle, Toggle, VAlign
 from briefing.blocks.text import HTML, Alert, AlertLevel, BigNumber, Code, Formula, Text
 
 __all__: list[str] = [
@@ -22,6 +22,7 @@ __all__: list[str] = [
     "Alert",
     "AlertLevel",
     "BigNumber",
+    "Card",
     "Chip",
     "Chips",
     "Code",

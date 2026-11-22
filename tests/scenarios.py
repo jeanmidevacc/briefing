@@ -105,6 +105,11 @@ SCENARIOS: dict[str, Build] = {
     ),
     "alert": lambda _: bf.Briefing(bf.Alert("Drift **detected** in `orders`; see [the runbook](#runbook).",
                                             level="warning", title="Heads *up*")),
+    "card": lambda _: bf.Briefing(bf.Group(
+        bf.Card("Pizza and *snacks*", title="Food **and** delivery", icon="🍕",
+                tags=["Pizza", bf.Chip("Uber Eats +18%", color="up")], link="streaming"),
+        bf.Card(bf.BigNumber("Searches", 14, prev_value=11), title="Streaming", name="streaming"),
+        min_width="16rem")),
     "chips": lambda _: bf.Briefing(
         bf.Chips(["Pizza", bf.Chip("Steam +41%", tooltip="Usual 31, now 44", color="up"),
                   bf.Chip("Netflix -12%", color="down"), bf.Chip("Teal", color="#0d9488")]),
@@ -273,6 +278,7 @@ ESCAPE_SCENARIOS: dict[str, Callable[[], tuple[bf.Briefing, str]]] = {
     "bignumber": lambda: (bf.Briefing(bf.BigNumber(PAYLOAD, PAYLOAD, change=PAYLOAD, is_upward_change=True)), "R"),
     "alert": lambda: (bf.Briefing(bf.Alert(PAYLOAD, title=PAYLOAD)), "R"),
     "chips": lambda: (bf.Briefing(bf.Chips([bf.Chip(PAYLOAD, tooltip=PAYLOAD)])), "R"),
+    "card": lambda: (bf.Briefing(bf.Card(title=PAYLOAD, icon="<b>", tags=[PAYLOAD])), "R"),  # a body is Text
     "plot-caption": lambda: (bf.Briefing(bf.Plot(matplotlib_figure(), caption=PAYLOAD)), "R"),
     "table": lambda: (bf.Briefing(bf.Table(_payload_frame(), caption=PAYLOAD)), "R"),
     "datatable": lambda: (bf.Briefing(bf.DataTable(_payload_frame(), caption=PAYLOAD)), "R"),

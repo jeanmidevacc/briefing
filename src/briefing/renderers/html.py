@@ -36,7 +36,7 @@ from briefing.blocks.banner import Banner
 from briefing.blocks.base import Block, ContainerBlock
 from briefing.blocks.chips import Chip, Chips
 from briefing.blocks.files import Attachment, Image
-from briefing.blocks.layout import Briefing, Group, Select, SelectType, Toggle, VAlign
+from briefing.blocks.layout import Briefing, Card, Group, Select, SelectType, Toggle, VAlign
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
 from briefing.renderers.copy_embed import RUNTIME_GLOBALS, embed_label
 from briefing.renderers.formatting import Formatting
@@ -455,6 +455,26 @@ def _render_group(block: Group, idgen: _IdGen) -> str:
         f" bf-group--valign-{block.valign}" if block.valign != VAlign.TOP else ""
     )
     return f'<div class="bf-block bf-group{extra}{valign_cls}" {style}>{inner}</div>'
+
+
+@renderer_for(Card)
+def _render_card(block: Card, idgen: _IdGen) -> str:
+    """A frame with a heading line, its blocks stacked, its tags at the bottom (#27).
+
+    A link is the title's ``<a>``, stretched over the card by CSS; controls inside stay on top.
+    """
+    head = ""
+    if block.title or block.icon:
+        icon = f'<span class="bf-card__icon" aria-hidden="true">{_html.escape(block.icon)}</span>' if block.icon else ""
+        title = inline_markdown(block.title) if block.title else ""
+        if block.link:
+            title = f'<a class="bf-card__link" href="#{_html.escape(block.link)}">{inline_plain(block.title or "")}</a>'
+        head = f'<div class="bf-card__head">{icon}<div class="bf-card__title">{title}</div></div>'
+    body = "\n".join(_render_block(b, idgen) for b in block.blocks)
+    body = f'<div class="bf-card__body">{body}</div>' if body else ""
+    tags = chips_html(block.tags, " bf-card__tags") if block.tags else ""
+    linked = " bf-card--link" if block.link else ""
+    return f'<div class="bf-block bf-card{linked}">{head}{body}{tags}</div>'
 
 
 @renderer_for(Select)

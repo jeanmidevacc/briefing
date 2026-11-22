@@ -41,6 +41,43 @@ report = bf.Group(
 bf.save(report, "group-fit.html", name="Group with min_width")
 ```
 
+## Framed sections with `Card`
+
+A {class}`~briefing.Card` draws a frame and a heading line around blocks stacked in one
+column, where a `Group` only lays blocks side by side. It takes a `title` (with inline
+Markdown), an `icon` such as an emoji, `tags` shown as chips at the bottom, and a `link`
+to a block or heading: the whole card then leads there, while links inside it keep their
+own targets. Put cards in a `Group` with `min_width=` so they reflow on any screen.
+
+```{briefing-example}
+:title: Cards that lead to sections
+:height: 320
+
+import briefing as bf
+
+report = bf.Briefing(
+    bf.Page(
+        bf.Group(
+            bf.Card("Pizza, fast food, delivery and snacks", title="Food and delivery", icon="🍕",
+                    tags=["Pizza", "Uber Eats", bf.Chip("DoorDash +18%", color="up")],
+                    link="detail/food"),
+            bf.Card(bf.BigNumber("Searches", 14, prev_value=11), title="Streaming", icon="📺",
+                    link="detail/streaming"),
+            bf.Card("Steam, Twitch and Discord", title="Gaming", icon="🎮"),
+            min_width="15rem",
+        ),
+        title="Overview",
+    ),
+    bf.Page(
+        bf.Text("## Food and delivery {#food}\n\nWhat moved, search by search."),
+        bf.Text("## Streaming {#streaming}\n\nFilms and series."),
+        title="Detail",
+        name="detail",
+    ),
+)
+bf.save(report, "cards.html", name="Cards")
+```
+
 ## Tabs and dropdowns with `Select`
 
 Each child's `label` is its tab title. `type="dropdown"` gives a menu instead of a
