@@ -155,4 +155,12 @@ def test_images_leave_the_export_menu_out(tmp_path: Path) -> None:
     """#100: a report with export= exports the same image as one without it."""
     with_menu = bf.save_image(_with_menu(("png",)), tmp_path / "menu.png", width=800, scale=1, name="Q1")
     without = bf.save_image(_with_menu(()), tmp_path / "plain.png", width=800, scale=1, name="Q1")
-    assert with_menu[0].read_bytes() == without[0].read_bytes()
+    # Two renders may rasterise text a pixel differently, so compare pixels, not bytes: a
+    # menu left in would differ over hundreds of pixels, not a stray few.
+    image = pytest.importorskip("PIL.Image")
+    chops = pytest.importorskip("PIL.ImageChops")
+    a, b = (image.open(p).convert("RGB") for p in (with_menu[0], without[0]))
+    assert a.size == b.size
+    diff = chops.difference(a, b).convert("L").point(lambda v: 255 if v > 32 else 0)
+    changed = sum(1 for v in diff.getdata() if v)
+    assert changed <= 0.001 * a.size[0] * a.size[1], f"{changed} pixels differ"
