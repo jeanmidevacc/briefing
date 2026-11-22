@@ -89,9 +89,12 @@ def _number_key(f: float) -> str:
     return str(int(f)) if f.is_integer() and abs(f) < 2**53 else repr(f)
 
 
-def _td(text: str, key: str | None, href: str | None) -> str:
-    """A cell: its text (a link to *href*, #33), and its sort key when that differs from the text."""
+def _td(text: str, key: str | None, href: str | None, wrap: bool = False) -> str:
+    """A cell: its text (a link to *href*, #33), and its sort key when that differs from the text;
+    *wrap*: its text wraps (#151)."""
     sort_attr = "" if key is None or key == text else f' data-sort="{_html.escape(key)}"'
+    if wrap:
+        sort_attr = ' class="bf-dt__wrap"' + sort_attr
     shown = _html.escape(text)
     if href is not None:
         shown = f'<a href="{_html.escape(href)}" target="_blank" rel="noopener noreferrer">{shown}</a>'
@@ -180,7 +183,8 @@ def render_datatable(block: DataTable) -> str:
     big = from_json(block)
     columns = _columns(block, show_index)
     rows_html = "".join(
-        "<tr>" + "".join(_td(c.texts[i], c.keys[i], c.hrefs[i] if c.hrefs else None) for c in columns) + "</tr>"
+        "<tr>" + "".join(_td(c.texts[i], c.keys[i], c.hrefs[i] if c.hrefs else None, c.wrap) for c in columns)
+        + "</tr>"
         for i in range(min(len(df), PAGE_ROWS) if big else len(df))
     )
     more_html = data_html = ""
@@ -273,6 +277,7 @@ class _Column:
     texts: list[str]
     keys: list[str | None]
     hrefs: list[str | None] | None
+    wrap: bool = False
 
 
 def _missing(value: t.Any) -> bool:
@@ -297,7 +302,8 @@ def _columns(block: DataTable, show_index: bool) -> list[_Column]:
         template = links.get(name) if name is not None else None
         texts = _formatted(how, name, column) if how is not None else [_fmt(v) for v in column]
         hrefs = _hrefs(template, name, column, by_name) if template is not None else None
-        columns.append(_Column(texts, [_sort_key(v) for v in column], hrefs))
+        wraps = name is not None and (block.wrap is True or (isinstance(block.wrap, list) and name in block.wrap))
+        columns.append(_Column(texts, [_sort_key(v) for v in column], hrefs, wraps))
     return columns
 
 
@@ -364,6 +370,9 @@ def _payload(rows: int, columns: list[_Column]) -> dict[str, t.Any]:
     payload: dict[str, t.Any] = {"rows": rows, "text": [c.texts for c in columns], "keys": keys}
     if links:
         payload["links"] = links
+    wrap = [j for j, c in enumerate(columns) if c.wrap]
+    if wrap:
+        payload["wrap"] = wrap  # the columns whose text wraps (#151)
     return payload
 
 

@@ -179,6 +179,7 @@ Interactive, sortable and searchable table rendered from a pandas DataFrame.
 - `max_rows`: a whole number, default `10000`. Rows beyond this are dropped with a warning.
 - `formats`: an object {"<column>": text}. How to show a column's values: `{"revenue": "€ {:,.0f}", "share": "{:.1%}", "day": "{:%d %b %Y}"}`, Python format strings (as in pandas' `Styler.format`) or functions. Cells still sort by their raw value; missing values stay empty.
 - `links`: an object {"<column>": text}. Columns whose cells link somewhere: `{"doi": "https://doi.org/{}", "title": "{url}"}`, a URL template where `{}` is the cell's value and `{url}` the value of the column `url` in the same row. Only `http(s)://` and `mailto:` URLs make links (anything else stays text, with a warning); they open in a new tab.
+- `wrap`: true or false or a list of texts, default `false`. Columns whose text wraps onto several lines, instead of making the table scroll sideways: a list of column names, or `True` for every column.
 - `download`: true or false, default `false`. Put a "CSV" button above the table: it downloads the rows matching the reader's search, in their order, with their raw values (not the formatted text), as a file named after the table's `name` or caption.
 
 ### Code

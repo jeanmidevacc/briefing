@@ -67,6 +67,12 @@ table = bf.DataTable(
 bf.save(table, "datatable-formats.html", name="Papers")
 ```
 
+### Long text
+
+Cells stay on one line, so a column of notes makes the table scroll sideways.
+`wrap=["Note"]` lets those columns' text wrap within a readable width; `wrap=True` wraps every
+column.
+
 ### Letting readers download the data
 
 `download=True` puts a "CSV" button above the table. It downloads the rows matching the
