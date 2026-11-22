@@ -55,7 +55,14 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--version", action="version", version=f"briefing {__version__}")
     commands = parser.add_subparsers(dest="command", required=True,
-                                     metavar="{reference,validate,render,skill,image,pdf}")
+                                     metavar="{new,reference,validate,render,skill,image,pdf}")
+
+    new = commands.add_parser("new", help="start a report project: a build script, its Markdown and its theme",
+                              description="Write a small report project that runs as it is: build_report.py, "
+                              "report.md, theme.py and a README.")
+    new.add_argument("folder", type=Path, help="the project's folder (created if needed)")
+    new.add_argument("--title", help="the report's title (default: from the folder's name)")
+    new.add_argument("--force", action="store_true", help="replace the project's files if they are there")
 
     commands.add_parser("reference", help="print the reference for agents: the JSON format, every block and option",
                         description="Print briefing's reference for agents, for the version installed here.")
@@ -235,8 +242,19 @@ def _skill(args: argparse.Namespace) -> int:
     return 0
 
 
+def _new(args: argparse.Namespace) -> int:
+    from briefing._scaffold import new_project
+
+    written = new_project(args.folder, title=args.title, force=args.force)
+    for path in written:
+        print(f"wrote {path}")
+    print(f"next: cd {args.folder} && python build_report.py --open")
+    return 0
+
+
 _COMMANDS: dict[str, t.Callable[[argparse.Namespace], int]] = {
     "reference": _reference,
+    "new": _new,
     "validate": _validate,
     "render": _render,
     "skill": _skill,

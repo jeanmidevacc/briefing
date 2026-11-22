@@ -26,6 +26,7 @@ coding agents both write. Reports work offline forever: no CDN, no server.
    :caption: Guides
 
    quickstart
+   guides/project
    guides/text
    guides/markdown
    guides/tables
