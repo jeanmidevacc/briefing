@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `bf.Legend(scale, title=, events=)`: one legend for the blocks that share a `Scale`, and
   `legend=False` on `CalendarHeatmap` and `TimeHeatmap` to hide their own (#177).
 
+### Changed
+
+- The agent reference (`python -m briefing reference`, `llms-full.txt`) may now grow to
+  100 KB, up from 25 KB, so every block keeps its full option list as the grammar grows.
+
 ### Deprecated
 
 - The heatmaps' `center=`: pass `colors=bf.Scale([below, at, above], center=...)` instead.

@@ -23,8 +23,9 @@ from briefing.spec._reference import SKILL, build_reference, deprecated
 ROOT = Path(__file__).resolve().parents[2]
 REFERENCE = (files("briefing") / "reference.md").read_text(encoding="utf-8")
 
-#: An agent should read the whole reference in one go: about 6,000 tokens.
-BUDGET = 25_000
+#: An agent should read the whole reference in one go. 25 KB (about 6,000 tokens) at first (#32);
+#: raised to 100 KB (about 25,000 tokens) on 2026-11-22, as the grammar grew in 0.5 and 0.6.
+BUDGET = 100_000
 
 
 def _blocks(language: str) -> list[str]:
