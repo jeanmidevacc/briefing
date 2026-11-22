@@ -526,6 +526,8 @@ html.bf-printing .bf-heading-actions { display: none; }
   text-align: left;
   white-space: nowrap;
 }
+/* DataTable(wrap=…): long text wraps within a readable width instead of widening the table (#151). */
+.bf-dt__table td.bf-dt__wrap { white-space: normal; min-width: 12rem; max-width: 32rem; overflow-wrap: anywhere; }
 .bf-dt__th {
   background: var(--bf-surface);
   font-weight: 600;

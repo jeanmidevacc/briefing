@@ -127,3 +127,10 @@ def test_unpack_refuses_damaged_data(page: Page) -> None:
             [data, n],
         )
         assert message.startswith("briefing: the compressed data is damaged")
+
+
+def test_wrapped_columns_wrap_in_a_big_table_too(viewer: Viewer) -> None:
+    page = viewer.open(bf.DataTable(big_frame(1_500), wrap=["word"]))
+    page.locator('.bf-dt__page-btn[data-dir="1"]').click()  # rows made from the packed JSON
+    classes = page.locator(".bf-dt__table tbody tr:first-child td").evaluate_all("cs => cs.map(c => c.className)")
+    assert classes == ["", "", "bf-dt__wrap", ""]

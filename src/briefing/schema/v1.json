@@ -1267,6 +1267,24 @@
           ],
           "default": null
         },
+        "wrap": {
+          "description": "Columns whose text wraps onto several lines, instead of making the table scroll sideways: a list of column names, or `True` for every column.",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": false
+        },
         "download": {
           "description": "Put a \"CSV\" button above the table: it downloads the rows matching the reader's search, in their order, with their raw values (not the formatted text), as a file named after the table's `name` or caption.",
           "anyOf": [

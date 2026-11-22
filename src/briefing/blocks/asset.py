@@ -119,6 +119,8 @@ class DataTable(Block):
             "{url}"}``, a URL template where ``{}`` is the cell's value and ``{url}`` the value
             of the column ``url`` in the same row. Only ``http(s)://`` and ``mailto:`` URLs
             make links (anything else stays text, with a warning); they open in a new tab.
+        wrap: Columns whose text wraps onto several lines, instead of making the table
+            scroll sideways: a list of column names, or ``True`` for every column.
         download: Put a "CSV" button above the table: it downloads the rows matching the
             reader's search, in their order, with their raw values (not the formatted
             text), as a file named after the table's ``name`` or caption.
@@ -148,6 +150,7 @@ class DataTable(Block):
         max_rows: int = MAX_ROWS,
         formats: dict[str, str | Callable[[t.Any], str]] | None = None,
         links: dict[str, str] | None = None,
+        wrap: bool | list[str] = False,
         download: bool = False,
         name: BlockId | None = None,
         label: str | None = None,
@@ -156,6 +159,12 @@ class DataTable(Block):
         df = to_pandas(df, block="DataTable")
         if not isinstance(download, bool):
             raise BriefingError(f"DataTable: download is True or False, not {download!r}.")
+        if not isinstance(wrap, bool):
+            if not isinstance(wrap, list | tuple) or not all(isinstance(c, str) for c in wrap):
+                raise BriefingError(f"DataTable: wrap is True, False or a list of column names, not {wrap!r}.")
+            _columns_named("wrap", wrap, df)
+            wrap = list(wrap)
+        self.wrap = wrap
         self.download = download
         self.formats = _check_formats(formats, df) if formats else None
         self.links = _check_links(links, df) if links else None

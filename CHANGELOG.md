@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `DataTable(wrap=["Note"])` (or `wrap=True`): long text wraps within a readable width
+  instead of making the table scroll sideways (#151).
+
 ### Fixed
 
 - Tables read in dark themes: their stripes and the DataTable header hover were fixed light
