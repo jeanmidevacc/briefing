@@ -163,7 +163,8 @@ SCENARIOS: dict[str, Build] = {
         views=("days", "hours"), tz="America/Montreal", on_click="rows")),
     "calendar-diverging": lambda df: bf.Briefing(
         bf.lab.CalendarHeatmap(df("df_signed"), date="day", value="balance", center=0,
-                               colors=["#d73027", "#f7f7f7", "#1a9850"], week_start="sunday")),
+                               colors=["#d73027", "#f7f7f7", "#1a9850"], week_start="sunday",
+                               start="2026-02-15", end="2026-05-31")),
     "time-heatmap": lambda df: bf.Briefing(bf.lab.TimeHeatmap(
         df("df_pipeline_log"), date="run_at", rows="weekday", columns="hour", value="rows", group="team",
         on_click="rows")),

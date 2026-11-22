@@ -1994,6 +1994,38 @@
           ],
           "default": null
         },
+        "start": {
+          "description": "The first day shown (`\"2026-05-19\"` or a date), whatever the data covers; `None` starts at the first day with data or an event. Rows before it are left out, with a warning.",
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "end": {
+          "description": "The last day shown; `None` ends at the last day with data or an event. Rows after it are left out, with a warning. Calendars with the same `start` and `end` line up week for week.",
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
         "name": {
           "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
           "anyOf": [

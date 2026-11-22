@@ -367,3 +367,81 @@ def test_every_weekday_is_named_on_its_own_row(week_start: str) -> None:
     tops = sorted(float(attr(t, "y")) for t in labels)
     first = "Sun" if week_start == "sunday" else "Mon"
     assert next(t.get_text() for t in labels if float(attr(t, "y")) == tops[0]) == first
+
+
+# ── start and end (#153) ──────────────────────────────────────────────────────
+
+
+def _days(soup: BeautifulSoup) -> list[str]:
+    return sorted(_cells(soup))
+
+
+def test_start_and_end_fix_the_grid_whatever_the_data_covers(df_signed: pd.DataFrame) -> None:
+    soup = _soup(CalendarHeatmap(df_signed, date="day", start="2026-02-15", end=dt.date(2026, 6, 30)))
+    days = _days(soup)
+    assert days[0] == "2026-02-15" and days[-1] == "2026-06-30"
+    cells = _cells(soup)
+    assert "bf-cal__day--empty" in classes(cells["2026-02-20"])  # before the data: no data
+    assert "bf-cal__day--empty" in classes(cells["2026-06-01"])  # after it
+
+
+def test_either_edge_alone(df_signed: pd.DataFrame) -> None:
+    days = _days(_soup(CalendarHeatmap(df_signed, date="day", start="2026-02-01")))
+    assert (days[0], days[-1]) == ("2026-02-01", "2026-04-29")  # to the last day of data
+    assert _days(_soup(CalendarHeatmap(df_signed, date="day", end="2026-05-31")))[0] == "2026-03-01"
+
+
+def test_rows_outside_the_span_are_left_out_with_a_warning(df_signed: pd.DataFrame) -> None:
+    with pytest.warns(UserWarning, match=r"^CalendarHeatmap: 40 rows outside 2026-03-11 to 2026-03-30 left out\.$"):
+        block = CalendarHeatmap(df_signed, date="day", start="2026-03-11", end="2026-03-30")
+    assert len(block.df) == 20 and block.df["day"].min() == pd.Timestamp("2026-03-11")
+    with pytest.warns(UserWarning, match=r"1 row outside … to 2026-04-28"):
+        CalendarHeatmap(df_signed, date="day", end="2026-04-28")
+
+
+def test_no_warning_when_every_row_is_inside(df_signed: pd.DataFrame, recwarn: pytest.WarningsRecorder) -> None:
+    CalendarHeatmap(df_signed, date="day", start="2026-01-01", end="2026-12-31")
+    assert not recwarn.list
+
+
+def test_the_span_uses_local_days(df_timestamps_near_midnight: pd.DataFrame) -> None:
+    # 2026-01-10 03:30 UTC is 2026-01-09 in Montréal: inside a span that ends on the 9th.
+    with pytest.warns(UserWarning, match="2 rows outside"):
+        block = CalendarHeatmap(df_timestamps_near_midnight, date="aware", tz="America/Montreal", end="2026-01-09")
+    assert len(block.df) == 1
+
+
+def test_calendars_with_the_same_span_line_up(df_signed: pd.DataFrame, df_pipeline_log: pd.DataFrame) -> None:
+    start, end = "2026-01-01", "2026-04-30"
+    with pytest.warns(UserWarning):
+        a = _cells(_soup(CalendarHeatmap(df_pipeline_log, date="run_at", start=start, end=end)))
+    b = _cells(_soup(CalendarHeatmap(df_signed, date="day", start=start, end=end)))
+    assert a.keys() == b.keys()
+    assert all((attr(a[d], "x"), attr(a[d], "y")) == (attr(b[d], "x"), attr(b[d], "y")) for d in a)
+
+
+def test_events_outside_the_span_are_not_shown(df_pipeline_log: pd.DataFrame, df_events: pd.DataFrame) -> None:
+    with pytest.warns(UserWarning):
+        soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", events=df_events,
+                                     start="2025-12-28", end="2026-01-31"))
+    legend = find_one(soup, ".bf-cal__legend").get_text(" ")
+    assert "Holiday freeze" in legend and "Migration" in legend and "Incident" not in legend
+    assert len(soup.select(".bf-cal__event")) == 2
+
+
+def test_an_empty_span_draws_an_empty_calendar(df_empty: pd.DataFrame) -> None:
+    frame = pd.DataFrame({"d": pd.to_datetime(pd.Series([], dtype="object"))})
+    soup = _soup(CalendarHeatmap(frame, date="d", start="2026-01-01", end="2026-01-31"))
+    days = _days(soup)
+    assert len(days) == 31 and all("bf-cal__day--empty" in classes(c) for c in _cells(soup).values())
+    assert "no dates" in render_calendar(CalendarHeatmap(frame, date="d", start="2026-01-01"))
+
+
+@pytest.mark.parametrize(("kwargs", "match"), [
+    ({"start": "soon"}, "start must be a date"),
+    ({"end": 12.5j}, "end must be a date"),
+    ({"start": "2026-05-01", "end": "2026-04-01"}, r"start \(2026-05-01\) is after end \(2026-04-01\)"),
+])
+def test_bad_spans(df_signed: pd.DataFrame, kwargs: dict[str, t.Any], match: str) -> None:
+    with pytest.raises(bf.BriefingError, match=match):
+        CalendarHeatmap(df_signed, date="day", **kwargs)
