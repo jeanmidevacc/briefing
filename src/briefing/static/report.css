@@ -374,10 +374,16 @@ html.bf-printing .bf-heading-actions { display: none; }
 .bf-alert__title   { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; }
 .bf-alert__message { font-size: 0.875rem; }
 
-.bf-alert--info    { background: #eff6ff; border-color: #3b82f6; color: #1e40af; }
-.bf-alert--success { background: #f0fdf4; border-color: #22c55e; color: #166534; }
-.bf-alert--warning { background: #fffbeb; border-color: #f59e0b; color: #92400e; }
-.bf-alert--error   { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
+/* Each level keeps its hue, mixed with the theme so dark reports read (#167). */
+.bf-alert--info    { --bf-alert: #3b82f6; }
+.bf-alert--success { --bf-alert: #22c55e; }
+.bf-alert--warning { --bf-alert: #f59e0b; }
+.bf-alert--error   { --bf-alert: #ef4444; }
+.bf-alert--info, .bf-alert--success, .bf-alert--warning, .bf-alert--error {
+  background: color-mix(in oklab, var(--bf-alert) 12%, var(--bf-bg));
+  border-color: var(--bf-alert);
+  color: color-mix(in oklab, var(--bf-alert) 55%, var(--bf-text));
+}
 
 /* ── Select / tabs ────────────────────────────────────────────────────────── */
 .bf-select { }
