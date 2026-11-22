@@ -914,6 +914,9 @@ html.bf-printing .bf-heading-actions { display: none; }
   border-radius: 2px; }
 .bf-cal__swatch--zero { background: var(--bf-border); }
 .bf-cal__swatch--empty { border: 1px dashed var(--bf-border); }
+/* A Legend block (#177): the heatmaps' legend, once, under a short title. */
+.bf-legend .bf-cal__legend { margin-top: 0.25rem; }
+.bf-legend__title { font-size: 0.8125rem; font-weight: 600; color: var(--bf-text); }
 /* A bf.Scale's legend (#175): its gradient, or its classes, between the ends of its domain. */
 .bf-cal__ramp { display: inline-block; vertical-align: middle; width: 7rem; height: 10px; border-radius: 2px; }
 .bf-cal__swatch--blank { border: 1px solid transparent; }  /* a cell that can't exist is left blank (#111) */

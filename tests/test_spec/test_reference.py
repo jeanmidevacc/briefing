@@ -18,7 +18,7 @@ import pytest
 import briefing as bf
 from briefing.spec._diagnostic import CODES
 from briefing.spec._model import block_types
-from briefing.spec._reference import SKILL, build_reference
+from briefing.spec._reference import SKILL, build_reference, deprecated
 
 ROOT = Path(__file__).resolve().parents[2]
 REFERENCE = (files("briefing") / "reference.md").read_text(encoding="utf-8")
@@ -47,7 +47,10 @@ def test_every_block_and_option_is_in_it() -> None:
         assert name in sections, f"no section for {name}"
         for field in kind.fields:
             if field.name not in ("name", "label") and (field.attr or field.name == "file"):
-                assert f"- `{field.key}`" in sections[name], f"{name}.{field.key} is missing"
+                if deprecated(field):  # left out on purpose: agents shouldn't use it
+                    assert f"- `{field.key}`" not in sections[name], f"{name}.{field.key} is deprecated"
+                else:
+                    assert f"- `{field.key}`" in sections[name], f"{name}.{field.key} is missing"
 
 
 def test_every_diagnostic_code_is_in_it_and_in_the_guide() -> None:

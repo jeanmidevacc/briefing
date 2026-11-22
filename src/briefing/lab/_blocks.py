@@ -188,29 +188,22 @@ class CalendarHeatmap(Block):
         agg: How to aggregate ``value``: ``"sum"``, ``"mean"``, ``"median"``,
             ``"min"``, ``"max"`` or ``"count"``.
         group: Column to split by: one calendar per group, stacked, on one shared colour scale.
-        views: ``("days",)``, the day calendar. The hour view was removed in 0.5.0:
-            use :class:`TimeHeatmap` with ``rows="weekday", columns="hour"``.
+        views: Only ``("days",)``; the hour view was removed in 0.5.0 (use :class:`TimeHeatmap`).
         tz: A time zone such as ``"America/Montreal"``. Converts timezone-aware
-            timestamps only; naive timestamps and plain dates are taken as already
-            local, so a date at midnight never moves to the previous day.
-        colors: ``"github"`` (GitHub's green scale), a list of CSS colours (low to high,
-            spread over the data), or a :class:`~briefing.Scale`, whose colours mean the
-            same values in every block that uses it.
-        center: *Deprecated since 0.6.0:* use ``colors=bf.Scale([below, at, above],
-            center=...)``. A midpoint for a diverging scale with three hex colours.
+            timestamps only; naive timestamps and plain dates are taken as already local.
+        colors: ``"github"``, a list of CSS colours (low to high, spread over the data), or a
+            :class:`~briefing.Scale` (the same colours for the same values everywhere).
+        center: *Deprecated since 0.6.0:* use ``colors=bf.Scale([...], center=...)``.
         week_start: ``"monday"`` or ``"sunday"``: the first row of the grid.
         expected: A target per day, flagged when a day is below it (days with no
             data count as below): a number, a Series indexed by date, or a
             DataFrame with the ``date`` column, an ``expected`` column and, with
             ``group``, the group column.
-        events: Dates to mark: a list of dates, or a DataFrame with ``start``,
-            optional ``end``, ``label`` and ``color`` columns. A single day is outlined
-            and dotted under the calendar; a span draws as a band and leaves its days'
-            colours in view. ``color`` (any CSS colour) colours an event's marks and
-            legend entry; by default they take the theme's accent.
-        on_click: ``"rows"`` lists the rows behind a day or an hour in a panel
-            when it is clicked (up to ``ROWS_PER_CELL`` rows per cell, embedded in
-            the report); ``None`` (default) for no click action.
+        events: Dates to mark: a list of dates, or a DataFrame with ``start`` and optional
+            ``end``, ``label`` and ``color`` (a CSS colour; the accent by default) columns.
+            A day is outlined and dotted, a span drawn as a band.
+        on_click: ``"rows"`` lists the rows behind a day in a panel
+            when it is clicked (up to ``ROWS_PER_CELL`` per cell); ``None`` for none.
         start: The first day shown (``"2026-05-19"`` or a date), whatever the data
             covers; ``None`` starts at the first day with data or an event. Rows
             before it are left out, with a warning.
@@ -220,6 +213,7 @@ class CalendarHeatmap(Block):
         group_order: Group names to draw first, in this order (e.g.
             ``["Worldwide", "United States"]``); other groups follow by name.
             Needs ``group``; a name that isn't a group is an error.
+        legend: ``False`` hides this block's legend (show one :class:`~briefing.Legend` instead).
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
@@ -256,6 +250,7 @@ class CalendarHeatmap(Block):
         start: str | dt.date | None = None,
         end: str | dt.date | None = None,
         group_order: list[str] | None = None,
+        legend: bool = True,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
@@ -289,6 +284,7 @@ class CalendarHeatmap(Block):
         self.expected = _check_expected(expected, date, group)
         self.events = _check_events(events)
         self.group_order = _check_group_order(frame, group, group_order, "CalendarHeatmap")
+        self.legend = _check_flag(legend, "CalendarHeatmap: legend")
         self.start, self.end = _check_day(start, "start"), _check_day(end, "end")
         if self.start and self.end and self.start > self.end:
             raise BriefingError(f"CalendarHeatmap: start ({self.start}) is after end ({self.end}).")
@@ -321,18 +317,16 @@ class TimeHeatmap(Block):
         group: Column to split by: one grid per group, stacked, on one shared colour scale.
         tz: A time zone such as ``"America/Montreal"``. Converts timezone-aware
             timestamps only; naive timestamps and plain dates are taken as already local.
-        colors: ``"github"`` (GitHub's green scale), a list of CSS colours (low to high,
-            spread over the data), or a :class:`~briefing.Scale`, whose colours mean the
-            same values in every block that uses it.
-        center: *Deprecated since 0.6.0:* use ``colors=bf.Scale([below, at, above],
-            center=...)``. A midpoint for a diverging scale with three hex colours.
+        colors: ``"github"``, a list of CSS colours (low to high, spread over the data), or a
+            :class:`~briefing.Scale` (the same colours for the same values everywhere).
+        center: *Deprecated since 0.6.0:* use ``colors=bf.Scale([...], center=...)``.
         week_start: ``"monday"`` or ``"sunday"``: the first weekday of a ``weekday`` axis.
         on_click: ``"rows"`` lists the rows behind a cell in a panel when it is clicked
-            (up to ``ROWS_PER_CELL`` rows per cell, embedded in the report); ``None``
-            (default) for no click action.
+            (up to ``ROWS_PER_CELL`` per cell); ``None`` for none.
         group_order: Group names to draw first, in this order (e.g.
             ``["Worldwide", "United States"]``); other groups follow by name.
             Needs ``group``; a name that isn't a group is an error.
+        legend: ``False`` hides this block's legend (show one :class:`~briefing.Legend` instead).
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
@@ -364,6 +358,7 @@ class TimeHeatmap(Block):
         week_start: str = "monday",
         on_click: str | None = None,
         group_order: list[str] | None = None,
+        legend: bool = True,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
@@ -398,6 +393,7 @@ class TimeHeatmap(Block):
         self.value, self.agg, self.group = value, agg, group
         self.tz, self.center, self.week_start, self.on_click = tz, center, week_start, on_click
         self.group_order = _check_group_order(frame, group, group_order, "TimeHeatmap")
+        self.legend = _check_flag(legend, "TimeHeatmap: legend")
 
 
 _HEX = re.compile(r"^#(?:[0-9a-fA-F]{3}){1,2}$")
@@ -553,6 +549,56 @@ def _check_events(events: t.Any) -> t.Any:
     return pd.DataFrame({"start": starts})
 
 
+def _check_flag(value: object, where: str) -> bool:
+    if not isinstance(value, bool):
+        raise BriefingError(f"{where} is True or False, not {value!r}.")
+    return value
+
+
+class Legend(Block):
+    """One legend for the blocks that share a :class:`~briefing.Scale`, such as a page of calendars.
+
+    It shows the scale as the heatmaps do (a gradient, or its classes), a "no data" swatch
+    and any events; give the blocks themselves ``legend=False``.
+
+    Args:
+        scale: A :class:`~briefing.Scale` with a ``domain``: the values its colours stand for.
+        title: A short line above the legend, with inline Markdown as in captions.
+        events: Dates to list, as ``CalendarHeatmap(events=)`` takes them, with their colours.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
+        label: Tab or dropdown label when the block is inside a ``Select``.
+
+    Example::
+
+        interest = bf.Scale(["#1b2c80", "#f5479a", "#ffc46b"], domain=(0, 100))
+        bf.Legend(interest, title="Interest, 0 to 100", events=releases)
+        bf.lab.CalendarHeatmap(df, date="day", value="interest", colors=interest, legend=False)
+    """
+
+    def __init__(
+        self,
+        scale: Scale | Mapping[str, t.Any],
+        title: str | None = None,
+        events: t.Any = None,
+        name: BlockId | None = None,
+        label: str | None = None,
+    ) -> None:
+        super().__init__(name=name, label=label)
+        if isinstance(scale, Mapping):
+            scale = Scale.of(scale)
+        if not isinstance(scale, Scale):
+            raise BriefingError(f"Legend: scale is a bf.Scale(...), not {scale!r}.")
+        if scale.domain is None:
+            raise BriefingError("Legend: the scale needs a domain=(low, high): without one its colours mean "
+                                "different values in each block, and there is nothing fixed to show.")
+        if title is not None and not isinstance(title, str):
+            raise BriefingError(f"Legend: title is text, not {title!r}.")
+        self.scale = scale
+        self.colors = scale  # read by the heatmaps' legend code
+        self.title = title.strip() or None if title else None
+        self.events = _check_events(events)
+
+
 # ── public re-exports ─────────────────────────────────────────────────────────
 
-__all__: list[str] = ["CalendarHeatmap", "DataDive", "DataProfile", "TimeHeatmap"]
+__all__: list[str] = ["CalendarHeatmap", "DataDive", "DataProfile", "Legend", "TimeHeatmap"]

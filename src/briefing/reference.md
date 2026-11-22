@@ -151,6 +151,14 @@ A wrapping row of pills: labels, tags, or values that rose or fell.
 
 - `items` (required): a list of texts or a chip {"texts": "...", "tooltip": "...", "color": "up"}. The pills: text, or Chip for a tooltip or a colour.
 
+### Legend
+
+One legend for the blocks that share a Scale, such as a page of calendars.
+
+- `scale` (required): a scale {"colors": ["#...", "#..."], "domain": [0, 100]}. A Scale with a `domain`: the values its colours stand for.
+- `title`: text. A short line above the legend, with inline Markdown as in captions.
+- `events`: a list of texts or a table {"columns": [...], "rows": [[...]]}. Dates to list, as `CalendarHeatmap(events=)` takes them, with their colours.
+
 ### Banner
 
 Markdown text over a background image: a report cover, a section opener or a social card.
@@ -260,17 +268,17 @@ GitHub-style calendar heatmap: one cell per day, weeks as columns.
 - `value`: text. Column to aggregate per day; `None` counts the rows.
 - `agg`: one of "sum", "mean", "median", "min", "max", "count", default `"sum"`. How to aggregate `value`: `"sum"`, `"mean"`, `"median"`, `"min"`, `"max"` or `"count"`.
 - `group`: text. Column to split by: one calendar per group, stacked, on one shared colour scale.
-- `views`: a list of values from "days", default `["days"]`. `("days",)`, the day calendar. The hour view was removed in 0.5.0: use TimeHeatmap with `rows="weekday", columns="hour"`.
-- `tz`: text. A time zone such as `"America/Montreal"`. Converts timezone-aware timestamps only; naive timestamps and plain dates are taken as already local, so a date at midnight never moves to the previous day.
-- `colors`: text or a list of texts or a scale {"colors": ["#...", "#..."], "domain": [0, 100]}, default `"github"`. `"github"` (GitHub's green scale), a list of CSS colours (low to high, spread over the data), or a Scale, whose colours mean the same values in every block that uses it.
-- `center`: a number. *Deprecated since 0.6.0:* use `colors=bf.Scale([below, at, above], center=...)`. A midpoint for a diverging scale with three hex colours.
+- `views`: a list of values from "days", default `["days"]`. Only `("days",)`; the hour view was removed in 0.5.0 (use TimeHeatmap).
+- `tz`: text. A time zone such as `"America/Montreal"`. Converts timezone-aware timestamps only; naive timestamps and plain dates are taken as already local.
+- `colors`: text or a list of texts or a scale {"colors": ["#...", "#..."], "domain": [0, 100]}, default `"github"`. `"github"`, a list of CSS colours (low to high, spread over the data), or a Scale (the same colours for the same values everywhere).
 - `week_start`: one of "monday", "sunday", default `"monday"`. `"monday"` or `"sunday"`: the first row of the grid.
 - `expected`: a number or a table {"columns": [...], "rows": [[...]]}. A target per day, flagged when a day is below it (days with no data count as below): a number, a Series indexed by date, or a DataFrame with the `date` column, an `expected` column and, with `group`, the group column.
-- `events`: a list of texts or a table {"columns": [...], "rows": [[...]]}. Dates to mark: a list of dates, or a DataFrame with `start`, optional `end`, `label` and `color` columns. A single day is outlined and dotted under the calendar; a span draws as a band and leaves its days' colours in view. `color` (any CSS colour) colours an event's marks and legend entry; by default they take the theme's accent.
-- `on_click`: one of "rows". `"rows"` lists the rows behind a day or an hour in a panel when it is clicked (up to `ROWS_PER_CELL` rows per cell, embedded in the report); `None` (default) for no click action.
+- `events`: a list of texts or a table {"columns": [...], "rows": [[...]]}. Dates to mark: a list of dates, or a DataFrame with `start` and optional `end`, `label` and `color` (a CSS colour; the accent by default) columns. A day is outlined and dotted, a span drawn as a band.
+- `on_click`: one of "rows". `"rows"` lists the rows behind a day in a panel when it is clicked (up to `ROWS_PER_CELL` per cell); `None` for none.
 - `start`: text. The first day shown (`"2026-05-19"` or a date), whatever the data covers; `None` starts at the first day with data or an event. Rows before it are left out, with a warning.
 - `end`: text. The last day shown; `None` ends at the last day with data or an event. Rows after it are left out, with a warning. Calendars with the same `start` and `end` line up week for week.
 - `group_order`: a list of texts. Group names to draw first, in this order (e.g. `["Worldwide", "United States"]`); other groups follow by name. Needs `group`; a name that isn't a group is an error.
+- `legend`: true or false, default `true`. `False` hides this block's legend (show one Legend instead).
 
 ### lab.TimeHeatmap
 
@@ -284,11 +292,11 @@ When something usually happens: a grid that crosses two units of one date column
 - `agg`: one of "sum", "mean", "median", "min", "max", "count", default `"sum"`. How to aggregate `value`: `"sum"`, `"mean"`, `"median"`, `"min"`, `"max"` or `"count"`. Sums and counts are averaged per occurrence.
 - `group`: text. Column to split by: one grid per group, stacked, on one shared colour scale.
 - `tz`: text. A time zone such as `"America/Montreal"`. Converts timezone-aware timestamps only; naive timestamps and plain dates are taken as already local.
-- `colors`: text or a list of texts or a scale {"colors": ["#...", "#..."], "domain": [0, 100]}, default `"github"`. `"github"` (GitHub's green scale), a list of CSS colours (low to high, spread over the data), or a Scale, whose colours mean the same values in every block that uses it.
-- `center`: a number. *Deprecated since 0.6.0:* use `colors=bf.Scale([below, at, above], center=...)`. A midpoint for a diverging scale with three hex colours.
+- `colors`: text or a list of texts or a scale {"colors": ["#...", "#..."], "domain": [0, 100]}, default `"github"`. `"github"`, a list of CSS colours (low to high, spread over the data), or a Scale (the same colours for the same values everywhere).
 - `week_start`: one of "monday", "sunday", default `"monday"`. `"monday"` or `"sunday"`: the first weekday of a `weekday` axis.
-- `on_click`: one of "rows". `"rows"` lists the rows behind a cell in a panel when it is clicked (up to `ROWS_PER_CELL` rows per cell, embedded in the report); `None` (default) for no click action.
+- `on_click`: one of "rows". `"rows"` lists the rows behind a cell in a panel when it is clicked (up to `ROWS_PER_CELL` per cell); `None` for none.
 - `group_order`: a list of texts. Group names to draw first, in this order (e.g. `["Worldwide", "United States"]`); other groups follow by name. Needs `group`; a name that isn't a group is an error.
+- `legend`: true or false, default `true`. `False` hides this block's legend (show one Legend instead).
 
 ## Diagnostics
 

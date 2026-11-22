@@ -28,7 +28,7 @@ from briefing.blocks.chips import Chips
 from briefing.blocks.files import Attachment, Image
 from briefing.blocks.layout import Briefing, Card, Group, Page, Select, TabStyle, Toggle
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
-from briefing.lab._blocks import CalendarHeatmap, DataDive, DataProfile, TimeHeatmap
+from briefing.lab._blocks import CalendarHeatmap, DataDive, DataProfile, Legend, TimeHeatmap
 
 #: The format version this briefing reads and writes (``"briefing": 1``). It changes only
 #: when JSON written for an older version would stop working.
@@ -45,6 +45,7 @@ _TYPES: tuple[tuple[str, type[Block]], ...] = (
     ("BigNumber", BigNumber),
     ("Alert", Alert),
     ("Chips", Chips),
+    ("Legend", Legend),
     ("Banner", Banner),
     ("Image", Image),
     ("Attachment", Attachment),
@@ -116,6 +117,10 @@ _OVERRIDES: dict[tuple[str, str], dict[str, t.Any]] = {
     ("lab.CalendarHeatmap", "colors"): _HEATMAP_COLORS,
     ("lab.TimeHeatmap", "colors"): _HEATMAP_COLORS,
     ("lab.CalendarHeatmap", "events"): {
+        "anyOf": [{"type": "array", "items": {"type": "string"}}, _ref("table"), {"type": "null"}]
+    },
+    ("Legend", "scale"): _ref("scale"),
+    ("Legend", "events"): {
         "anyOf": [{"type": "array", "items": {"type": "string"}}, _ref("table"), {"type": "null"}]
     },
 }

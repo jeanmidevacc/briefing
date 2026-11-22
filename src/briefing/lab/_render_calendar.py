@@ -19,7 +19,7 @@ from briefing.renderers.script_json import script_json
 from briefing.scale import Scale
 
 if t.TYPE_CHECKING:
-    from briefing.lab._blocks import CalendarHeatmap, TimeHeatmap
+    from briefing.lab._blocks import CalendarHeatmap, Legend, TimeHeatmap
 
     #: The heatmaps that share these helpers: the calendar, and the time-pattern grid (#111).
     Heatmap: t.TypeAlias = "CalendarHeatmap | TimeHeatmap"  # explicit: mypy may read this module first
@@ -126,7 +126,7 @@ def _targets(block: CalendarHeatmap, group: str | None) -> Callable[[dt.date], f
     return table.get
 
 
-def _events(block: CalendarHeatmap) -> list[_Event]:
+def _events(block: CalendarHeatmap | Legend) -> list[_Event]:
     import pandas as pd
 
     if block.events is None:
@@ -338,7 +338,7 @@ def _days_svg(
 
 
 def _legend(
-    block: Heatmap,
+    block: Heatmap | Legend,
     values: list[float],
     colour: Callable[[float], tuple[str, str]],
     events: list[_Event],
@@ -378,6 +378,15 @@ def _legend(
     return f'<div class="bf-cal__legend">{"".join(items)}</div>'
 
 
+def render_legend(block: Legend) -> str:
+    """A :class:`~briefing.Legend` block (#177): the heatmaps' legend, once for the page."""
+    from briefing.renderers.inline import inline_markdown
+
+    title = f'<div class="bf-legend__title">{inline_markdown(block.title)}</div>' if block.title else ""
+    colour = _scale(t.cast("Heatmap", block), [])
+    return f'<div class="bf-block bf-legend">{title}{_legend(block, [], colour, _events(block), targets=False)}</div>'
+
+
 def _edge(day: str | None) -> dt.date | None:
     """``start=`` or ``end=`` (an ISO string) as a date."""
     return dt.date.fromisoformat(day) if day else None
@@ -403,7 +412,8 @@ def _days_view(block: CalendarHeatmap) -> str:
         svg = _days_svg(block, first, last, data, colour, _targets(block, group), events)
         calendars.append(f'<div class="bf-cal__calendar"{_group_attr(block, group)}>{title}'
                          f'<div class="bf-cal__scroll">{svg}</div></div>')
-    return "".join(calendars) + _legend(block, values, colour, events, targets=block.expected is not None)
+    legend = _legend(block, values, colour, events, targets=block.expected is not None) if block.legend else ""
+    return "".join(calendars) + legend
 
 
 _PANEL = ('<div class="bf-cal__panel" hidden><div class="bf-cal__panel-head"><span class="bf-cal__panel-title"></span>'
