@@ -12,6 +12,8 @@ within its page; :meth:`IdGen.claim` raises otherwise.
 """
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from briefing.blocks.base import Block, ContainerBlock
 from briefing.blocks.layout import Briefing, Select
 from briefing.renderers.registry import IdGen
@@ -31,6 +33,20 @@ def claim_links(root: Briefing, idgen: IdGen) -> None:
                     _walk(child, page.name, idgen)
         else:
             _walk(block, None, idgen)
+
+
+def claim_slide_links(slides: Sequence[Block], idgen: IdGen) -> None:
+    """Give every named block in a deck's *slides* its link id (#197).
+
+    A named slide scopes names as a named page does: a block named ``margin`` in the slide
+    named ``summary`` links as ``#summary/margin``, so a report's pages become slides
+    without their names clashing.
+    """
+    for slide in slides:
+        _claim(slide, None, idgen, what="a slide")
+        idgen.place(slide, slide.name)
+        for child in _children(slide):
+            _walk(child, slide.name, idgen)
 
 
 def _walk(block: Block, page: str | None, idgen: IdGen) -> None:

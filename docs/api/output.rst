@@ -36,7 +36,7 @@ Slide decks
 -----------
 
 .. automodule:: briefing.deck
-   :members: Deck, Slide, from_spec
+   :members: Deck, Slide, to_html, save, from_spec
    :no-index:
 
 .. currentmodule:: briefing

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" class="bf-deck-page">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width={{ width }}" />
+  <meta name="generator" content="briefing {{ version }}" />
+  <title>{{ deck_name }}</title>
+  <style>
+{{ css }}
+  </style>
+  {% if head_scripts %}{{ head_scripts }}{% endif %}
+</head>
+<body class="bf-deck-body">
+  <div class="bf-deck" data-bf-deck data-bf-width="{{ width }}" data-bf-height="{{ height }}">
+    <main class="bf-deck__stage" aria-roledescription="slide deck" aria-label="{{ deck_name }}">
+{{ slides_html }}
+    </main>
+    <nav class="bf-deck__controls" aria-label="Slides" hidden>
+      <button class="bf-deck__btn" type="button" data-bf-go="prev" aria-label="Previous slide" title="Previous slide (←)">&#8249;</button>
+      <span class="bf-deck__count" aria-live="polite"></span>
+      <button class="bf-deck__btn" type="button" data-bf-go="next" aria-label="Next slide" title="Next slide (→)">&#8250;</button>
+      <button class="bf-deck__btn" type="button" data-bf-go="overview" aria-label="All slides" title="All slides (O)" aria-pressed="false">&#9638;</button>
+      <button class="bf-deck__btn" type="button" data-bf-go="fullscreen" aria-label="Full screen" title="Full screen (F)">&#x26F6;</button>
+    </nav>
+  </div>
+  <script>
+{{ scripts }}
+  </script>
+</body>
+</html>

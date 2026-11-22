@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 
 import briefing as bf
+from tests.html_helpers import parse
 from tests.scenarios import SCENARIOS, Frames
 
 DECK: dict[str, t.Any] = {
@@ -119,14 +120,32 @@ def test_validate_points_at_what_is_wrong(spec: dict[str, t.Any], expected: tupl
     assert expected in _codes(spec)
 
 
-def test_names_are_unique_in_the_whole_deck() -> None:
+def test_a_named_slide_scopes_names_as_a_page_does() -> None:
+    spec = {"briefing": 1, "slides": [
+        {"name": "q1", "blocks": [{"type": "Text", "text": "a", "name": "kpis"}]},
+        {"name": "q2", "blocks": [{"type": "Text", "text": "b", "name": "kpis"}]},
+    ]}
+    assert bf.validate(spec) == []
+    soup = parse(bf.deck.to_html(bf.deck.from_spec(spec)))
+    assert soup.select_one('[id="q1/kpis"]') is not None and soup.select_one('[id="q2/kpis"]') is not None
+
+
+def test_names_outside_named_slides_are_unique_across_them() -> None:
     spec = {"briefing": 1, "slides": [
         {"title": "a", "name": "kpis"},
         {"blocks": [{"type": "Text", "text": "b", "name": "kpis"}]},
     ]}
     found = bf.validate(spec)
     assert [(d.code, d.path) for d in found] == [("duplicate-name", "/slides/1/blocks/0")]
-    assert "unique in the deck" in (found[0].hint or "")
+    assert "unique within its slide" in (found[0].hint or "")
+
+
+def test_a_name_used_twice_in_one_slide_says_which_slide() -> None:
+    spec = {"briefing": 1, "slides": [{"name": "q1", "blocks": [
+        {"type": "Text", "text": "a", "name": "kpis"}, {"type": "Text", "text": "b", "name": "kpis"}]}]}
+    found = bf.validate(spec)
+    assert [(d.code, d.path) for d in found] == [("duplicate-name", "/slides/0/blocks/1")]
+    assert "in slide 'q1'" in found[0].message
 
 
 def test_a_heading_named_like_a_slide_is_a_clash_too() -> None:

@@ -79,7 +79,7 @@ class Deck:
     Example::
 
         deck = bf.deck.Deck(
-            bf.deck.Slide(bf.Banner("Q3 review", subtitle="Sales and operations")),
+            bf.deck.Slide(bf.Banner("# Q3 review", image="cover.jpg")),
             bf.deck.Slide(bf.Plot(fig), title="Revenue by month"),
             footer="Sales analytics",
         )
