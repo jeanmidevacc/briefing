@@ -822,6 +822,21 @@
           ],
           "default": null
         },
+        "kicker": {
+          "description": "One short line of plain text above `text`, smaller and in the theme's muted colour, such as `\"Data through Nov 20, 2026\"`. Escaped, never Markdown.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
         "name": {
           "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
           "anyOf": [

@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a warning naming how many; events outside it aren't drawn (#153).
 - `group_order=[...]` on `CalendarHeatmap` and `TimeHeatmap`: the listed groups first, in
   that order, then the others by name (#154).
+- `Banner(kicker="Data through Nov 20, 2026")`: one short muted line of plain text above
+  the banner's text (#155).
 
 ### Fixed
 

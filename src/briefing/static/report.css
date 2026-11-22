@@ -776,6 +776,10 @@ html.bf-printing .bf-heading-actions { display: none; }
 .bf-banner--uniform .bf-banner__text { left: var(--bf-banner-pos); right: 0; }
 .bf-banner--left .bf-banner__text { left: 0; width: var(--bf-banner-pos); }
 .bf-banner__text > :last-child { margin-bottom: 0; }
+/* A short muted line above the banner's text (#155). */
+.bf-banner__text > .bf-banner__kicker { margin: 0 0 0.4rem; font-size: 0.8125rem; line-height: 1.3;
+  color: var(--bf-muted); letter-spacing: 0.02em; }
+.bf-banner__kicker + :is(h1, h2, h3, h4, h5, h6) { margin-top: 0; }
 @media (max-width: 640px) {
   /* Phones: the image stacks above the text and fades down into it. */
   .bf-banner { height: auto; }

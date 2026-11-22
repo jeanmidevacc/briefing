@@ -25,6 +25,8 @@ def _html(**kwargs: object) -> str:
         ({"focus": (50, 150)}, "focus"),
         ({"height": "tall"}, "height"),
         ({"image": b"not an image"}, "image"),
+        ({"kicker": "two\nlines"}, "kicker is one line of plain text"),
+        ({"kicker": 2026}, "kicker is one line of plain text"),
     ],
 )
 def test_bad_arguments(kwargs: dict[str, object], match: str) -> None:
@@ -116,3 +118,27 @@ def test_uniform_veil_markup() -> None:
 def test_fade_and_uniform_differ_only_in_the_veil() -> None:
     fade, uniform = _html(fade=True), _html(fade=False)
     assert "linear-gradient" in fade and "linear-gradient" not in uniform.split("bf-banner__veil", 1)[1][:200]
+
+
+# ── kicker (#155) ─────────────────────────────────────────────────────────────
+
+
+def test_kicker_is_an_escaped_line_above_the_text() -> None:
+    soup = parse(_html(kicker="Data through <Nov 20> & **later**"))
+    text = find_one(soup, ".bf-banner__text")
+    kicker = find_one(text, ".bf-banner__kicker")
+    assert text.find(True) is kicker  # first, above the Markdown
+    assert kicker.get_text() == "Data through <Nov 20> & **later**"  # escaped, not Markdown
+    assert kicker.find(True) is None
+    assert find_one(text, "h1").get_text() == "Title"
+
+
+@pytest.mark.parametrize("kicker", [None, "", "   "])
+def test_no_kicker_no_line(kicker: str | None) -> None:
+    assert not parse(_html(kicker=kicker)).select(".bf-banner__kicker")
+
+
+def test_kicker_in_a_fragment() -> None:
+    banner = bf.Banner("# Title", image=RED_SVG, kicker="Data through Nov 20, 2026")
+    soup = parse(bf.stringify(bf.Briefing(banner), full_html=False))
+    assert find_one(soup, ".bf-banner__kicker").get_text() == "Data through Nov 20, 2026"
