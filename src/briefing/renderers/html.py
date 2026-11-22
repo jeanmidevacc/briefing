@@ -29,10 +29,12 @@ from pathlib import Path
 
 from jinja2 import Environment, PackageLoader
 
+from briefing._colors import css_color
 from briefing._version import __version__
 from briefing.blocks.asset import DataTable, Plot, Table
 from briefing.blocks.banner import Banner
 from briefing.blocks.base import Block, ContainerBlock
+from briefing.blocks.chips import Chip, Chips
 from briefing.blocks.files import Attachment, Image
 from briefing.blocks.layout import Briefing, Group, Select, SelectType, Toggle, VAlign
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
@@ -389,13 +391,32 @@ def _render_bignumber(block: BigNumber, _: _IdGen) -> str:
         change_html = f'<div class="{" ".join(cls)}"{title}>{arrow}{_html.escape(change)}</div>'
 
     spark = _sparkline(block) if block.sparkline else ""
+    accent = (f' bf-bignumber--accent" style="--bf-number-accent: {_html.escape(css_color(block.accent))}'
+              if block.accent else "")
     return (
-        f'<div class="bf-block bf-bignumber">'
+        f'<div class="bf-block bf-bignumber{accent}">'
         f'<div class="bf-bignumber__heading">{heading}</div>'
         f'<div class="bf-bignumber__value">{value}</div>'
         f"{change_html}{spark}"
         f"</div>"
     )
+
+
+def chips_html(chips: list[Chip], cls: str = "") -> str:
+    """A ``<ul>`` of pills (#27): Chips blocks and a Card's tags."""
+    items = []
+    for chip in chips:
+        attrs = f' title="{_html.escape(chip.tooltip)}"' if chip.tooltip else ""
+        if chip.color:
+            attrs += f' style="--bf-chip: {_html.escape(css_color(chip.color))}"'
+        kind = "bf-chip bf-chip--color" if chip.color else "bf-chip"
+        items.append(f'<li class="{kind}"{attrs}>{_html.escape(chip.text)}</li>')
+    return f'<ul class="bf-chips{cls}">{"".join(items)}</ul>'
+
+
+@renderer_for(Chips)
+def _render_chips(block: Chips, _: _IdGen) -> str:
+    return chips_html(block.items, " bf-block")
 
 
 @renderer_for(Alert)

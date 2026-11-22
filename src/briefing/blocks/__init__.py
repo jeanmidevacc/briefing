@@ -5,6 +5,7 @@ Custom-visualisation blocks (DataProfile, DataDive) live in ``briefing.lab``.
 from briefing.blocks.asset import DataTable, Plot, Table
 from briefing.blocks.banner import Banner
 from briefing.blocks.base import Block, BlockId, BlockOrPrimitive, ContainerBlock, wrap_block
+from briefing.blocks.chips import Chip, Chips
 from briefing.blocks.files import Attachment, Image
 from briefing.blocks.header import Header
 from briefing.blocks.layout import Briefing, Group, Page, Select, SelectType, TabStyle, Toggle, VAlign
@@ -21,6 +22,8 @@ __all__: list[str] = [
     "Alert",
     "AlertLevel",
     "BigNumber",
+    "Chip",
+    "Chips",
     "Code",
     "Formula",
     "HTML",

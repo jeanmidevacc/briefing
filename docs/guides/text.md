@@ -120,6 +120,32 @@ report = [
 bf.save(report, "alerts.html", name="Alerts")
 ```
 
+## Labels with `Chips`
+
+`Chips` shows a wrapping row of pills: tags, categories, or values that rose or fell.
+Each item is text, or a {class}`~briefing.Chip` with a `tooltip` and a `color`:
+`"up"`, `"down"` or `"accent"` (the theme's colours, which a dark theme sets once with
+`Formatting(up_color=, down_color=)`), or any CSS colour. `BigNumber(accent=...)` takes
+the same colours for a stripe on the card's edge.
+
+```{briefing-example}
+:title: Chips and an accented BigNumber
+:height: 240
+
+import briefing as bf
+
+report = [
+    bf.BigNumber("Up more than 25 %", "14 searches", accent="up"),
+    bf.Chips([
+        bf.Chip("Steam +41%", tooltip="Usual level 31, since the release 44", color="up"),
+        bf.Chip("Twitch +28%", color="up"),
+        bf.Chip("Netflix -12%", color="down"),
+        "Spotify",
+    ]),
+]
+bf.save(report, "chips.html", name="Chips")
+```
+
 ## Inline Markdown in short fields
 
 Captions (of charts, tables, images, code and formulas), `Alert` titles and messages,

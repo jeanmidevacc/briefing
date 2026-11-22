@@ -9,6 +9,7 @@ from collections.abc import Callable, Sequence
 from enum import StrEnum
 from pathlib import Path
 
+from briefing._colors import check_color
 from briefing._error import BriefingError
 from briefing.blocks.base import _MAX_CAPTION_LEN, Block, BlockId, _truncate
 
@@ -198,6 +199,8 @@ class BigNumber(Block):
             ``"$ {:.1f}M"`` or ``"{:.1%}"``, or a function.
         sparkline: A short series of numbers drawn as a trend line under the value
             (a list, a Series or an array); missing values leave gaps.
+        accent: A colour stripe on the card's left edge: ``"up"``, ``"down"`` or
+            ``"accent"`` (the theme's colours) or a CSS colour.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
@@ -226,6 +229,7 @@ class BigNumber(Block):
         higher_is_better: bool = True,
         format: str | Callable[[t.Any], str] | None = None,  # noqa: A002
         sparkline: Sequence[float | None] | pd.Series | None = None,
+        accent: str | None = None,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
@@ -250,6 +254,7 @@ class BigNumber(Block):
         self.prev_value, self.change_as, self.higher_is_better = prev_value, change_as, higher_is_better
         self.format = _check_format(format, value)
         self.sparkline = _check_sparkline(sparkline)
+        self.accent = check_color(accent, "BigNumber: accent")
 
     #: How a computed change can be shown.
     CHANGE_AS: t.ClassVar[tuple[str, ...]] = ("percent", "absolute", "points")

@@ -74,6 +74,8 @@ bf.save(report, "custom.html", name="Custom theme", formatting=brand)
 | `muted_color` | `#6b7280` | labels, captions, axis text, icons |
 | `border_color` | `#e5e7eb` | table, card and divider borders |
 | `surface_color` | `#f9fafb` | card, table-header and code backgrounds |
+| `up_color` | `#16a34a` | a BigNumber's ▲, `"up"` chips and accents |
+| `down_color` | `#dc2626` | a BigNumber's ▼, `"down"` chips and accents |
 | `font` | `system-ui, -apple-system, 'Segoe UI', …` | CSS `font-family` stack |
 | `radius` | `0.5rem` | corner radius of cards, badges, buttons |
 | `width` | `Width.MEDIUM` | content width: `NARROW` (768 px), `MEDIUM` (1200 px), `FULL`, or any CSS width |

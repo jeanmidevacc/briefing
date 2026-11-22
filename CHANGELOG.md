@@ -36,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   difference or percentage points), the numbers formatted, and a small trend line (#35).
 - `Group(min_width="16rem")`: as many cells per row as fit, each at least that wide, up to
   `columns` (#27).
+- `bf.Chips([...])`: a wrapping row of pills, each text or a `bf.Chip(text, tooltip=, color=)`;
+  `BigNumber(accent=)` puts a colour stripe on the card. Both take `"up"`, `"down"`,
+  `"accent"` or a CSS colour; `Formatting(up_color=, down_color=)` set the theme's up and
+  down colours, which a BigNumber's ▲ and ▼ now use too (#27).
 
 ### Changed
 

@@ -24,6 +24,7 @@ from pathlib import Path
 from briefing.blocks.asset import DataTable, Plot, Table
 from briefing.blocks.banner import Banner
 from briefing.blocks.base import _NAME_RE, Block, ContainerBlock
+from briefing.blocks.chips import Chips
 from briefing.blocks.files import Attachment, Image
 from briefing.blocks.layout import Briefing, Group, Page, Select, TabStyle, Toggle
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
@@ -42,6 +43,7 @@ _TYPES: tuple[tuple[str, type[Block]], ...] = (
     ("Page", Page),
     ("BigNumber", BigNumber),
     ("Alert", Alert),
+    ("Chips", Chips),
     ("Banner", Banner),
     ("Image", Image),
     ("Attachment", Attachment),
@@ -100,6 +102,7 @@ _OVERRIDES: dict[tuple[str, str], dict[str, t.Any]] = {
     ("Image", "image"): _ref("image"),
     ("Attachment", "file"): {"anyOf": [_ref("file"), _ref("table")]},
     ("Briefing", "tabs"): {"anyOf": [_ref("tab_style"), {"type": "null"}]},
+    ("Chips", "items"): {"type": "array", "minItems": 1, "items": {"anyOf": [{"type": "string"}, _ref("chip")]}},
     ("Briefing", "header"): {"anyOf": [_ref("header"), {"type": "null"}]},
     ("Select", "style"): {"anyOf": [_ref("tab_style"), {"type": "null"}]},
     ("lab.CalendarHeatmap", "start"): {"anyOf": [{"type": "string", "format": "date"}, {"type": "null"}]},
@@ -418,6 +421,14 @@ def build_schema() -> dict[str, t.Any]:
                 "as_of": {"type": "string"},
                 "tz": {"type": "string"},
             },
+            "additionalProperties": False,
+        },
+        "chip": {
+            "description": "A pill with more than its text (bf.Chip): a tooltip, and a colour: up, down, "
+            "accent or a CSS colour.",
+            "type": "object",
+            "properties": {"text": {"type": "string"}, "tooltip": {"type": "string"}, "color": {"type": "string"}},
+            "required": ["text"],
             "additionalProperties": False,
         },
         "tab_style": {
