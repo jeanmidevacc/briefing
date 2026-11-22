@@ -5,7 +5,7 @@ import math
 import numbers
 import textwrap
 import typing as t
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
 from pathlib import Path
 
@@ -45,6 +45,9 @@ class Text(EmbeddedTextBlock):
     Args:
         text: Markdown; common leading indentation is removed.
         file: Path to a ``.md`` file to read instead of ``text``.
+        values: Fills ``{name}`` and ``{name:spec}`` (such as ``{share:.1%}``) in the text.
+            Each value shows exactly as written: Markdown and HTML in it are escaped. Other
+            braces, and anything inside code, stay as they are; ``{{`` and ``}}`` are braces.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
@@ -57,6 +60,8 @@ class Text(EmbeddedTextBlock):
             - item two
         \"\"\")
         bf.Text(file="notes.md")
+        bf.Text("Searches rose {change} from {span}.",
+                values={"change": bf.fmt.percent(0.253, sign=True), "span": bf.fmt.span(start, end)})
     """
 
     embed_noun: t.ClassVar[str | None] = "text"
@@ -66,6 +71,7 @@ class Text(EmbeddedTextBlock):
         text: str | None = None,
         *,
         file: str | Path | None = None,
+        values: Mapping[str, t.Any] | None = None,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
@@ -81,6 +87,10 @@ class Text(EmbeddedTextBlock):
             if not path.exists():
                 raise BriefingError(f"File not found: {path}")
             content = path.read_text(encoding="utf-8")
+        if values is not None:
+            from briefing._prose import fill
+
+            content = fill(content, values)  # kept filled: the JSON form is the text (#184)
 
         super().__init__(content=content, name=name, label=label)
 

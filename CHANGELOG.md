@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`Formatting.categorical()`, checked for colour-blind readers). A `Scale` whose domain
   names categories is a named palette, such as party colours: `scale.mapping` feeds
   Plotly's `color_discrete_map`, and a `Legend` lists it (#39).
+- `Text(text, values={...})` fills `{name}` and `{name:spec}` fields, each value shown exactly
+  as written; `bf.fmt.date`, `span`, `percent` and `number` format values for prose; a
+  heading ending in `{#auto}` links by a slug of its text, and `bf.slug` is public (#184).
 
 ### Changed
 

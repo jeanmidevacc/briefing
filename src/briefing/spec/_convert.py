@@ -28,7 +28,7 @@ from briefing.scale import Scale
 from briefing.spec._check import check, describe, refs_in, show
 from briefing.spec._data import decode_figure, decode_image, decode_table, encode_figure, encode_image, encode_table
 from briefing.spec._diagnostic import Diagnostic, Severity
-from briefing.spec._model import FORMAT_VERSION, BlockType, Field, block_types, root_type, type_name
+from briefing.spec._model import FORMAT_VERSION, BlockType, Field, accepted, block_types, root_type, type_name
 
 #: The keys of the report object besides its options.
 _ROOT_KEYS = ("briefing", "blocks")
@@ -304,7 +304,7 @@ class Reader:
             self._add("error", "misplaced-page", path, "A Page can only be at the top of the report.",
                       "Use a Group here, or a Select of Groups for tabs.")
             return None
-        self._unknown_keys(spec, path, type_, ["type", *(f.key for f in kind.fields if f.attr or f.name == "file"),
+        self._unknown_keys(spec, path, type_, ["type", *(f.key for f in kind.fields if accepted(f)),
                                                *(["blocks"] if kind.container else [])])
         options, ok = self._options(spec, kind, path, type_)
         name = spec.get("name")

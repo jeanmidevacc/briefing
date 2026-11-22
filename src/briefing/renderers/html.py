@@ -30,6 +30,7 @@ from pathlib import Path
 from jinja2 import Environment, PackageLoader
 
 from briefing._colors import css_color
+from briefing._prose import slug
 from briefing._version import __version__
 from briefing.blocks.asset import DataTable, Plot, Table
 from briefing.blocks.banner import Banner
@@ -129,7 +130,11 @@ def _name_headings(state: t.Any) -> None:
         if match is None:
             continue
         last.content = last.content[:match.start()]
-        link = claim(match.group(1))
+        name = match.group(1)
+        if name == "auto":  # a slug of the heading's text (#184)
+            words = "".join(c.content for c in tokens[i + 1].children if c.type in ("text", "code_inline"))
+            name = slug(words)
+        link = claim(name)
         token.attrSet("id", link)
         token.attrSet("data-bf-link", "")
         tokens[i + 2].meta["bf_link"] = link

@@ -66,7 +66,7 @@ def test_unknown_options_suggest_the_closest_one() -> None:
     group = _one(_spec({"type": "Group", "colums": 2, "blocks": [_text()]}))
     assert (group.path, group.hint) == ("/blocks/0/colums", 'Did you mean "columns"?')
     blocks = _one(_spec({"type": "Text", "text": "a", "blocks": []}))
-    assert blocks.code == "unknown-option" and blocks.hint == "Its options are: text, file, name, label."
+    assert blocks.code == "unknown-option" and blocks.hint == "Its options are: text, file, values, name, label."
 
 
 def test_unknown_block_types() -> None:
