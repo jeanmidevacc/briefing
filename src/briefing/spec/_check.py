@@ -40,6 +40,7 @@ _DEF_WORDS = {
     "figure": 'a chart {"plotly": {...}} or {"vega-lite": {...}}',
     "image": "an image file path or a data: URI",
     "file": "a file path or a data: URI",
+    "tab_style": 'a tab style {"layout": "stretch", "sticky": true, ...}',
     "ref": '{"ref": "<name>"}',
     "name": "a name (a letter, then letters, digits, _ or -)",
     "block": "a block",

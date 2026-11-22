@@ -1,11 +1,12 @@
 """Layout and container blocks: Group, Select, Toggle, Page, Briefing."""
 from __future__ import annotations
 
+import dataclasses
 import math
 import numbers
 import typing as t
 import warnings
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from enum import StrEnum
 
 from briefing._error import BriefingError
@@ -37,6 +38,77 @@ class VAlign(StrEnum):
     TOP = "top"
     CENTER = "center"
     BOTTOM = "bottom"
+
+
+@dataclasses.dataclass(frozen=True)
+class TabStyle:
+    """How a row of tabs looks: page tabs (``Briefing(tabs=)``) or a ``Select``'s (``Select(style=)``).
+
+    The defaults are the usual look; a report that sets no style renders exactly as before.
+
+    Args:
+        layout: ``"start"`` (tabs from the left), ``"center"``, or ``"stretch"``
+            (each tab takes an equal share of the line).
+        full_width: Run the tab line edge to edge across the window; the tabs stay
+            aligned with the content.
+        sticky: Keep the tab bar at the top of the window while scrolling.
+        size: ``"sm"``, ``"md"`` or ``"lg"``.
+        variant: ``"underline"`` (a line under the active tab), ``"pills"`` (a tinted
+            pill) or ``"boxed"`` (folder tabs that join their panel).
+
+    Example::
+
+        report = bf.Briefing(page_1, page_2, tabs=bf.TabStyle(layout="stretch", sticky=True))
+        bf.Select(chart, table, style=bf.TabStyle(variant="pills", size="sm"))
+    """
+
+    layout: str = "start"
+    full_width: bool = False
+    sticky: bool = False
+    size: str = "md"
+    variant: str = "underline"
+
+    LAYOUTS: t.ClassVar[tuple[str, ...]] = ("start", "center", "stretch")
+    SIZES: t.ClassVar[tuple[str, ...]] = ("sm", "md", "lg")
+    VARIANTS: t.ClassVar[tuple[str, ...]] = ("underline", "pills", "boxed")
+
+    def __post_init__(self) -> None:
+        for option, choices in (("layout", self.LAYOUTS), ("size", self.SIZES), ("variant", self.VARIANTS)):
+            value = getattr(self, option)
+            if value not in choices:
+                raise BriefingError(
+                    f"TabStyle: {option} must be one of {', '.join(map(repr, choices))}, not {value!r}."
+                )
+        for option in ("full_width", "sticky"):
+            if not isinstance(getattr(self, option), bool):
+                raise BriefingError(f"TabStyle: {option} must be True or False, not {getattr(self, option)!r}.")
+
+    @classmethod
+    def of(cls, value: TabStyle | Mapping[str, t.Any] | None, where: str) -> TabStyle | None:
+        """*value* as a TabStyle: a TabStyle, a dict of its options (the JSON form) or ``None``."""
+        if value is None or isinstance(value, TabStyle):
+            return value
+        if isinstance(value, Mapping):
+            fields = [f.name for f in dataclasses.fields(cls)]
+            unknown = [k for k in value if k not in fields]
+            if unknown:
+                raise BriefingError(f"{where}: TabStyle has no option {unknown[0]!r}; it takes {', '.join(fields)}.")
+            return cls(**value)
+        raise BriefingError(f"{where} takes a bf.TabStyle(...) or a dict of its options, not {value!r}.")
+
+    def to_dict(self) -> dict[str, t.Any]:
+        """The options that differ from the defaults: the JSON form."""
+        default = TabStyle()
+        return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)
+                if getattr(self, f.name) != getattr(default, f.name)}
+
+    def classes(self) -> str:
+        """The ``bf-tabs--*`` classes for this style: none for the defaults."""
+        default = TabStyle()
+        names = [self.layout, self.size, self.variant]
+        names = [n for n, d in zip(names, [default.layout, default.size, default.variant], strict=True) if n != d]
+        names += ["full"] * self.full_width + ["sticky"] * self.sticky
+        return "".join(f" bf-tabs--{n}" for n in names)
 
 
 def _is_positive_number(value: object, *, whole: bool = False) -> bool:
@@ -109,6 +181,7 @@ class Select(ContainerBlock):
         *arg_blocks: The panels; each child's ``label`` is its tab or option title.
         blocks: The panels as a list, instead of positional arguments.
         type: ``"tabs"`` (default) or ``"dropdown"`` (or a :class:`SelectType`).
+        style: How the tabs look: a :class:`TabStyle` (layout, size, variant…). Tabs only.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
@@ -128,11 +201,16 @@ class Select(ContainerBlock):
         *arg_blocks: BlockOrPrimitive,
         blocks: Sequence[BlockOrPrimitive] | None = None,
         type: SelectType | str = SelectType.TABS,  # noqa: A002
+        style: TabStyle | Mapping[str, t.Any] | None = None,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
         super().__init__(*arg_blocks, blocks=blocks, name=name, label=label)
         self.type = SelectType(type)
+        self.style = TabStyle.of(style, "Select style=")
+        if self.style is not None and self.type == SelectType.DROPDOWN:
+            raise BriefingError("Select: style= styles tabs, and this Select is a dropdown. "
+                                "Drop style=, or use type='tabs'.")
         if len(self.blocks) < 2:
             warnings.warn(
                 f"Select has {len(self.blocks)} block(s) — at least 2 are expected.",
@@ -237,6 +315,8 @@ class Briefing(ContainerBlock):
         footer: Text to put before the report's footer line, such as a team name. Every
             report ends with "Made with briefing" and its version; that line can't be
             turned off.
+        tabs: How the page tabs look, for a report made of :class:`Page` blocks: a
+            :class:`TabStyle` such as ``bf.TabStyle(layout="stretch", sticky=True)``.
 
     Example::
 
@@ -259,6 +339,7 @@ class Briefing(ContainerBlock):
     REMOVED_EXPORTS: t.ClassVar[dict[str, str]] = {"pdf": EXPORT_PDF_REMOVED}
     export: tuple[str, ...]
     footer: str | None
+    tabs: TabStyle | None
 
     def __init__(
         self,
@@ -266,17 +347,23 @@ class Briefing(ContainerBlock):
         blocks: Sequence[BlockOrPrimitive] | None = None,
         export: str | Sequence[str] = (),
         footer: str | None = None,
+        tabs: TabStyle | Mapping[str, t.Any] | None = None,
     ) -> None:
         # Unwrap if a single Briefing is passed directly (avoids double-wrapping).
         if len(arg_blocks) == 1 and isinstance(arg_blocks[0], Briefing):
             export = export or arg_blocks[0].export
             footer = footer or arg_blocks[0].footer
+            tabs = tabs or arg_blocks[0].tabs
             arg_blocks = tuple(arg_blocks[0].blocks)
         if footer is not None and not isinstance(footer, str):
             raise BriefingError(f"Briefing 'footer' must be text such as 'Analytics team', not {footer!r}.")
         super().__init__(*arg_blocks, blocks=blocks)
         self.export = self._check_export(export)
         self.footer = _truncate(footer, _MAX_CAPTION_LEN) if footer else None
+        self.tabs = TabStyle.of(tabs, "Briefing tabs=")
+        if self.tabs is not None and not any(isinstance(b, Page) for b in self.blocks):
+            raise BriefingError("Briefing: tabs= styles the page tabs, and this report has no Page. "
+                                "Put its blocks in bf.Page(...)s, or style a Select with Select(style=...).")
 
     @classmethod
     def _check_export(cls, export: object) -> tuple[str, ...]:
@@ -324,6 +411,7 @@ __all__: list[str] = [
     "Page",
     "Select",
     "SelectType",
+    "TabStyle",
     "Toggle",
     "VAlign",
 ]
