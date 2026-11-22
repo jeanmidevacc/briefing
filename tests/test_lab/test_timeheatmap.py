@@ -119,6 +119,7 @@ def test_group_order_puts_the_listed_groups_first() -> None:
         ({"group": "team", "group_order": "b"}, r"group_order must be a list of group names"),
     ],
 )
+@pytest.mark.filterwarnings("ignore:TimeHeatmap. center= is deprecated:DeprecationWarning")
 def test_options_that_dont_fit_say_what_to_pass(kwargs: dict[str, t.Any], message: str) -> None:
     options = {"date": "run_at", "rows": "weekday", "columns": "month", **kwargs}
     with pytest.raises(bf.BriefingError, match=message):

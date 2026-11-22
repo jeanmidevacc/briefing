@@ -43,6 +43,7 @@ _DEF_WORDS = {
     "tab_style": 'a tab style {"layout": "stretch", "sticky": true, ...}',
     "header": 'a header {"subtitle": "...", "author": "...", "as_of": "2026-11-20", ...}',
     "chip": 'a chip {"text": "...", "tooltip": "...", "color": "up"}',
+    "scale": 'a scale {"colors": ["#...", "#..."], "domain": [0, 100]}',
     "ref": '{"ref": "<name>"}',
     "name": "a name (a letter, then letters, digits, _ or -)",
     "block": "a block",

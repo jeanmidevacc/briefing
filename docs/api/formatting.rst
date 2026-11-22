@@ -11,3 +11,12 @@ Formatting and themes
 .. autoclass:: TextAlignment
    :members:
    :undoc-members:
+
+Colour scales
+-------------
+
+.. autoclass:: Scale
+   :members: bounds, position, at, gradient
+
+.. automodule:: briefing.color
+   :members: ramp, mix, along, lightness, to_oklab, from_oklab, check_hex

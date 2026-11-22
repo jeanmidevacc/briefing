@@ -914,6 +914,8 @@ html.bf-printing .bf-heading-actions { display: none; }
   border-radius: 2px; }
 .bf-cal__swatch--zero { background: var(--bf-border); }
 .bf-cal__swatch--empty { border: 1px dashed var(--bf-border); }
+/* A bf.Scale's legend (#175): its gradient, or its classes, between the ends of its domain. */
+.bf-cal__ramp { display: inline-block; vertical-align: middle; width: 7rem; height: 10px; border-radius: 2px; }
 .bf-cal__swatch--blank { border: 1px solid transparent; }  /* a cell that can't exist is left blank (#111) */
 .bf-cal__swatch--below { border: 1.5px solid #dc2626; }
 .bf-calendar rect[role="button"] { cursor: pointer; outline: none; }

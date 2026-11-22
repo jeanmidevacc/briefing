@@ -89,3 +89,21 @@ def test_export_pdf_is_rejected_from_0_4() -> None:
     version = tuple(int(part) for part in bf.__version__.split(".")[:2])
     if version >= (0, 4):
         assert "pdf" not in bf.Briefing.DEPRECATED_EXPORTS
+
+
+# ── the heatmaps' center= (#175): deprecated in 0.6.0, removed in 0.8.0 ──────
+
+
+@pytest.mark.parametrize("block", ["CalendarHeatmap", "TimeHeatmap"])
+def test_heatmap_center_is_deprecated_for_a_scale(block: str, df_pipeline_log: t.Any) -> None:
+    extra = {"rows": "weekday", "columns": "hour"} if block == "TimeHeatmap" else {}
+    expected = (rf"{block}: center= is deprecated since briefing 0\.6\.0 and will be removed in 0\.8\.0\. "
+                r"Pass colors=bf\.Scale\(\[below, at, above\], center=\.\.\.\)")
+    with pytest.warns(DeprecationWarning, match=expected) as caught:
+        getattr(bf.lab, block)(df_pipeline_log, date="run_at", value="rows", center=500,
+                               colors=["#d73027", "#f7f7f7", "#1a9850"], **extra)
+    assert caught[0].filename == __file__
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        getattr(bf.lab, block)(df_pipeline_log, date="run_at", value="rows",
+                               colors=bf.Scale(["#d73027", "#f7f7f7", "#1a9850"], center=500), **extra)

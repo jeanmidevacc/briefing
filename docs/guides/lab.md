@@ -74,7 +74,7 @@ different from days with a zero.
   `group_order=["Worldwide", "United States"]` puts those first, in that order.
 - `on_click="rows"` lists the rows behind a day when it is clicked, up to
   `CalendarHeatmap.ROWS_PER_CELL` per cell.
-- `center=` with three `colors` gives a diverging scale, for values that go negative.
+- `colors=` takes `"github"`, a list of colours, or a `bf.Scale` (below).
 
 Click a day in the example to see its runs:
 
@@ -118,8 +118,17 @@ since 0.2.2). Use [`TimeHeatmap`](#timeheatmap-when-does-it-usually-happen) with
 to the calendar in a `Select` or `Group` to show both.
 :::
 
-For values that go negative, such as a daily balance, `center=0` switches to a
-diverging scale. `colors` then takes three colours: below, at and above the centre.
+### Colour scales
+
+A list of colours is spread over each block's own data, so the same colour can mean
+different values in two calendars side by side. A {class}`~briefing.Scale` fixes that:
+its `domain` says which values its colours stand for, in every block that uses it, and
+its colours are mixed in OKLab, so equal steps in value look like equal steps in colour.
+`steps=5` turns it into five classes, and calling a scale with a value gives its colour,
+for chips or anything else. {mod}`briefing.color` has the OKLab helpers (`ramp`, `mix`).
+
+For values that go negative, such as a daily balance, `center=0` makes the scale
+diverging, with an odd number of colours: the middle one sits at the centre.
 
 ```{briefing-example}
 :title: A diverging CalendarHeatmap
@@ -134,7 +143,8 @@ ledger["balance"] = rng.normal(0, 400, len(ledger)).cumsum().round()
 
 bf.save(
     bf.lab.CalendarHeatmap(
-        ledger, date="day", value="balance", center=0, colors=["#dc2626", "#f3f4f6", "#16a34a"]
+        ledger, date="day", value="balance",
+        colors=bf.Scale(["#dc2626", "#f3f4f6", "#16a34a"], center=0),
     ),
     "balance.html",
     name="Daily balance",
@@ -174,6 +184,6 @@ total and how many times it occurs. Means, medians, minimums and maximums (`agg=
 aggregate the cell's rows directly. Cells that can't exist, such as 31 February, are left
 blank; cells with no data have a dashed outline; zeros are grey.
 
-It takes the calendar's other options too: `value` and `agg`, `colors` and `center=`,
+It takes the calendar's other options too: `value` and `agg`, `colors` (a `bf.Scale` too),
 `tz=`, `week_start=` (the first weekday of a `weekday` axis), `group=` (one grid per
 group, on one colour scale) with `group_order=`, and `on_click="rows"`.

@@ -147,7 +147,9 @@ def test_events_as_single_dates(df_pipeline_log: pd.DataFrame) -> None:
     assert len(soup.select(".bf-cal__event--day")) == 2
 
 
+@pytest.mark.filterwarnings("ignore:CalendarHeatmap. center= is deprecated:DeprecationWarning")
 def test_center_gives_a_diverging_scale(df_signed: pd.DataFrame) -> None:
+    # The deprecated center= (#175) keeps working until 0.8.0.
     df = pd.concat([df_signed, pd.DataFrame({"day": [pd.Timestamp("2026-05-01")], "balance": [0.0]})])
     soup = _soup(CalendarHeatmap(df, date="day", value="balance", center=0,
                                  colors=["#ff0000", "#ffffff", "#0000ff"]))
