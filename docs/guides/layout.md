@@ -89,6 +89,46 @@ bf.save(report, "pages.html", name="Q1 review")
 A page's `name` lets {func}`~briefing.save_image` and {func}`~briefing.save_pdf`
 pick it with `page="summary"`.
 
+## Tab styles
+
+{class}`~briefing.TabStyle` sets how a row of tabs looks: pass it as
+`Briefing(tabs=...)` for the page tabs, or as `Select(style=...)` for one Select.
+
+- `layout`: `"start"` (default), `"center"`, or `"stretch"`, where each tab takes an
+  equal share of the line.
+- `full_width=True` runs the tab line edge to edge across the window; the tabs stay
+  aligned with the content.
+- `sticky=True` keeps the tab bar at the top of the window while the reader scrolls.
+- `size`: `"sm"`, `"md"` (default) or `"lg"`.
+- `variant`: `"underline"` (default), `"pills"` or `"boxed"`.
+
+A report that sets no style looks as it always has. In the JSON form, a style is an
+object such as `"tabs": {"layout": "stretch", "sticky": true}`.
+
+```{briefing-example}
+:title: Styled tabs
+:height: 420
+
+import briefing as bf
+
+notes = [bf.Text(f"Section {i}. " * 30) for i in range(1, 6)]
+report = bf.Briefing(
+    bf.Page(
+        bf.Select(
+            bf.Text("The chart would go here.", label="Chart"),
+            bf.Text("And the data here.", label="Data"),
+            style=bf.TabStyle(variant="pills", size="sm"),
+        ),
+        *notes,
+        title="Summary",
+    ),
+    bf.Page(*notes, title="Regional detail"),
+    bf.Page(bf.Text("How the numbers were made."), title="Method"),
+    tabs=bf.TabStyle(layout="stretch", full_width=True, sticky=True),
+)
+bf.save(report, "tab-style.html", name="Tab styles")
+```
+
 ## Links to pages, tabs and headings
 
 A block's `name` is also its link. Links come only from names, never from titles, so

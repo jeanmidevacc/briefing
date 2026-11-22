@@ -21,7 +21,7 @@ from pathlib import Path
 
 from briefing._error import BriefingError
 from briefing.blocks.base import Block, ContainerBlock
-from briefing.blocks.layout import Briefing, Select
+from briefing.blocks.layout import Briefing, Select, TabStyle
 from briefing.spec._check import check, describe, refs_in, show
 from briefing.spec._data import decode_figure, decode_image, decode_table, encode_figure, encode_image, encode_table
 from briefing.spec._diagnostic import Diagnostic, Severity
@@ -55,6 +55,8 @@ def _plain(value: object) -> t.Any:
         return [_plain(v) for v in value]
     if isinstance(value, dict) and all(isinstance(k, str) for k in value):
         return {k: _plain(v) for k, v in value.items()}
+    if isinstance(value, TabStyle):
+        return value.to_dict()
     raise _NoJSON
 
 

@@ -394,7 +394,7 @@ def _render_select(block: Select, idgen: _IdGen) -> str:
                 f"{panel_html}</div>"
             )
         return (
-            f'<div class="bf-block bf-select" id="{uid}">'
+            f'<div class="bf-block bf-select{block.style.classes() if block.style else ""}" id="{uid}">'
             f'<div class="bf-select__tablist" role="tablist">{tabs_html}</div>'
             f"{panels_html}"
             f"</div>"

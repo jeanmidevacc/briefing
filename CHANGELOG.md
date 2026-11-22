@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that order, then the others by name (#154).
 - `Banner(kicker="Data through Nov 20, 2026")`: one short muted line of plain text above
   the banner's text (#155).
+- `bf.TabStyle(layout=, full_width=, sticky=, size=, variant=)`: how tabs look, for the
+  page tabs (`Briefing(tabs=...)`) or one Select (`Select(style=...)`). Tabs can be
+  centred or stretched to equal shares, run their line edge to edge, stay at the top while
+  scrolling, come in three sizes, and be underlined, pills or boxed. Reports that set no
+  style render as before (#22).
 
 ### Changed
 

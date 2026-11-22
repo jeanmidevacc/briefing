@@ -25,7 +25,7 @@ from briefing.blocks.asset import DataTable, Plot, Table
 from briefing.blocks.banner import Banner
 from briefing.blocks.base import _NAME_RE, Block, ContainerBlock
 from briefing.blocks.files import Attachment, Image
-from briefing.blocks.layout import Briefing, Group, Page, Select, Toggle
+from briefing.blocks.layout import Briefing, Group, Page, Select, TabStyle, Toggle
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
 from briefing.lab._blocks import CalendarHeatmap, DataDive, DataProfile, TimeHeatmap
 
@@ -98,6 +98,8 @@ _OVERRIDES: dict[tuple[str, str], dict[str, t.Any]] = {
     ("Banner", "image"): _ref("image"),
     ("Image", "image"): _ref("image"),
     ("Attachment", "file"): {"anyOf": [_ref("file"), _ref("table")]},
+    ("Briefing", "tabs"): {"anyOf": [_ref("tab_style"), {"type": "null"}]},
+    ("Select", "style"): {"anyOf": [_ref("tab_style"), {"type": "null"}]},
     ("lab.CalendarHeatmap", "start"): {"anyOf": [{"type": "string", "format": "date"}, {"type": "null"}]},
     ("lab.CalendarHeatmap", "end"): {"anyOf": [{"type": "string", "format": "date"}, {"type": "null"}]},
     ("lab.CalendarHeatmap", "events"): {
@@ -401,6 +403,18 @@ def build_schema() -> dict[str, t.Any]:
                 {"type": "object", "properties": {"vega-lite": {"type": "object"}}, "required": ["vega-lite"],
                  "additionalProperties": False},
             ],
+        },
+        "tab_style": {
+            "description": "How a row of tabs looks (bf.TabStyle); every key is optional.",
+            "type": "object",
+            "properties": {
+                "layout": {"enum": list(TabStyle.LAYOUTS)},
+                "full_width": {"type": "boolean"},
+                "sticky": {"type": "boolean"},
+                "size": {"enum": list(TabStyle.SIZES)},
+                "variant": {"enum": list(TabStyle.VARIANTS)},
+            },
+            "additionalProperties": False,
         },
         "image": {
             "description": "An image file's path, or the image as a data: URI "

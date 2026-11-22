@@ -15,5 +15,6 @@ becomes a :class:`~briefing.Text`, and a dataframe becomes a :class:`~briefing.D
 .. autoclass:: SelectType
    :members:
    :undoc-members:
+.. autoclass:: TabStyle
 .. autoclass:: Toggle
 .. autoclass:: Page

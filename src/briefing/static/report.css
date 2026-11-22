@@ -400,6 +400,33 @@ html.bf-printing .bf-heading-actions { display: none; }
 .bf-select__panel                        { padding-top: 1rem; }
 .bf-select__panel[hidden]                { display: none; }
 
+/* ── TabStyle (#22): classes only a Select with a style carries ──────────── */
+.bf-tabs--center > .bf-select__tablist { justify-content: center; }
+.bf-tabs--stretch > .bf-select__tablist > .bf-select__tab { flex: 1 1 0; text-align: center; }
+.bf-tabs--sm > .bf-select__tablist > .bf-select__tab { padding: 0.35rem 0.85rem; font-size: 0.8125rem; }
+.bf-tabs--lg > .bf-select__tablist > .bf-select__tab { padding: 0.8rem 1.6rem; font-size: 1rem; }
+.bf-tabs--pills > .bf-select__tablist { border-bottom: none; gap: 0.25rem; --bf-tabs-line: 0px; }
+.bf-tabs--pills > .bf-select__tablist > .bf-select__tab { border: none; margin: 0; border-radius: 999px; }
+.bf-tabs--pills > .bf-select__tablist > .bf-select__tab[aria-selected="true"] {
+  color: var(--bf-accent); background: color-mix(in oklab, var(--bf-accent) 14%, transparent); }
+.bf-tabs--boxed > .bf-select__tablist { border-bottom-width: 1px; gap: 0.25rem; --bf-tabs-line: 1px; }
+.bf-tabs--boxed > .bf-select__tablist > .bf-select__tab {
+  border: 1px solid transparent; margin-bottom: -1px; border-radius: var(--bf-radius) var(--bf-radius) 0 0; }
+.bf-tabs--boxed > .bf-select__tablist > .bf-select__tab[aria-selected="true"] {
+  color: var(--bf-text); background: var(--bf-bg); border-color: var(--bf-border); border-bottom-color: var(--bf-bg); }
+/* Sticky: the bar stays at the top of the window, on the theme's background. */
+.bf-tabs--sticky > .bf-select__tablist { position: sticky; top: 0; z-index: 20; background: var(--bf-bg); }
+/* Full width: the line (and a sticky bar's background) runs edge to edge. Box shadows
+   clipped to the bar's height reach the window's edges without making the page scroll
+   sideways; they paint only outside the bar, so the tabs keep their own line. */
+.bf-tabs--full > .bf-select__tablist { position: relative; }
+.bf-tabs--full.bf-tabs--sticky > .bf-select__tablist { position: sticky;
+  box-shadow: 0 0 0 100vmax var(--bf-bg); clip-path: inset(0 -100vmax); }
+.bf-tabs--full > .bf-select__tablist::after {
+  content: ""; position: absolute; left: 0; right: 0; pointer-events: none;
+  bottom: calc(-1 * var(--bf-tabs-line, 2px)); height: var(--bf-tabs-line, 2px);
+  box-shadow: 0 0 0 100vmax var(--bf-border); clip-path: inset(0 -100vmax); }
+
 /* ── Select / dropdown ────────────────────────────────────────────────────── */
 .bf-select--dropdown .bf-select__select {
   appearance: none;

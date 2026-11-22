@@ -47,6 +47,21 @@
       ],
       "default": null
     },
+    "tabs": {
+      "description": "How the page tabs look, for a report made of Page blocks: a TabStyle such as `bf.TabStyle(layout=\"stretch\", sticky=True)`.",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/tab_style"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/ref"
+        }
+      ],
+      "default": null
+    },
     "blocks": {
       "description": "The report's blocks, in order: all of them Page blocks, or none.",
       "anyOf": [
@@ -337,6 +352,21 @@
             }
           ],
           "default": "tabs"
+        },
+        "style": {
+          "description": "How the tabs look: a TabStyle (layout, size, variant…). Tabs only.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/tab_style"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
         },
         "name": {
           "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
@@ -2427,6 +2457,40 @@
           "additionalProperties": false
         }
       ]
+    },
+    "tab_style": {
+      "description": "How a row of tabs looks (bf.TabStyle); every key is optional.",
+      "type": "object",
+      "properties": {
+        "layout": {
+          "enum": [
+            "start",
+            "center",
+            "stretch"
+          ]
+        },
+        "full_width": {
+          "type": "boolean"
+        },
+        "sticky": {
+          "type": "boolean"
+        },
+        "size": {
+          "enum": [
+            "sm",
+            "md",
+            "lg"
+          ]
+        },
+        "variant": {
+          "enum": [
+            "underline",
+            "pills",
+            "boxed"
+          ]
+        }
+      },
+      "additionalProperties": false
     },
     "image": {
       "description": "An image file's path, or the image as a data: URI (data:image/png;base64,...).",

@@ -49,6 +49,7 @@ def normalize(blocks: Briefing) -> Briefing:
                     for page in pages
                 ],
                 type=SelectType.TABS,
+                style=blocks.tabs,
             )
         ]
 
