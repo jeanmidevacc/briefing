@@ -14,7 +14,16 @@ import typing as t
 
 from briefing.spec._check import describe
 from briefing.spec._diagnostic import CODES
-from briefing.spec._model import FORMAT_VERSION, BlockType, Field, accepted, block_types, root_type
+from briefing.spec._model import (
+    FORMAT_VERSION,
+    BlockType,
+    Field,
+    accepted,
+    block_types,
+    deck_type,
+    root_type,
+    slide_type,
+)
 
 #: Options every block takes, described once instead of under each block.
 _COMMON = ("name", "label")
@@ -160,6 +169,44 @@ def _block(kind: BlockType) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def _decks() -> str:
+    deck = "\n".join(_option(f) for f in deck_type().fields)
+    slide = "\n".join(_option(f) for f in slide_type().fields)
+    return f"""\
+## Decks
+
+A deck (`bf.deck.Deck` in Python) puts the same blocks on slides. Its JSON has `"slides"` in
+place of `"blocks"`; each slide is an object with its own `"blocks"`, written as in a report:
+
+```json
+{{"briefing": {FORMAT_VERSION}, "footer": "Sales analytics", "slides": [
+  {{"title": "Q3 review"}},
+  {{"title": "Summary", "name": "summary", "blocks": [
+    {{"type": "Text", "text": "Revenue grew in **every** region."}},
+    {{"type": "Group", "columns": 2, "blocks": [
+      {{"type": "BigNumber", "heading": "Revenue", "value": 4200000, "prev_value": 3900000, "format": "${{:,.0f}}"}},
+      {{"type": "BigNumber", "heading": "Margin", "value": 0.31, "format": "{{:.0%}}"}}
+    ]}}
+  ]}}
+]}}
+```
+
+- A slide needs `"blocks"`, a `"title"`, or both; a slide with only a title is a section slide.
+- Slides hold any block but a Page. Lay them out with Group (columns), Select (tabs) or Card.
+- Names are unique in the whole deck: a slide's link is `#name`, as is a block's.
+- Check a deck as a report: `python -m briefing validate deck.json`, or `bf.validate(spec, data)`.
+  Build it with `bf.deck.from_spec(spec, data)`; `bf.to_spec(deck)` writes it.
+
+The deck's options:
+
+{deck}
+
+A slide's options:
+
+{slide}
+"""
+
+
 def deprecated(field: Field) -> bool:
     """Whether an option is deprecated (its docs start so): left out, since agents shouldn't use it."""
     return field.description.startswith("*Deprecated")
@@ -172,7 +219,7 @@ def build_reference() -> str:
     blocks = "\n".join(_block(kind) for kind in block_types().values())
     codes = "\n".join(f"- `{code}` ({severity}): {meaning}" for code, (severity, meaning) in CODES.items())
     return (
-        f"{_INTRO}\n## The report's options\n\n{report}\n\n## Blocks\n\n{blocks}\n"
+        f"{_INTRO}\n## The report's options\n\n{report}\n\n## Blocks\n\n{blocks}\n{_decks()}\n"
         "## Diagnostics\n\n"
         "`validate` lists every problem with a severity, a code, a path (a JSON Pointer such as\n"
         "`/blocks/1/columns`), a message and often a hint. An error means the report can't be built\n"

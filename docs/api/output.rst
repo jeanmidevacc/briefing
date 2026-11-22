@@ -32,6 +32,15 @@ Email digests
 
 .. currentmodule:: briefing
 
+Slide decks
+-----------
+
+.. automodule:: briefing.deck
+   :members: Deck, Slide, from_spec
+   :no-index:
+
+.. currentmodule:: briefing
+
 Comparing runs
 --------------
 

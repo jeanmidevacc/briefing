@@ -1,107 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "briefing report, format 1",
-  "description": "A briefing report as JSON: the same blocks and options as in Python. Render it with briefing.from_spec(spec, data) and check it with briefing.validate(spec, data).",
-  "type": "object",
-  "properties": {
-    "briefing": {
-      "description": "The format version of this JSON (not briefing's version): 1.",
-      "const": 1
+  "title": "briefing report or deck, format 1",
+  "description": "A briefing report (\"blocks\") or slide deck (\"slides\") as JSON: the same blocks and options as in Python. Check it with briefing.validate(spec, data).",
+  "anyOf": [
+    {
+      "$ref": "#/$defs/report"
     },
-    "export": {
-      "description": "Opt-in export menu in the report header: `\"png\"` adds \"Save as PNG\" (the open page with a margin around it, drawn in the reader's browser at 2×). Reports without it contain no export code. \"Save as PNG\" is best effort: charts drawn in iframes (Bokeh) and WebGL Plotly traces come out blank, and fonts are whatever the reader's machine has. For exact, reproducible files use save_image / save_pdf. To print, use the browser's own print (Ctrl+P or ⌘P): it gets the same print layout. `\"embed\"` puts a `</>` button on each page, labelled group, chart, table, text, number, alert and banner: it copies that part as an embed fragment, as stringify makes with `full_html=False`, to paste into another page. `\"pdf\"` (the \"Print\" button) was removed in 0.4.0: print with Ctrl+P, or save a file with save_pdf.",
-      "anyOf": [
-        {
-          "enum": [
-            "png",
-            "embed"
-          ]
-        },
-        {
-          "type": "array",
-          "items": {
-            "enum": [
-              "png",
-              "embed"
-            ]
-          }
-        },
-        {
-          "$ref": "#/$defs/ref"
-        }
-      ],
-      "default": []
-    },
-    "footer": {
-      "description": "Text to put before the report's footer line, such as a team name. Every report ends with \"Made with briefing\" and its version; that line can't be turned off.",
-      "anyOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "$ref": "#/$defs/ref"
-        }
-      ],
-      "default": null
-    },
-    "tabs": {
-      "description": "How the page tabs look, for a report made of Page blocks: a TabStyle such as `bf.TabStyle(layout=\"stretch\", sticky=True)`.",
-      "anyOf": [
-        {
-          "$ref": "#/$defs/tab_style"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/ref"
-        }
-      ],
-      "default": null
-    },
-    "header": {
-      "description": "What the header shows besides the name and render time: a Header with a subtitle, author, logo, \"data as of\" date and time zone.",
-      "anyOf": [
-        {
-          "$ref": "#/$defs/header"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/ref"
-        }
-      ],
-      "default": null
-    },
-    "blocks": {
-      "description": "The report's blocks, in order: all of them Page blocks, or none.",
-      "anyOf": [
-        {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/Page"
-          },
-          "minItems": 1
-        },
-        {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/block"
-          },
-          "minItems": 1
-        }
-      ]
+    {
+      "$ref": "#/$defs/deck"
     }
-  },
-  "required": [
-    "briefing",
-    "blocks"
   ],
-  "additionalProperties": false,
   "$defs": {
     "block": {
       "description": "Any block but a Page (pages only go at the top level).",
@@ -3017,6 +2925,207 @@
     "file": {
       "description": "A file's path, or its content as a data: URI (data:application/pdf;base64,...).",
       "type": "string"
+    },
+    "report": {
+      "description": "A briefing report as JSON: the same blocks and options as in Python. Build it with briefing.from_spec(spec, data) and check it with briefing.validate(spec, data).",
+      "type": "object",
+      "properties": {
+        "briefing": {
+          "description": "The format version of this JSON (not briefing's version): 1.",
+          "const": 1
+        },
+        "export": {
+          "description": "Opt-in export menu in the report header: `\"png\"` adds \"Save as PNG\" (the open page with a margin around it, drawn in the reader's browser at 2×). Reports without it contain no export code. \"Save as PNG\" is best effort: charts drawn in iframes (Bokeh) and WebGL Plotly traces come out blank, and fonts are whatever the reader's machine has. For exact, reproducible files use save_image / save_pdf. To print, use the browser's own print (Ctrl+P or ⌘P): it gets the same print layout. `\"embed\"` puts a `</>` button on each page, labelled group, chart, table, text, number, alert and banner: it copies that part as an embed fragment, as stringify makes with `full_html=False`, to paste into another page. `\"pdf\"` (the \"Print\" button) was removed in 0.4.0: print with Ctrl+P, or save a file with save_pdf.",
+          "anyOf": [
+            {
+              "enum": [
+                "png",
+                "embed"
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "png",
+                  "embed"
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": []
+        },
+        "footer": {
+          "description": "Text to put before the report's footer line, such as a team name. Every report ends with \"Made with briefing\" and its version; that line can't be turned off.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "tabs": {
+          "description": "How the page tabs look, for a report made of Page blocks: a TabStyle such as `bf.TabStyle(layout=\"stretch\", sticky=True)`.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/tab_style"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "header": {
+          "description": "What the header shows besides the name and render time: a Header with a subtitle, author, logo, \"data as of\" date and time zone.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/header"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "blocks": {
+          "description": "The report's blocks, in order: all of them Page blocks, or none.",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Page"
+              },
+              "minItems": 1
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/block"
+              },
+              "minItems": 1
+            }
+          ]
+        }
+      },
+      "required": [
+        "briefing",
+        "blocks"
+      ],
+      "additionalProperties": false
+    },
+    "deck": {
+      "description": "A briefing slide deck as JSON (bf.deck.Deck): its slides, each holding blocks. Build it with briefing.deck.from_spec(spec, data).",
+      "type": "object",
+      "properties": {
+        "briefing": {
+          "description": "The format version of this JSON (not briefing's version): 1.",
+          "const": 1
+        },
+        "footer": {
+          "description": "Text before the \"Made with briefing\" line at the foot of every slide, such as a team name.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "slides": {
+          "description": "The deck's slides, in order.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/slide"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "briefing",
+        "slides"
+      ],
+      "additionalProperties": false
+    },
+    "slide": {
+      "description": "One slide of a deck: a title over blocks stacked top to bottom, as in a report.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "Optional: a slide is known by its place in \"slides\".",
+          "const": "Slide"
+        },
+        "title": {
+          "description": "The slide's heading, with inline Markdown as in captions.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable slide id (letters, digits, `_` and `-`): its link in the deck (`#name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "blocks": {
+          "description": "The slide's blocks, top to bottom.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/block"
+          }
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "blocks"
+          ]
+        },
+        {
+          "required": [
+            "title"
+          ]
+        }
+      ],
+      "additionalProperties": false
     }
   }
 }

@@ -10,6 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `bf.deck`: slide decks written from briefing's blocks (#197). `bf.deck.Deck(*slides,
+  footer=)` holds `bf.deck.Slide(*blocks, title=, name=)` objects, each holding any block
+  but a `Page`; a slide with only a title is a section slide. A deck has a JSON form,
+  `{"briefing": 1, "slides": [{"title": ..., "blocks": [...]}]}`: `bf.to_spec(deck)` writes
+  it, `bf.deck.from_spec(spec, data)` reads it, and `bf.validate` and
+  `python -m briefing validate` check it, with names unique in the whole deck.
+
+### Changed
+
+- The JSON Schema's root accepts a report or a deck: the report's definition moved to
+  `$defs/report`, next to `$defs/deck` and `$defs/slide`. Report JSON is unchanged and still
+  format 1.
+
 ## [0.6.1] - 2026-11-22
 
 ### Added

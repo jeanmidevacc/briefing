@@ -131,6 +131,9 @@ def wrap_block(b: BlockOrPrimitive) -> Block:
 
         return DataTable(b)
 
+    if type(b).__module__ == "briefing.deck._blocks":  # a Deck, which isn't a block
+        raise BriefingError("A Deck isn't a block of a report: save it with bf.deck.save(deck, path).")
+
     raise BriefingError(
         f"Cannot auto-wrap {type(b).__name__!r} into a briefing block. "
         "Pass a briefing block, a string, or a dataframe."

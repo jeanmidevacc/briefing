@@ -153,6 +153,9 @@ jsonschema.validate(spec, bf.schema())
 `bf.validate` checks more than the schema can say (names, references, each block's own
 checks, rendering), so prefer it when Python is at hand.
 
+The schema's root accepts a report (`"blocks"`) or a slide deck (`"slides"`, see
+{mod}`briefing.deck`); each is a definition of its own, `$defs/report` and `$defs/deck`.
+
 ## For agents
 
 briefing is newer than most models' training data. An agent can learn it from the

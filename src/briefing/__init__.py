@@ -27,7 +27,7 @@ from pathlib import Path
 # ── lab: custom-visualisation blocks (briefing.lab.DataProfile / .DataDive) ───
 # Same wheel; importing it registers its renderers. `briefing[lab]` only adds
 # the pandas dependency those blocks need at render time.
-from briefing import color, email, fmt, lab
+from briefing import color, deck, email, fmt, lab
 from briefing._error import BriefingError
 from briefing._markdown_first import from_markdown
 from briefing._preview import Preview, preview
@@ -282,6 +282,7 @@ __all__: list[str] = [
     "Legend",
     "Scale",
     "color",
+    "deck",
     "email",
     "fmt",
     "slug",
