@@ -17,10 +17,6 @@ from briefing.blocks.base import Block
 from tests.banner_images import RED_SVG
 from tests.contract import PAYLOAD
 
-#: The "calendar" scenario keeps the deprecated hour view (#111) so the tests still cover it;
-#: modules that render the scenarios filter its warning with this.
-HOUR_VIEW_WARNING = "ignore:CalendarHeatmap. the hour view:DeprecationWarning"
-
 Frames = Callable[[str], pd.DataFrame]
 Build = Callable[[Frames], bf.Briefing]
 
@@ -170,7 +166,7 @@ SCENARIOS: dict[str, Build] = {
     "calendar": lambda df: bf.Briefing(bf.lab.CalendarHeatmap(
         df("df_pipeline_log"), date="run_at", value="rows", group="team", expected=500,
         events=df("df_events").assign(color=pd.Series(["#2dd4bf", None, "rgb(96, 165, 250)"])),
-        views=("days", "hours"), tz="America/Montreal", on_click="rows")),
+        tz="America/Montreal", on_click="rows")),
     "calendar-diverging": lambda df: bf.Briefing(
         bf.lab.CalendarHeatmap(df("df_signed"), date="day", value="balance", center=0,
                                colors=["#d73027", "#f7f7f7", "#1a9850"], week_start="sunday",

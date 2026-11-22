@@ -9,10 +9,8 @@ import pytest
 import briefing as bf
 from briefing.spec.__main__ import schema_text
 from briefing.spec._model import block_types
-from tests.scenarios import HOUR_VIEW_WARNING, SCENARIOS, Frames
+from tests.scenarios import SCENARIOS, Frames
 from tests.test_spec.test_from_spec import EXAMPLE
-
-pytestmark = pytest.mark.filterwarnings(HOUR_VIEW_WARNING)
 
 SCHEMA = files("briefing") / "schema" / "v1.json"
 

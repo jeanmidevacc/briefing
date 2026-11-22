@@ -237,7 +237,7 @@ GitHub-style calendar heatmap: one cell per day, weeks as columns.
 - `value`: text. Column to aggregate per day; `None` counts the rows.
 - `agg`: one of "sum", "mean", "median", "min", "max", "count", default `"sum"`. How to aggregate `value`: `"sum"`, `"mean"`, `"median"`, `"min"`, `"max"` or `"count"`.
 - `group`: text. Column to split by: one calendar per group, stacked, on one shared colour scale.
-- `views`: a list of values from "days", "hours", default `["days"]`. `("days",)`, `("hours",)` or `("days", "hours")`: the day calendar and/or a 7 × 24 weekday-by-hour grid; with both, tabs switch between them. The hour view needs timestamps with a time of day. *Deprecated since 0.2.2:* the hour view raises a `DeprecationWarning` and will be replaced by a dedicated time-pattern heatmap (issue #111).
+- `views`: a list of values from "days", default `["days"]`. `("days",)`, the day calendar. The hour view was removed in 0.5.0: use TimeHeatmap with `rows="weekday", columns="hour"`.
 - `tz`: text. A time zone such as `"America/Montreal"`. Converts timezone-aware timestamps only; naive timestamps and plain dates are taken as already local, so a date at midnight never moves to the previous day.
 - `colors`: text or a list of texts, default `"github"`. `"github"` (GitHub's green scale) or a list of CSS colours, low to high.
 - `center`: a number. A midpoint for a diverging scale (e.g. `0` for values that go negative); `colors` is then three hex colours: below, at and above it.

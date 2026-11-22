@@ -160,12 +160,11 @@ class DataDive(Block):
         self.max_rows = max_rows
 
 
-#: Shown once per CalendarHeatmap built with the hour view (#111).
-HOURS_VIEW_DEPRECATION = (
-    "CalendarHeatmap: the hour view (views=('hours',) or ('days', 'hours')) is deprecated since briefing "
-    "0.2.2 and will be removed in 0.5.0. Use bf.lab.TimeHeatmap(df, date=..., rows='weekday', columns='hour') "
-    "for the weekday-by-hour grid (and other time patterns, "
-    "https://github.com/jeanmidevacc/briefing/issues/111), and views=('days',) for the day calendar alone."
+#: The hour view, deprecated in 0.2.2, was removed in 0.5.0 (#111).
+HOURS_VIEW_REMOVED = (
+    "CalendarHeatmap: the hour view (views=('hours',) or ('days', 'hours')) was removed in briefing 0.5.0. "
+    "Use bf.lab.TimeHeatmap(df, date=..., rows='weekday', columns='hour') for the weekday-by-hour grid, "
+    "next to the calendar in a bf.Select or bf.Group if you want both; the calendar is the day view alone."
 )
 
 
@@ -186,11 +185,8 @@ class CalendarHeatmap(Block):
         agg: How to aggregate ``value``: ``"sum"``, ``"mean"``, ``"median"``,
             ``"min"``, ``"max"`` or ``"count"``.
         group: Column to split by: one calendar per group, stacked, on one shared colour scale.
-        views: ``("days",)``, ``("hours",)`` or ``("days", "hours")``: the day calendar
-            and/or a 7 × 24 weekday-by-hour grid; with both, tabs switch between them.
-            The hour view needs timestamps with a time of day. *Deprecated since
-            0.2.2:* the hour view raises a ``DeprecationWarning`` and will be replaced
-            by a dedicated time-pattern heatmap (issue #111).
+        views: ``("days",)``, the day calendar. The hour view was removed in 0.5.0:
+            use :class:`TimeHeatmap` with ``rows="weekday", columns="hour"``.
         tz: A time zone such as ``"America/Montreal"``. Converts timezone-aware
             timestamps only; naive timestamps and plain dates are taken as already
             local, so a date at midnight never moves to the previous day.
@@ -271,19 +267,12 @@ class CalendarHeatmap(Block):
         if on_click not in (None, "rows"):
             raise BriefingError(f"CalendarHeatmap: on_click must be 'rows' or None, not {on_click!r}.")
         views = tuple(views)
-        if not views or any(v not in ("days", "hours") for v in views) or len(set(views)) != len(views):
-            raise BriefingError(
-                f"CalendarHeatmap: views must be ('days',), ('hours',) or ('days', 'hours'), not {views!r}."
-            )
+        if "hours" in views:
+            raise BriefingError(HOURS_VIEW_REMOVED)
+        if views != ("days",):
+            raise BriefingError(f"CalendarHeatmap: views is ('days',), the day calendar, not {views!r}.")
         if tz is not None:
             _check_tz(tz)
-        if "hours" in views:
-            warnings.warn(HOURS_VIEW_DEPRECATION, DeprecationWarning, stacklevel=2)
-        if "hours" in views and not _has_times(frame[date]):
-            raise BriefingError(
-                f"CalendarHeatmap: the hour view needs a time of day, but {date!r} holds dates only. "
-                "Pass timestamps, or views=('days',)."
-            )
         if week_start not in ("monday", "sunday"):
             raise BriefingError(f"CalendarHeatmap: week_start must be 'monday' or 'sunday', not {week_start!r}.")
         self.colors = _check_colors(colors, center)

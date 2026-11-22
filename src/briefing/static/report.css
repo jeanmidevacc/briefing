@@ -837,17 +837,17 @@ html.bf-printing .bf-heading-actions { display: none; }
 .bf-cal__calendar + .bf-cal__calendar { margin-top: 1rem; }
 .bf-cal__group { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; }
 .bf-cal__scroll { overflow-x: auto; }
-.bf-cal__days, .bf-cal__hours, .bf-cal__grid { display: block; font-family: var(--bf-font);
+.bf-cal__days, .bf-cal__grid { display: block; font-family: var(--bf-font);
   /* Fit the width available (report or Group column) from 0.6x to 2x the natural size (#106);
      below 0.6x the calendar scrolls inside its block. */
   width: 100%; height: auto; min-width: calc(0.6 * var(--bf-cal-w)); max-width: calc(2 * var(--bf-cal-w)); }
 /* calendar.js sets --bf-cal-text so labels change size at half the cells' rate; without it,
    labels scale with the SVG. */
-.bf-cal__days text, .bf-cal__hours text, .bf-cal__grid text { fill: var(--bf-muted); font-size: calc(9px * var(--bf-cal-text, 1)); }
+.bf-cal__days text, .bf-cal__grid text { fill: var(--bf-muted); font-size: calc(9px * var(--bf-cal-text, 1)); }
 .bf-cal__days .bf-cal__year { fill: var(--bf-text); font-weight: 700; font-size: calc(10px * var(--bf-cal-text, 1)); }
 .bf-cal__year-line { stroke: var(--bf-muted); stroke-dasharray: 2 2; }
-.bf-cal__day--zero, .bf-cal__hour--zero, .bf-cal__cell--zero { fill: var(--bf-border); }
-.bf-cal__day--empty, .bf-cal__hour--empty, .bf-cal__cell--empty { fill: none; stroke: var(--bf-border); stroke-width: 1; stroke-dasharray: 2 1.5; }
+.bf-cal__day--zero, .bf-cal__cell--zero { fill: var(--bf-border); }
+.bf-cal__day--empty, .bf-cal__cell--empty { fill: none; stroke: var(--bf-border); stroke-width: 1; stroke-dasharray: 2 1.5; }
 /* An event's colour (#152): --bf-event on its marks, else the accent. */
 .bf-cal__day--event { stroke: var(--bf-event, var(--bf-accent)); stroke-width: 1.5; }
 .bf-cal__day--below { stroke: #dc2626; stroke-width: 1.5; stroke-dasharray: none; }
@@ -872,7 +872,7 @@ html.bf-printing .bf-heading-actions { display: none; }
   border-radius: 0.375rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18); pointer-events: none; }
 .bf-cal__tip[hidden] { display: none; }
 .bf-cal__tip strong { display: block; font-weight: 600; }
-.bf-calendar rect.bf-cal__day:hover, .bf-calendar rect.bf-cal__hour:hover,
+.bf-calendar rect.bf-cal__day:hover,
 .bf-calendar rect.bf-cal__cell:hover { stroke: var(--bf-text); stroke-width: 1.5; }
 .bf-calendar rect[role="button"]:focus-visible { stroke: var(--bf-accent); stroke-width: 2; }
 .bf-cal__panel { margin-top: 0.75rem; border: 1px solid var(--bf-border); border-radius: var(--bf-radius);
@@ -924,7 +924,7 @@ html.bf-printing .bf-print-label {
   .bf-plot, .bf-alert, .bf-bignumber, .bf-formula, .bf-code, .bf-profile__card,
   .bf-group:has(> .bf-bignumber) { break-inside: avoid; }
   /* A calendar may shrink to fit the sheet instead of being clipped (#106). */
-  .bf-cal__days, .bf-cal__hours, .bf-cal__grid { min-width: 0; --bf-cal-text: 1; }
+  .bf-cal__days, .bf-cal__grid { min-width: 0; --bf-cal-text: 1; }
   .bf-cal__swatch { width: 11px; height: 11px; }
   .bf-cal__tip { display: none !important; }
   .bf-heading-actions { display: none; }

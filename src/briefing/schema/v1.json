@@ -1916,14 +1916,13 @@
           "default": null
         },
         "views": {
-          "description": "`(\"days\",)`, `(\"hours\",)` or `(\"days\", \"hours\")`: the day calendar and/or a 7 × 24 weekday-by-hour grid; with both, tabs switch between them. The hour view needs timestamps with a time of day. *Deprecated since 0.2.2:* the hour view raises a `DeprecationWarning` and will be replaced by a dedicated time-pattern heatmap (issue #111).",
+          "description": "`(\"days\",)`, the day calendar. The hour view was removed in 0.5.0: use TimeHeatmap with `rows=\"weekday\", columns=\"hour\"`.",
           "anyOf": [
             {
               "type": "array",
               "items": {
                 "enum": [
-                  "days",
-                  "hours"
+                  "days"
                 ]
               }
             },

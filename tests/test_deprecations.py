@@ -51,19 +51,18 @@ def test_plot_scale_is_gone() -> None:
         bf.Plot(object(), scale=2.0)  # type: ignore[call-arg]
 
 
-# ── CalendarHeatmap's hour view (#111) ────────────────────────────────────────
+# ── CalendarHeatmap's hour view (#111): deprecated in 0.2.2, removed in 0.5.0 ──────
 
 
 @pytest.mark.parametrize("views", [("hours",), ("days", "hours"), ["hours", "days"]])
-def test_the_calendar_hour_view_warns_and_still_renders(views: tuple[str, ...], df_pipeline_log: t.Any) -> None:
-    expected = r"hour view .* deprecated since briefing 0\.2\.2 and will be removed in 0\.5\.0\. Use bf\.lab\.TimeHeat"
-    with pytest.warns(DeprecationWarning, match=expected) as caught:
-        block = bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", views=views)
-    assert caught[0].filename == __file__  # points at the caller's line (stacklevel=2)
-    assert "bf-cal__hours" in bf.stringify(bf.Briefing(block))
+def test_the_calendar_hour_view_was_removed_and_says_what_to_use(views: t.Any, df_pipeline_log: t.Any) -> None:
+    expected = r"hour view .* was removed in briefing 0\.5\.0\. Use bf\.lab\.TimeHeatmap\(df, date=\.\.\., rows="
+    with pytest.raises(bf.BriefingError, match=expected):
+        bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", views=views)
 
 
-def test_the_day_calendar_alone_does_not_warn(df_pipeline_log: t.Any) -> None:
+def test_the_day_calendar_still_takes_views_days(df_pipeline_log: t.Any) -> None:
+    # The deprecation told users to pass views=('days',): it keeps working, without a warning.
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at")

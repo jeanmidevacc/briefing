@@ -20,9 +20,7 @@ import pytest
 
 import briefing as bf
 from tests.golden import NOW, mask, static_files, static_marker
-from tests.scenarios import HOUR_VIEW_WARNING, REPORT_NAME, SCENARIOS, Frames
-
-pytestmark = pytest.mark.filterwarnings(HOUR_VIEW_WARNING)
+from tests.scenarios import REPORT_NAME, SCENARIOS, Frames
 
 GOLDEN = Path(__file__).parent / "snapshots" / "golden"
 

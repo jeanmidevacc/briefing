@@ -75,7 +75,7 @@ _CHOICES: dict[tuple[str, str], tuple[str, ...]] = {
     ("Banner", "side"): ("left", "right"),
     ("lab.DataDive", "layout"): ("scatter", "tile"),
     ("lab.CalendarHeatmap", "agg"): CalendarHeatmap.AGGS,
-    ("lab.CalendarHeatmap", "views"): ("days", "hours"),
+    ("lab.CalendarHeatmap", "views"): ("days",),
     ("lab.CalendarHeatmap", "week_start"): ("monday", "sunday"),
     ("lab.CalendarHeatmap", "on_click"): ("rows",),
     ("lab.TimeHeatmap", "rows"): TimeHeatmap.UNITS,

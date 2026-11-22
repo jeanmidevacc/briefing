@@ -22,10 +22,7 @@ from tests.contract import (
     check_user_text_escaped,
     parse_report,
 )
-from tests.scenarios import ESCAPE_SCENARIOS, HOUR_VIEW_WARNING, REPORT_NAME, SCENARIOS, Frames
-
-pytestmark = pytest.mark.filterwarnings(HOUR_VIEW_WARNING)
-
+from tests.scenarios import ESCAPE_SCENARIOS, REPORT_NAME, SCENARIOS, Frames
 
 #: Cases expected to fail today, as {(rule, scenario): reason}. Remove an entry
 #: when its issue is fixed; strict xfail makes a stale entry fail.
