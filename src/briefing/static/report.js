@@ -117,20 +117,28 @@
   // ── Select / dropdown ────────────────────────────────────────────────────────
 
   function setupDropdown(sel, root) {
-    var select = sel.querySelector('.bf-select__select');
-    var panels = Array.from(sel.querySelectorAll('.bf-select__panel'));
+    var select = sel.querySelector(':scope > .bf-select__select');
+    var panels = Array.from(sel.querySelectorAll(':scope > .bf-select__panel'));
+
+    var shown = 0;
 
     function activate(idx) {
+      shown = idx;
       panels.forEach(function (p, i) { p.hidden = i !== idx; });
+      if (select && panels[idx] && panels[idx].id) select.setAttribute('aria-controls', panels[idx].id);
       resizePlots(panels[idx]);
     }
 
     if (select) {
-      select.addEventListener('change', function () {
+      // 'input' too (#29): some browsers fire 'change' only when a keyboard user leaves the list.
+      var choose = function () {
         var idx = parseInt(select.value, 10);
+        if (idx === shown) return;
         activate(idx);
         panelChosen(root, panels[idx]);
-      });
+      };
+      select.addEventListener('input', choose);
+      select.addEventListener('change', choose);
     }
 
     activate(0);
@@ -410,7 +418,7 @@
       flag.classList.add('bf-printing');
       root.querySelectorAll('.bf-select').forEach(function (sel) {
         var labels = sel.classList.contains('bf-select--dropdown')
-          ? Array.from(sel.querySelectorAll('.bf-select__select option'))
+          ? Array.from(sel.querySelectorAll(':scope > .bf-select__select option'))
           : Array.from(sel.querySelectorAll(':scope > .bf-select__tablist > .bf-select__tab'));
         sel.querySelectorAll(':scope > .bf-select__panel').forEach(function (panel, i) {
           var label = document.createElement('div');
