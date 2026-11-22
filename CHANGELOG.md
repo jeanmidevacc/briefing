@@ -49,6 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Alerts in dark themes: their backgrounds and text were fixed light colours; each level now
+  keeps its hue mixed with the theme's background and text, readable (4.5:1) in every preset
+  (#167).
 - Dropdown Selects are accessible: the menu is named after the Select's `label` ("Choose a
   view" without one, not "Select view"), each panel is a region named after its option and
   tied to the menu with `aria-controls`, the keyboard switches panels as it moves through
