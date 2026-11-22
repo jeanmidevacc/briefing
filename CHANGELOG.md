@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   contrast, colours too close, colour-blind clashes, lightness that doesn't rise), with
   `bf.color.contrast`, `simulate` and `distance`; and `Formatting.from_accent(colour,
   dark=)`, a whole theme from one brand colour at WCAG contrast levels (#179).
+- Charts in the report's theme: `Formatting.plotly_template()` and `Formatting.mpl_style()`
+  give Plotly and Matplotlib the theme's font, colours and a categorical palette
+  (`Formatting.categorical()`, checked for colour-blind readers). A `Scale` whose domain
+  names categories is a named palette, such as party colours: `scale.mapping` feeds
+  Plotly's `color_discrete_map`, and a `Legend` lists it (#39).
 
 ### Changed
 

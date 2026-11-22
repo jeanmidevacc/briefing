@@ -354,6 +354,10 @@ def _legend(
         return f'<span class="bf-cal__legend-item">{content}</span>'
 
     items: list[str] = []
+    if isinstance(block.colors, Scale) and block.colors.categorical:  # a named palette (#39): one swatch each
+        for category, fill in block.colors.mapping.items():
+            items.append(item(swatch(fill) + _html.escape(category)))
+        return f'<div class="bf-cal__legend">{"".join(items)}</div>'
     if isinstance(block.colors, Scale):
         if values or block.colors.domain is not None:
             low, high = block.colors.bounds(values)
@@ -383,7 +387,7 @@ def render_legend(block: Legend) -> str:
     from briefing.renderers.inline import inline_markdown
 
     title = f'<div class="bf-legend__title">{inline_markdown(block.title)}</div>' if block.title else ""
-    colour = _scale(t.cast("Heatmap", block), [])
+    colour = (lambda v: ("", "")) if block.scale.categorical else _scale(t.cast("Heatmap", block), [])
     return f'<div class="bf-block bf-legend">{title}{_legend(block, [], colour, _events(block), targets=False)}</div>'
 
 

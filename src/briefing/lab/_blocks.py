@@ -432,6 +432,9 @@ def _check_colors(colors: t.Any, center: float | None, block: str = "CalendarHea
     if isinstance(colors, Mapping):
         colors = Scale.of(colors)
     if isinstance(colors, Scale):
+        if colors.categorical:
+            raise BriefingError(f"{block}: a categorical Scale colours categories; a heatmap needs one over numbers, "
+                                "with domain=(low, high) or none.")
         if center is not None:
             raise BriefingError(f"{block}: with a bf.Scale, put the centre in it: bf.Scale(..., center=...).")
         return colors
@@ -562,7 +565,8 @@ class Legend(Block):
     and any events; give the blocks themselves ``legend=False``.
 
     Args:
-        scale: A :class:`~briefing.Scale` with a ``domain``: the values its colours stand for.
+        scale: A :class:`~briefing.Scale` with a ``domain``: the values its colours stand for,
+            or the categories of a named palette (one swatch each).
         title: A short line above the legend, with inline Markdown as in captions.
         events: Dates to list, as ``CalendarHeatmap(events=)`` takes them, with their colours.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).

@@ -21,14 +21,16 @@ class Scale:
 
     Colours are spaced evenly along the domain and mixed in OKLab, so equal steps in value
     look like equal steps in colour. Pass a scale as ``colors=`` to the heatmaps, or call it
-    with a value to colour anything else.
+    with a value to colour anything else. A domain of category names makes it categorical:
+    a named palette, one colour per category (#39).
 
     Args:
         colors: Two or more hex colours, low to high. With ``center``, an odd number:
             the middle one sits at the centre.
         domain: ``(low, high)``: the values the first and last colours stand for, so a
             colour means the same value everywhere; values outside are clamped. Without
-            it, each block spreads the colours over its own data.
+            it, each block spreads the colours over its own data. Or a list of category
+            names, one per colour, for a categorical scale.
         center: A midpoint for a diverging scale, such as ``0`` for a balance.
         steps: Show that many flat classes instead of a continuous ramp.
 
@@ -38,10 +40,12 @@ class Scale:
         bf.lab.CalendarHeatmap(df, date="day", value="interest", colors=interest)
         interest(42)  # the hex colour of 42
         balance = bf.Scale(["#d73027", "#f7f7f7", "#1a9850"], center=0)
+        parties = bf.Scale(["#d71920", "#1a4782"], domain=["Liberal", "Conservative"])
+        parties("Liberal")  # '#d71920'; parties.mapping for Plotly's color_discrete_map
     """
 
     colors: Sequence[str]
-    domain: tuple[float, float] | None = None
+    domain: tuple[float, float] | Sequence[str] | None = None
     center: float | None = None
     steps: int | None = None
 
@@ -49,31 +53,62 @@ class Scale:
         if isinstance(self.colors, str) or not isinstance(self.colors, Sequence) or len(self.colors) < 2:
             raise BriefingError(f"Scale: colors is a list of two or more hex colours, not {self.colors!r}.")
         object.__setattr__(self, "colors", tuple(_color.check_hex(c, "Scale: each colour") for c in self.colors))
+        if self.domain is not None and self.domain and not isinstance(self.domain, str) and all(
+                isinstance(v, str) for v in self.domain):
+            self._categorical()
+            return
         if self.domain is not None:
-            if (isinstance(self.domain, str) or not isinstance(self.domain, Sequence) or len(self.domain) != 2
-                    or not all(_number(v) for v in self.domain) or not self.domain[0] < self.domain[1]):
+            ends: t.Any = self.domain
+            if (isinstance(ends, str) or not isinstance(ends, Sequence) or len(ends) != 2
+                    or not all(_number(v) for v in ends) or not ends[0] < ends[1]):
                 raise BriefingError(f"Scale: domain is (low, high), two numbers with low below high, "
                                     f"not {self.domain!r}.")
-            object.__setattr__(self, "domain", (float(self.domain[0]), float(self.domain[1])))
+            object.__setattr__(self, "domain", (float(ends[0]), float(ends[1])))
         if self.center is not None:
             if not _number(self.center):
                 raise BriefingError(f"Scale: center is a number, not {self.center!r}.")
             if len(self.colors) % 2 == 0:
                 raise BriefingError("Scale: with center, colors has an odd number of colours (3, 5…): "
                                     "the middle one sits at the centre.")
-            if self.domain is not None and not self.domain[0] < self.center < self.domain[1]:
+            lo, hi = t.cast("tuple[float, float]", self.domain) if self.domain is not None else (-math.inf, math.inf)
+            if not lo < self.center < hi:
                 raise BriefingError(f"Scale: center {self.center} must be inside the domain {self.domain}.")
             object.__setattr__(self, "center", float(self.center))
         if self.steps is not None and (not isinstance(self.steps, int) or isinstance(self.steps, bool)
                                        or self.steps < 2):
             raise BriefingError(f"Scale: steps is a whole number of 2 or more, not {self.steps!r}.")
 
+    def _categorical(self) -> None:
+        names = list(t.cast("Sequence[str]", self.domain))
+        if len(names) != len(self.colors):
+            raise BriefingError(f"Scale: a categorical scale has one colour per category: {len(self.colors)} "
+                                f"colours for {len(names)} categories.")
+        if len(set(names)) != len(names):
+            raise BriefingError(f"Scale: a category is named twice in {names!r}.")
+        if self.center is not None or self.steps is not None:
+            raise BriefingError("Scale: center and steps are for numbers, not categories.")
+        object.__setattr__(self, "domain", tuple(names))
+
+    @property
+    def categorical(self) -> bool:
+        """Whether the domain names categories (a named palette) rather than a range of numbers."""
+        return self.domain is not None and all(isinstance(v, str) for v in self.domain)
+
+    @property
+    def mapping(self) -> dict[str, str]:
+        """Category → colour, for a categorical scale (Plotly's ``color_discrete_map``)."""
+        if not self.categorical:
+            raise BriefingError("Scale: mapping is for a categorical scale, whose domain names categories.")
+        return dict(zip(t.cast("Sequence[str]", self.domain), self.colors, strict=True))
+
     # ── the scale ────────────────────────────────────────────────────────────
 
     def bounds(self, values: Sequence[float] = ()) -> tuple[float, float]:
         """The low and high ends: the domain, else the range of *values* (symmetric around a centre)."""
+        if self.categorical:
+            raise BriefingError("Scale: a categorical scale colours categories, not a range of numbers.")
         if self.domain is not None:
-            return self.domain
+            return t.cast("tuple[float, float]", self.domain)
         if not values:
             raise BriefingError("Scale: this scale has no domain and no values to spread over: "
                                 "pass domain=(low, high).")
@@ -100,10 +135,15 @@ class Scale:
         """The colour of *value* between *lo* and *hi*."""
         return _color.along(self.colors, self.position(value, lo, hi))
 
-    def __call__(self, value: float) -> str:
-        """The hex colour of *value* on this scale's domain."""
+    def __call__(self, value: float | str) -> str:
+        """The hex colour of *value* on this scale's domain (or of a category)."""
+        if self.categorical:
+            mapping = self.mapping
+            if value not in mapping:
+                raise BriefingError(f"Scale: {value!r} isn't one of its categories: {list(mapping)!r}.")
+            return mapping[str(value)]
         lo, hi = self.bounds()
-        return self.at(value, lo, hi)
+        return self.at(t.cast(float, value), lo, hi)
 
     def gradient(self, lo: float, hi: float) -> str:
         """A CSS ``linear-gradient`` of the scale from *lo* to *hi*, left to right."""
@@ -135,7 +175,7 @@ class Scale:
         """The fields that are set, as JSON."""
         out: dict[str, t.Any] = {"colors": list(self.colors)}
         if self.domain is not None:
-            out["domain"] = list(self.domain)
+            out["domain"] = list(self.domain)  # numbers, or category names
         if self.center is not None:
             out["center"] = self.center
         if self.steps is not None:

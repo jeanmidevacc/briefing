@@ -4,7 +4,7 @@ Formatting and themes
 .. currentmodule:: briefing
 
 .. autoclass:: Formatting
-   :members: from_accent
+   :members: from_accent, categorical, plotly_template, mpl_style
 .. autoclass:: Width
    :members:
    :undoc-members:

@@ -155,7 +155,7 @@ A wrapping row of pills: labels, tags, or values that rose or fell.
 
 One legend for the blocks that share a Scale, such as a page of calendars.
 
-- `scale` (required): a scale {"colors": ["#...", "#..."], "domain": [0, 100]}. A Scale with a `domain`: the values its colours stand for.
+- `scale` (required): a scale {"colors": ["#...", "#..."], "domain": [0, 100]}. A Scale with a `domain`: the values its colours stand for, or the categories of a named palette (one swatch each).
 - `title`: text. A short line above the legend, with inline Markdown as in captions.
 - `events`: a list of texts or a table {"columns": [...], "rows": [[...]]}. Dates to list, as `CalendarHeatmap(events=)` takes them, with their colours.
 
