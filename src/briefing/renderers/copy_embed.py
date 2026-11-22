@@ -12,6 +12,7 @@ import re
 
 from briefing.blocks.base import Block
 from briefing.blocks.layout import Group
+from briefing.renderers.inline import inline_plain
 
 #: A markdown heading on the first line, without its ``{#name}``.
 _FIRST_HEADING = re.compile(r"\s*#{1,6}[ \t]+([^\n]+?)(?:[ \t]*\{#[\w-]+\})?[ \t]*(?:\n|$)")
@@ -32,8 +33,8 @@ def embed_label(block: Block, page: bool = False) -> str | None:
     if noun is None or (isinstance(block, Group) and not block.label):
         return None
     for text in (block.label, *(getattr(block, a, None) for a in ("caption", "heading", "title"))):
-        if isinstance(text, str) and text.strip():
-            return text.strip()
+        if isinstance(text, str) and inline_plain(text):
+            return inline_plain(text)
     markdown = getattr(block, "content", None) or getattr(block, "text", None)
     heading = _FIRST_HEADING.match(markdown) if isinstance(markdown, str) else None
     return heading.group(1) if heading else f"this {noun}"

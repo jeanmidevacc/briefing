@@ -90,8 +90,18 @@ import briefing as bf
 report = [
     bf.Alert("The nightly load finished at 02:14.", level="success"),
     bf.Alert("South region margin dropped below 25 %.", level="warning", title="Watch"),
-    bf.Alert("The legacy source is gone from 1 March.", level="error", title="Breaking change"),
+    bf.Alert("The legacy source is **gone from 1 March**: read `orders_v2`.", level="error",
+             title="Breaking change"),
     bf.Alert("Figures are provisional until the month closes."),
 ]
 bf.save(report, "alerts.html", name="Alerts")
 ```
+
+## Inline Markdown in short fields
+
+Captions (of charts, tables, images, code and formulas), `Alert` titles and messages,
+and `BigNumber` headings take inline Markdown: `**bold**`, `*italics*`, `` `code` ``
+and `[links](https://example.org)`. Block syntax such as headings and lists stays as
+written, and raw HTML is shown as text rather than run, since these fields often hold
+values from data; use `Text` or `HTML` for richer content. Write `\*` to keep a
+character that Markdown would read.

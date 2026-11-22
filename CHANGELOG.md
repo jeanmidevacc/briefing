@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Captions, `Alert` titles and messages, and `BigNumber` headings render inline Markdown
+  (bold, italics, code, links); raw HTML in them stays escaped, and block syntax stays text.
+  A caption that already holds `*`, backticks or `[…](…)` may now be formatted: write `\*`
+  to keep it literal (#26).
 - Theme presets use only fonts every system has, so a preset looks the same to every reader
   (#28). Inter, DM Sans, IBM Plex Sans and Lora were named but never embedded, so most
   readers saw a fallback. The default is now the system UI font; `corporate()` a

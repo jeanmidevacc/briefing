@@ -29,6 +29,7 @@ import re
 import typing as t
 
 from briefing._error import BriefingError
+from briefing.renderers.inline import inline_markdown
 from briefing.renderers.pack import UNPACK_JS, pack
 from briefing.renderers.registry import IdGen
 from briefing.renderers.script_json import script_json
@@ -361,7 +362,7 @@ def render_figure(block: Plot, idgen: IdGen | None = None) -> str:
         return f'<div class="bf-placeholder">⚠ {_html.escape(str(exc))}</div>'
 
     caption_html = (
-        f'<figcaption class="bf-plot__caption">{_html.escape(block.caption)}</figcaption>'
+        f'<figcaption class="bf-plot__caption">{inline_markdown(block.caption)}</figcaption>'
         if block.caption
         else ""
     )
