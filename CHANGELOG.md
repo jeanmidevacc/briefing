@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Tables read in dark themes: their stripes and the DataTable header hover were fixed light
+  greys (`#fafafa`, `#f0f0f0`); they now take the theme's surface and border colours (#150).
+
 ## [0.4.1] - 2026-11-20
 
 ### Fixed

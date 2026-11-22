@@ -214,7 +214,7 @@ html.bf-printing .bf-heading-actions { display: none; }
   color: var(--bf-text);
 }
 .bf-text tr:nth-child(even) td,
-.bf-html tr:nth-child(even) td { background: #fafafa; }
+.bf-html tr:nth-child(even) td { background: var(--bf-surface); }
 .bf-text hr,
 .bf-html hr {
   border: none;
@@ -470,7 +470,7 @@ html.bf-printing .bf-heading-actions { display: none; }
   font-weight: 600;
   color: var(--bf-text);
 }
-.bf-table__table tr:nth-child(even) td { background: #fafafa; }
+.bf-table__table tr:nth-child(even) td { background: var(--bf-surface); }
 .bf-table__caption {
   margin-top: 0.5rem;
   font-size: 0.8rem;
@@ -532,12 +532,13 @@ html.bf-printing .bf-heading-actions { display: none; }
   cursor: pointer;
   user-select: none;
 }
-.bf-dt__th:hover { background: #f0f0f0; }
+/* Table colours come from the theme, so dark themes read (#150). */
+.bf-dt__th:hover { background: color-mix(in oklab, var(--bf-border) 60%, var(--bf-surface)); }
 .bf-dt__th span:first-child { margin-right: 0.25rem; }
 .bf-dt__sort-icon { font-size: 0.7rem; color: var(--bf-muted); }
 .bf-dt__th[data-sort="asc"]  .bf-dt__sort-icon::after { content: " ▲"; }
 .bf-dt__th[data-sort="desc"] .bf-dt__sort-icon::after { content: " ▼"; }
-.bf-dt__table tr:nth-child(even) td { background: #fafafa; }
+.bf-dt__table tr:nth-child(even) td { background: var(--bf-surface); }
 .bf-dt__table tr[hidden] { display: none; }
 
 .bf-dt__footer {
