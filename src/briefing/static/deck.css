@@ -163,3 +163,25 @@ html.bf-deck-page { font-size: 22px; }
 .bf-deck--overview .bf-slide > * { pointer-events: none; }
 .bf-deck--overview .bf-slide--current { outline: 8px solid var(--bf-accent); }
 .bf-deck--overview .bf-slide:focus-visible { outline: 8px solid var(--bf-text); }
+
+/* ── print: one slide per page, the size of a 16:9 slide (13.33 x 7.5 in) ─── */
+@page { size: 1280px 720px; margin: 0; }
+@media print {
+  .bf-deck-body { padding: 0; background: none; }
+  .bf-deck--live, .bf-deck--overview { position: static; overflow: visible; }
+  .bf-deck--live .bf-deck__stage, .bf-deck--overview .bf-deck__stage {
+    display: block; position: static; transform: none; width: auto; height: auto; padding: 0;
+  }
+  .bf-deck--live .bf-slide, .bf-deck--overview .bf-slide {
+    position: relative; inset: auto; visibility: visible; transform: none; margin: 0; outline: 0;
+  }
+  .bf-slide { break-after: page; break-inside: avoid; }
+  .bf-slide:last-child { break-after: auto; }
+  .bf-deck__controls { display: none !important; }
+  .bf-slide--overflow .bf-slide__body { overflow: clip; }
+  .bf-slide--overflow::after { content: "Doesn't fit"; }
+}
+/* A slide prints as it shows: its chosen tab and closed toggles stay so (report.css prints them all). */
+html.bf-printing .bf-slide .bf-select__tablist { display: flex !important; }
+html.bf-printing .bf-slide .bf-select__panel[hidden],
+html.bf-printing .bf-slide .bf-toggle__body[hidden] { display: none !important; }

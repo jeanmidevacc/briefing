@@ -92,8 +92,13 @@ def _report_html(
             raise BriefingError(f"No saved report at {path}. Pass a Briefing, a block, or the path to a .html file.")
         return path.read_text(encoding="utf-8"), []
     from briefing.blocks.layout import Briefing, Page
+    from briefing.deck._blocks import Deck
     from briefing.renderers.html import render_report
 
+    if isinstance(report, Deck):  # bf.deck.save_pdf / save_image (#197)
+        from briefing.deck._render import render_deck
+
+        return render_deck(report, name=name, formatting=formatting), []
     wrapped = Briefing.wrap(report)
     names = [b.name for b in wrapped.blocks] if all(isinstance(b, Page) for b in wrapped.blocks) else []
     return render_report(wrapped, name=name, formatting=formatting), names
@@ -106,10 +111,18 @@ def _block_network(route: Route) -> None:
         route.continue_()
 
 
+#: What to say when a deck reaches the report exports, or a report the deck exports.
+DECK_EXPORTS = "This is a slide deck: export it with bf.deck.save_pdf or bf.deck.save_image."
+REPORT_EXPORTS = "This is a report, not a slide deck: export it with bf.save_pdf or bf.save_image."
+
+
 class Session:
     """A report open in headless Chromium, ready to show a page and capture it."""
 
-    def __init__(self, page: Page, names: list[str | None]) -> None:
+    def __init__(self, page: Page, names: list[str | None], deck: bool = False) -> None:
+        is_deck = page.locator("[data-bf-deck]").count() > 0
+        if is_deck != deck:
+            raise BriefingError(DECK_EXPORTS if is_deck else REPORT_EXPORTS)
         self.page = page
         titles: list[str] = page.evaluate(_PAGES_JS)
         self.pages = [
@@ -172,8 +185,13 @@ def open_report(
     scale: float,
     name: str = "Report",
     formatting: Formatting | None = None,
+    height: int = 100,
+    deck: bool = False,
 ) -> Iterator[Session]:
-    """Open *report* in headless Chromium at *width* CSS pixels and *scale* device pixels per pixel."""
+    """Open *report* in headless Chromium at *width* CSS pixels and *scale* device pixels per pixel.
+
+    *deck* says a slide deck is expected (#197), opened at *width* × *height*.
+    """
     sync_playwright = _playwright()
     html, names = _report_html(report, name, formatting)
     with tempfile.TemporaryDirectory(prefix="briefing-export-") as tmp, sync_playwright() as pw:
@@ -189,12 +207,12 @@ def open_report(
         try:
             # A short viewport: a full-page capture is never shorter than it, so the
             # content alone sets the image height.
-            context = browser.new_context(viewport={"width": width, "height": 100}, device_scale_factor=scale)
+            context = browser.new_context(viewport={"width": width, "height": height}, device_scale_factor=scale)
             context.route("**/*", _block_network)
             page = context.new_page()
             page.goto(source.as_uri())
             page.wait_for_load_state("load")
-            session = Session(page, names)
+            session = Session(page, names, deck=deck)
             session.wait_drawn()
             yield session
         finally:

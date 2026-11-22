@@ -32,8 +32,16 @@ def _max_size(value: str) -> str | None:
 
 
 def _page(value: str) -> str | int:
-    """``--page``: "all", a 0-based index, or a page title or name."""
+    """``--page``: "all", a 0-based index, or a page title or name; ``--slide``: a number from 1, or a name."""
     return int(value) if value.isdigit() else value
+
+
+def _is_deck(path: Path) -> bool:
+    """Whether the saved HTML at *path* is a slide deck (#197) rather than a report."""
+    try:
+        return "data-bf-deck" in path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return False  # the export says what's wrong with the file
 
 
 def _output(source: Path, output: Path | None, suffix: str) -> Path:
@@ -77,11 +85,12 @@ def _parser() -> argparse.ArgumentParser:
     validate.add_argument("--json", action="store_true", help="print the problems as a JSON list")
     validate.add_argument("--max-size", type=_max_size, default=DEFAULT_MAX_SIZE, metavar="SIZE", help=size_help)
 
-    render = commands.add_parser("render", help="render a report's JSON to an HTML file",
-                                 description="Build a report from its JSON (see bf.from_spec) and save it as HTML.")
+    render = commands.add_parser("render", help="render a report's (or a deck's) JSON to an HTML file",
+                                 description="Build a report from its JSON (see bf.from_spec), or a deck from "
+                                 "its JSON with \"slides\" (see bf.deck.from_spec), and save it as HTML.")
     render.add_argument("spec", help='the report\'s JSON file, or "-" to read it from standard input')
     render.add_argument("-o", "--output", type=Path, help="the HTML file to write (default: next to the JSON)")
-    render.add_argument("--name", default="Report", help="the report's title (default: Report)")
+    render.add_argument("--name", default=None, help="the report's title (default: Report, or Deck for a deck)")
     render.add_argument("--data", action="append", default=[], metavar="NAME=FILE", help=data_help)
     render.add_argument("--max-size", type=_max_size, default=DEFAULT_MAX_SIZE, metavar="SIZE", help=size_help)
 
@@ -96,7 +105,7 @@ def _parser() -> argparse.ArgumentParser:
                                 description="Save report pages as images (see bf.save_image), in headless "
                                 'Chromium, offline. Needs pip install "briefing[image]" and, once, '
                                 "playwright install chromium.")
-    image.add_argument("report", type=Path, help="a saved report .html file")
+    image.add_argument("report", type=Path, help="a saved report or deck .html file")
     image.add_argument("-o", "--output", type=Path,
                        help="output file, or a directory (default: next to the report, same name)")
     image.add_argument("--page", type=_page, default="all",
@@ -112,16 +121,23 @@ def _parser() -> argparse.ArgumentParser:
 
     pdf = commands.add_parser("pdf", help="save the report as one PDF",
                               description="Save a report as a PDF (see bf.save_pdf).")
-    pdf.add_argument("report", type=Path, help="a saved report .html file")
+    pdf.add_argument("report", type=Path, help="a saved report or deck .html file")
     pdf.add_argument("-o", "--output", type=Path, help="output .pdf file, or a directory (default: next to the report)")
     pdf.add_argument("--page", type=_page, default="all",
                      help='"all" (default), a page title or name, or a 0-based index')
     pdf.add_argument("--paper", choices=sorted(PAPERS), default="a4", help="paper size (default: a4)")
     pdf.add_argument("--landscape", action="store_true", help="turn the paper sideways")
+    for command in (image, pdf):
+        command.add_argument("--slide", type=_page, default=None, metavar="SLIDE",
+                             help='for a deck: "all" (default), a slide\'s number (1 for the first) or its name')
     return parser
 
 
 def _export(args: argparse.Namespace) -> int:
+    if _is_deck(args.report):
+        return _export_deck(args)
+    if args.slide is not None:
+        raise BriefingError(f"--slide picks a slide of a deck, and {args.report} is a report: use --page.")
     if args.command == "image":
         suffix = "." + (args.format or (args.output.suffix.lstrip(".") if args.output and args.output.suffix
                                         and not args.output.is_dir() else "png"))
@@ -132,6 +148,29 @@ def _export(args: argparse.Namespace) -> int:
     else:
         written = [save_pdf(args.report, _output(args.report, args.output, ".pdf"),
                             page=args.page, paper=args.paper, landscape=args.landscape)]
+    for path in written:
+        print(path)
+    return 0
+
+
+def _export_deck(args: argparse.Namespace) -> int:
+    from briefing import deck
+
+    if args.page != "all":
+        raise BriefingError(f"{args.report} is a slide deck: pick a slide with --slide (1 for the first), not --page.")
+    slide = "all" if args.slide is None else args.slide
+    if args.command == "image":
+        if args.size is not None or args.width != 1200:
+            raise BriefingError("A deck's images are its slides, 1280 x 720: --size and --width are for reports.")
+        suffix = "." + (args.format or (args.output.suffix.lstrip(".") if args.output and args.output.suffix
+                                        and not args.output.is_dir() else "png"))
+        written = deck.save_image(args.report, _output(args.report, args.output, suffix), slide=slide,
+                                  scale=args.scale)
+    else:
+        if args.paper != "a4" or args.landscape:
+            raise BriefingError("A deck prints one slide per page, 13.33 x 7.5 in: --paper and --landscape are "
+                                "for reports.")
+        written = [deck.save_pdf(args.report, _output(args.report, args.output, ".pdf"), slide=slide)]
     for path in written:
         print(path)
     return 0
@@ -211,18 +250,26 @@ def _validate(args: argparse.Namespace) -> int:
 
 
 def _render(args: argparse.Namespace) -> int:
-    from briefing import from_spec, save
+    from briefing import deck, from_spec, save
 
     if args.output is None and args.spec == "-":
         raise BriefingError("pass --output report.html when the JSON comes from standard input.")
     output = args.output or Path(args.spec).with_suffix(".html")
+    from briefing.spec._convert import load
+
+    text = _spec(args.spec)
+    loaded, _ = load(text)  # a problem here is reported by from_spec below
+    is_deck = isinstance(loaded, dict) and "slides" in loaded and "blocks" not in loaded
     try:
-        report = from_spec(_spec(args.spec), _data(args.data))
+        built = deck.from_spec(text, _data(args.data)) if is_deck else from_spec(text, _data(args.data))
     except BriefingError as exc:
         if "was passed in data" in str(exc):
             raise BriefingError(f"{exc}\nPass referenced tables as --data name=file.csv.") from exc
         raise
-    save(report, str(output), name=args.name, max_size=args.max_size)
+    if isinstance(built, deck.Deck):
+        deck.save(built, output, name=args.name or "Deck", max_size=args.max_size)
+    else:
+        save(built, str(output), name=args.name or "Report", max_size=args.max_size)
     print(output)
     return 0
 

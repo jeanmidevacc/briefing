@@ -180,6 +180,15 @@
       }
       runtime.on(root, 'mousemove', wake);
 
+      // Print every slide, one per page (deck.css): leave the overview while printing.
+      var overviewBeforePrint = false;
+      runtime.onPrint(function () {
+        overviewBeforePrint = overview;
+        if (overview) setOverview(false);
+      }, function () {
+        if (overviewBeforePrint) setOverview(true);
+      });
+
       deck.classList.add('bf-deck--live');
       controls.hidden = false;
       wake();

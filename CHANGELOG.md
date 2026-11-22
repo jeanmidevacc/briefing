@@ -26,6 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   slide's number (`#3`) or a name. What doesn't fit a slide shrinks, down to 70%, then
   scrolls with a "Doesn't fit" mark; a slide with more than about 120 words of text warns.
   A DataTable on a slide shows 10 rows a page.
+- Printing a deck gives one slide per page, each 1280 × 720 (13.33 × 7.5 in, a 16:9
+  slide), every slide as it shows: its chosen tab, its table's page (#197).
+  `bf.deck.save_pdf(deck, path, slide=)` writes that PDF and `bf.deck.save_image(deck,
+  path, slide=, scale=)` one image per slide (`q3_01.png`, …), from a `Deck` or a saved
+  deck. `python -m briefing render` builds a deck from JSON with `"slides"`, and
+  `python -m briefing pdf` and `image` export a saved deck, picking slides with `--slide`.
 
 ### Changed
 
