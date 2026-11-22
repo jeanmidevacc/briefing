@@ -72,7 +72,10 @@ def test_every_code_validate_reports_is_listed() -> None:
 def test_its_json_examples_are_valid_reports(example: str) -> None:
     spec = json.loads(example)
     assert bf.validate(spec) == []
-    assert "Made with briefing" in bf.stringify(bf.from_spec(spec))
+    if "slides" in spec:  # a deck (#197)
+        assert len(bf.deck.from_spec(spec)) == len(spec["slides"])
+    else:
+        assert "Made with briefing" in bf.stringify(bf.from_spec(spec))
 
 
 @pytest.mark.parametrize("example", _blocks("python"), ids=lambda e: e[:30])

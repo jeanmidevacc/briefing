@@ -305,6 +305,39 @@ When something usually happens: a grid that crosses two units of one date column
 - `group_order`: a list of texts. Group names to draw first, in this order (e.g. `["Worldwide", "United States"]`); other groups follow by name. Needs `group`; a name that isn't a group is an error.
 - `legend`: true or false, default `true`. `False` hides this block's legend (show one Legend instead).
 
+## Decks
+
+A deck (`bf.deck.Deck` in Python) puts the same blocks on slides. Its JSON has `"slides"` in
+place of `"blocks"`; each slide is an object with its own `"blocks"`, written as in a report:
+
+```json
+{"briefing": 1, "footer": "Sales analytics", "slides": [
+  {"title": "Q3 review"},
+  {"title": "Summary", "name": "summary", "blocks": [
+    {"type": "Text", "text": "Revenue grew in **every** region."},
+    {"type": "Group", "columns": 2, "blocks": [
+      {"type": "BigNumber", "heading": "Revenue", "value": 4200000, "prev_value": 3900000, "format": "${:,.0f}"},
+      {"type": "BigNumber", "heading": "Margin", "value": 0.31, "format": "{:.0%}"}
+    ]}
+  ]}
+]}
+```
+
+- A slide needs `"blocks"`, a `"title"`, or both; a slide with only a title is a section slide.
+- Slides hold any block but a Page. Lay them out with Group (columns), Select (tabs) or Card.
+- Names are unique in the whole deck: a slide's link is `#name`, as is a block's.
+- Check a deck as a report: `python -m briefing validate deck.json`, or `bf.validate(spec, data)`.
+  Build it with `bf.deck.from_spec(spec, data)`; `bf.to_spec(deck)` writes it.
+
+The deck's options:
+
+- `footer`: text. Text before the "Made with briefing" line at the foot of every slide, such as a team name.
+
+A slide's options:
+
+- `title`: text. The slide's heading, with inline Markdown as in captions.
+- `name`: a name (a letter, then letters, digits, _ or -). Stable slide id (letters, digits, `_` and `-`): its link in the deck (`#name`).
+
 ## Diagnostics
 
 `validate` lists every problem with a severity, a code, a path (a JSON Pointer such as

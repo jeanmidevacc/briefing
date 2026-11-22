@@ -588,6 +588,11 @@ def _render_placeholder(block: Block, _: _IdGen) -> str:
 # ── dispatcher ────────────────────────────────────────────────────────────────
 
 
+def render_block(block: Block, idgen: _IdGen) -> str:
+    """The HTML of *block*, with its link id and copy-embed marks; what containers call for each child."""
+    return _render_block(block, idgen)
+
+
 def _render_block(block: Block, idgen: _IdGen) -> str:
     if isinstance(block, Briefing):
         inner = "\n".join(_render_block(b, idgen) for b in block.blocks)

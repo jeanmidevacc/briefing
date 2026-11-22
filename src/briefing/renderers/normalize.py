@@ -23,6 +23,8 @@ def normalize(blocks: Briefing) -> Briefing:
        :class:`~briefing.Page` blocks they are converted to a single
        ``Select(type=TABS)`` whose children are labelled ``Group`` blocks,
        one per page.  Mixed roots (some Pages, some non-Pages) raise an error.
+
+    A deck's :class:`~briefing.deck.Slide` anywhere in the tree is an error too.
     """
     root = copy.copy(blocks)
     root.blocks = list(blocks.blocks)  # shallow-copy the list
@@ -31,6 +33,12 @@ def normalize(blocks: Briefing) -> Briefing:
         raise BriefingError(
             "Cannot render an empty Briefing container — add at least one block."
         )
+
+    from briefing.deck._blocks import SLIDE_IN_REPORT, Slide  # here: briefing.deck imports the renderers
+    from briefing.renderers.registry import iter_blocks
+
+    if any(isinstance(b, Slide) for b in iter_blocks(root)):
+        raise BriefingError(SLIDE_IN_REPORT)
 
     has_pages = [isinstance(b, Page) for b in root.blocks]
 

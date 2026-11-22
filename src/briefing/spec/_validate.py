@@ -24,6 +24,7 @@ from briefing._error import BriefingError
 from briefing.blocks.asset import Plot
 from briefing.blocks.base import Block, ContainerBlock
 from briefing.blocks.layout import Briefing, Page
+from briefing.deck._blocks import Deck
 from briefing.renderers.html import render_content, render_report
 from briefing.renderers.normalize import normalize
 from briefing.renderers.registry import IdGen, clash_message, lookup_renderer
@@ -64,7 +65,7 @@ def _unique(found: list[Diagnostic]) -> list[Diagnostic]:
 
 
 def _validate(report_or_spec: object, data: Mapping[str, t.Any] | None, limit: int | None) -> list[Diagnostic]:
-    if isinstance(report_or_spec, Block | list):
+    if isinstance(report_or_spec, Block | list | Deck):
         try:
             spec, data = to_spec(report_or_spec)
         except BriefingError as exc:
@@ -77,14 +78,18 @@ def _validate(report_or_spec: object, data: Mapping[str, t.Any] | None, limit: i
         return [Diagnostic("error", "wrong-type", "", f"data must be a dict of the objects the JSON names, "
                            f"not {type(data).__name__}.")]
     reader = Reader(data, capture_warnings=True)
-    report = reader.report(spec)
+    built = reader.root(spec)
     found = reader.diagnostics
-    if report is None or reader.has_errors:
+    if built is None or reader.has_errors:
         return found
+    # A deck's slides are checked as the blocks of one report; they render the same way.
+    report = Briefing(*built.slides) if isinstance(built, Deck) else built
     paths = _paths(report, reader.paths)
     found += _draw_each(report, paths)
     if not any(d.severity == "error" for d in found):
-        found += _render(report, paths)
+        found += _render(report, paths, deck=isinstance(built, Deck))
+    if isinstance(built, Deck):
+        return found
     if limit is not None and not any(d.severity == "error" for d in found):
         found += _weigh(report, paths, limit)
     return found
@@ -188,9 +193,9 @@ class _Tracer(IdGen):
             self.found.append(Diagnostic("error", "name-clash", path, clash_message(link, made)))
 
 
-def _render(report: Briefing, paths: dict[int, str]) -> list[Diagnostic]:
+def _render(report: Briefing, paths: dict[int, str], deck: bool = False) -> list[Diagnostic]:
     try:
-        normalised = normalize(report)
+        normalised = report if deck else normalize(report)  # a deck's slides need no normalising
     except BriefingError as exc:
         return [Diagnostic("error", "render-error", "", str(exc))]
     paths = dict(paths)

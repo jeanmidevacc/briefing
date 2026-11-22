@@ -24,14 +24,27 @@ from briefing.blocks.base import Block, ContainerBlock
 from briefing.blocks.chips import Chip
 from briefing.blocks.header import Header
 from briefing.blocks.layout import Briefing, Select, TabStyle
+from briefing.deck._blocks import SLIDE_IN_REPORT, Deck, Slide
 from briefing.scale import Scale
 from briefing.spec._check import check, describe, refs_in, show
 from briefing.spec._data import decode_figure, decode_image, decode_table, encode_figure, encode_image, encode_table
 from briefing.spec._diagnostic import Diagnostic, Severity
-from briefing.spec._model import FORMAT_VERSION, BlockType, Field, accepted, block_types, root_type, type_name
+from briefing.spec._model import (
+    FORMAT_VERSION,
+    BlockType,
+    Field,
+    accepted,
+    block_types,
+    deck_type,
+    root_type,
+    slide_type,
+    type_name,
+)
 
 #: The keys of the report object besides its options.
 _ROOT_KEYS = ("briefing", "blocks")
+#: What a deck's JSON is, for messages.
+_DECK_SHAPE = '{"briefing": 1, "slides": [{"title": "...", "blocks": [...]}]}'
 
 
 class _NoJSON(Exception):
@@ -94,6 +107,8 @@ class _Writer:
 
     def block(self, block: Block) -> dict[str, t.Any]:
         name = type_name(block)
+        if isinstance(block, Slide):
+            raise BriefingError(SLIDE_IN_REPORT)
         if name is None:
             raise BriefingError(
                 f"{type(block).__name__} isn't one of briefing's blocks, so it has no JSON form; "
@@ -104,7 +119,13 @@ class _Writer:
             out["blocks"] = [self.block(child) for child in block.blocks]
         return out
 
-    def options(self, block: Block, kind: BlockType) -> dict[str, t.Any]:
+    def slide(self, slide: Slide) -> dict[str, t.Any]:
+        out = self.options(slide, slide_type())
+        if slide.blocks:
+            out["blocks"] = [self.block(child) for child in slide.blocks]
+        return out
+
+    def options(self, block: Block | Deck, kind: BlockType) -> dict[str, t.Any]:
         out: dict[str, t.Any] = {}
         refs: list[str] = []  # this block's references so far
         for field in kind.fields:
@@ -119,7 +140,7 @@ class _Writer:
                 out[field.key] = self._data(value, field, block, kind, refs)
         return out
 
-    def _data(self, value: object, field: Field, block: Block, kind: BlockType, refs: list[str]) -> t.Any:
+    def _data(self, value: object, field: Field, block: Block | Deck, kind: BlockType, refs: list[str]) -> t.Any:
         if self.inline:
             accepts = refs_in(field.schema)
             for target, encode in (("table", encode_table), ("figure", encode_figure), ("image", encode_image),
@@ -129,7 +150,7 @@ class _Writer:
         if id(value) not in self._seen:
             if not refs:
                 self._counts[kind.name] += 1
-            base = block.name or f"{kind.name.removeprefix('lab.').lower()}-{self._counts[kind.name]}"
+            base = getattr(block, "name", None) or f"{kind.name.removeprefix('lab.').lower()}-{self._counts[kind.name]}"
             key = base if not refs else f"{base}-{field.name}"
             unique, n = key, 1
             while unique in self.data:
@@ -143,8 +164,12 @@ class _Writer:
 
 def to_spec(report: object, *, inline: bool = False) -> tuple[dict[str, t.Any], dict[str, t.Any]]:
     """The JSON form of *report*, and the objects its references name (see :func:`briefing.to_spec`)."""
-    root = Briefing.wrap(report)
     writer = _Writer(inline)
+    if isinstance(report, Deck):
+        deck: dict[str, t.Any] = {"briefing": FORMAT_VERSION, **writer.options(report, deck_type())}
+        deck["slides"] = [writer.slide(slide) for slide in report.slides]
+        return deck, writer.data
+    root = Briefing.wrap(report)
     spec: dict[str, t.Any] = {"briefing": FORMAT_VERSION, **writer.options(root, root_type())}
     spec["blocks"] = [writer.block(b) for b in root.blocks]
     return spec, writer.data
@@ -206,6 +231,7 @@ class Reader:
         self.diagnostics: list[Diagnostic] = []
         self.paths: dict[int, str] = {}  # id(block) -> the JSON Pointer it was built from
         self._links: dict[str, str] = {}  # link id -> path of the block that has it
+        self._deck = False  # reading a deck's slides: names are unique in the whole deck
 
     # ── diagnostics ──
 
@@ -217,6 +243,73 @@ class Reader:
         return any(d.severity == "error" for d in self.diagnostics)
 
     # ── the report ──
+
+    def root(self, spec: object) -> Briefing | Deck | None:
+        """The report or the deck *spec* describes (a deck has ``"slides"``), or ``None``."""
+        if isinstance(spec, Mapping) and "slides" in spec:
+            if "blocks" in spec:
+                self._add("error", "unknown-option", "/slides",
+                          'This JSON has both "blocks" (a report) and "slides" (a deck).',
+                          'A report has "blocks"; a deck has "slides", each with its own "blocks". Keep one.')
+                return None
+            return self.deck(spec)
+        return self.report(spec)
+
+    def deck(self, spec: Mapping[str, t.Any]) -> Deck | None:
+        """The deck *spec* describes, or ``None`` when it can't be built."""
+        if not self._version(spec):
+            return None
+        self._deck = True
+        kind = deck_type()
+        self._unknown_keys(spec, "", "The deck", ["briefing", "slides", *(f.key for f in kind.fields)])
+        options, ok = self._options(spec, kind, "", "The deck")
+        raw = spec["slides"]
+        if not isinstance(raw, list):
+            self._add("error", "wrong-type", "/slides", f'"slides" must be a list of slides, not {show(raw)}.',
+                      f"A deck is {_DECK_SHAPE}.")
+            return None
+        if not raw:
+            self._add("error", "empty-container", "/slides", "The deck has no slides.", "Add at least one slide.")
+            return None
+        slides = [self.slide(child, _join("/slides", i)) for i, child in enumerate(raw)]
+        if not ok or None in slides or self.has_errors:
+            return None
+        try:
+            return Deck(*t.cast(list[Slide], slides), **options)
+        except BriefingError as exc:
+            self._add("error", "invalid-value", "", str(exc))
+            return None
+
+    def slide(self, spec: object, path: str) -> Slide | None:
+        """The slide *spec* describes: ``{"title", "name", "blocks"}``; or ``None``."""
+        if not isinstance(spec, Mapping):
+            self._add("error", "not-a-block", path,
+                      f'A slide is an object with a "title" and "blocks", not {show(spec)}.')
+            return None
+        if "type" in spec and spec["type"] != "Slide":
+            self._add("error", "unknown-type", _join(path, "type"),
+                      f'"slides" holds slides, not {show(spec["type"])} blocks.',
+                      'Leave "type" out (or write "Slide") and put the blocks in the slide\'s "blocks".')
+            return None
+        kind = slide_type()
+        self._unknown_keys(spec, path, "A slide", ["type", *(f.key for f in kind.fields), "blocks"])
+        options, ok = self._options(spec, kind, path, "The slide")
+        name = spec.get("name")
+        if isinstance(name, str) and check(name, {"$ref": "#/$defs/name"}):
+            self._claim(name, None, path, "slide")
+        raw = spec.get("blocks", [])
+        if not isinstance(raw, list):
+            self._add("error", "wrong-type", _join(path, "blocks"),
+                      f'"blocks" must be a list of blocks, not {show(raw)}.')
+            return None
+        if not raw and not spec.get("title"):
+            self._add("error", "empty-container", path, "This slide has no blocks and no title.",
+                      'Add "blocks": [...], or a "title" for a section slide.')
+            return None
+        children = [self.block(child, _join(_join(path, "blocks"), i), page=None) for i, child in enumerate(raw)]
+        if not ok or None in children:
+            return None
+        return t.cast(Slide | None, self._construct(Slide, {"blocks": children, **options}, path, "The slide"))
 
     def report(self, spec: object) -> Briefing | None:
         """The report *spec* describes, or ``None`` when it can't be built."""
@@ -301,8 +394,12 @@ class Reader:
             return None
         kind = kinds[type_]
         if type_ == "Page" and not top:
-            self._add("error", "misplaced-page", path, "A Page can only be at the top of the report.",
-                      "Use a Group here, or a Select of Groups for tabs.")
+            if self._deck:
+                self._add("error", "misplaced-page", path, "A slide can't hold a Page.",
+                          'In a deck, each page is a slide of its own, in "slides".')
+            else:
+                self._add("error", "misplaced-page", path, "A Page can only be at the top of the report.",
+                          "Use a Group here, or a Select of Groups for tabs.")
             return None
         self._unknown_keys(spec, path, type_, ["type", *(f.key for f in kind.fields if accepted(f)),
                                                *(["blocks"] if kind.container else [])])
@@ -353,9 +450,10 @@ class Reader:
         link = f"{page}/{name}" if page else name
         if link in self._links:
             where = f" in page {page!r}" if page else ""
+            scope = "in the deck" if self._deck else "within its page"
             self._add("error", "duplicate-name", path,
                       f"Two blocks{where} are named {name!r}: the one at {self._links[link]} and this {type_}.",
-                      f"A name must be unique within its page, so that the link #{link} leads to one place; "
+                      f"A name must be unique {scope}, so that the link #{link} leads to one place; "
                       "rename one of them.")
         else:
             self._links[link] = path
@@ -365,6 +463,8 @@ class Reader:
         hint = _suggest(type_, kinds) or _suggest(f"lab.{type_}", kinds)
         if type_ == "Briefing":
             hint = 'The report\'s own options ("export", "footer") go at the top of the JSON, next to "blocks".'
+        if type_ == "Slide":
+            hint = f'Slides make a deck, which has "slides" in place of "blocks": {_DECK_SHAPE}.'
         self._add("error", "unknown-type", _join(path, "type"), f"There is no block type {show(type_)}.",
                   hint or f"The types are: {', '.join(kinds)}.")
 
@@ -461,19 +561,44 @@ class Reader:
         return None
 
 
-def from_spec(spec: object, data: Mapping[str, t.Any] | None = None) -> Briefing:
-    """The report *spec* describes (see :func:`briefing.from_spec`)."""
+def _loaded(spec: object, data: Mapping[str, t.Any] | None) -> t.Any:
     loaded, problem = load(spec)
     if problem is not None:
         raise BriefingError(str(problem))
     if data is not None and not isinstance(data, Mapping):
         raise BriefingError(f"data must be a dict of the objects the JSON names, not {type(data).__name__}.")
+    return loaded
+
+
+def _raise_errors(reader: Reader, what: str) -> t.NoReturn:
+    errors = [d for d in reader.diagnostics if d.severity == "error"]
+    shown = "\n".join(f"- {d}" for d in errors[:10])
+    more = f"\n…and {len(errors) - 10} more." if len(errors) > 10 else ""
+    raise BriefingError(f"This JSON isn't a {what} briefing can build:\n{shown}{more}\n"
+                        "bf.validate(spec, data) lists every problem.")
+
+
+def from_spec(spec: object, data: Mapping[str, t.Any] | None = None) -> Briefing:
+    """The report *spec* describes (see :func:`briefing.from_spec`)."""
+    loaded = _loaded(spec, data)
+    if isinstance(loaded, Mapping) and "slides" in loaded and "blocks" not in loaded:
+        raise BriefingError('This JSON is a deck (it has "slides"): build it with bf.deck.from_spec(spec, data).')
     reader = Reader(data if data is not None else {}, capture_warnings=False)
     report = reader.report(loaded)
-    errors = [d for d in reader.diagnostics if d.severity == "error"]
-    if errors or report is None:
-        shown = "\n".join(f"- {d}" for d in errors[:10])
-        more = f"\n…and {len(errors) - 10} more." if len(errors) > 10 else ""
-        raise BriefingError(f"This JSON isn't a report briefing can build:\n{shown}{more}\n"
-                            "bf.validate(spec, data) lists every problem.")
+    if report is None or reader.has_errors:
+        _raise_errors(reader, "report")
     return report
+
+
+def deck_from_spec(spec: object, data: Mapping[str, t.Any] | None = None) -> Deck:
+    """The deck *spec* describes (see :func:`briefing.deck.from_spec`)."""
+    loaded = _loaded(spec, data)
+    if not isinstance(loaded, Mapping) or "slides" not in loaded:
+        if isinstance(loaded, Mapping) and "blocks" in loaded:
+            raise BriefingError('This JSON is a report (it has "blocks"): build it with bf.from_spec(spec, data).')
+        raise BriefingError(f"A deck's JSON is an object with \"slides\": {_DECK_SHAPE}.")
+    reader = Reader(data if data is not None else {}, capture_warnings=False)
+    deck = reader.root(loaded)
+    if not isinstance(deck, Deck) or reader.has_errors:
+        _raise_errors(reader, "deck")
+    return deck

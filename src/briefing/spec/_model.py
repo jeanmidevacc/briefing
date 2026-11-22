@@ -28,6 +28,7 @@ from briefing.blocks.chips import Chips
 from briefing.blocks.files import Attachment, Image
 from briefing.blocks.layout import Briefing, Card, Group, Page, Select, TabStyle, Toggle
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
+from briefing.deck._blocks import Deck, Slide
 from briefing.lab._blocks import CalendarHeatmap, DataDive, DataProfile, Legend, TimeHeatmap
 
 #: The format version this briefing reads and writes (``"briefing": 1``). It changes only
@@ -159,7 +160,7 @@ class _Pandas:
     Series = _Series
 
 
-_HINT_NAMES = {"pd": _Pandas, "Styler": _Styler, "Block": Block}
+_HINT_NAMES = {"pd": _Pandas, "Styler": _Styler, "Block": Block, "Slide": Slide}
 
 
 # ── the model ─────────────────────────────────────────────────────────────────
@@ -183,7 +184,7 @@ class BlockType:
     """A block class as the JSON form sees it."""
 
     name: str
-    cls: type[Block]
+    cls: type[Block]  # Deck's too, though it isn't a block: only its options are read from it
     fields: tuple[Field, ...]
     description: str
 
@@ -208,17 +209,29 @@ def root_type() -> BlockType:
     return _block_type("Briefing", Briefing)
 
 
+@functools.cache
+def slide_type() -> BlockType:
+    """A deck's slide (:class:`~briefing.deck.Slide`): ``{"title", "name", "blocks"}`` in ``"slides"``."""
+    return _block_type("Slide", Slide)
+
+
+@functools.cache
+def deck_type() -> BlockType:
+    """A deck (:class:`~briefing.deck.Deck`): its options sit at the top of its JSON, next to ``"slides"``."""
+    return _block_type("Deck", Deck)
+
+
 def type_name(block: Block) -> str | None:
     """The ``type`` of *block* in the JSON form, or ``None`` for a class it doesn't know."""
     return next((name for name, cls in _TYPES if type(block) is cls), None)
 
 
-def _block_type(name: str, cls: type[Block]) -> BlockType:
+def _block_type(name: str, cls: type[Block] | type[Deck]) -> BlockType:
     docs = _arg_docs(cls.__doc__ or "")
     hints = t.get_type_hints(cls.__init__, localns=_HINT_NAMES)
     fields = []
     for param in inspect.signature(cls.__init__).parameters.values():
-        if param.name in ("self", "blocks") or param.kind is param.VAR_POSITIONAL:
+        if param.name in ("self", "blocks", "slides") or param.kind is param.VAR_POSITIONAL:
             continue
         key = (name, param.name)
         if key in _OVERRIDES:
@@ -236,7 +249,8 @@ def _block_type(name: str, cls: type[Block]) -> BlockType:
             description=docs.get(param.name, ""),
             attr=_ATTRS.get(key, param.name),
         ))
-    return BlockType(name=name, cls=cls, fields=tuple(fields), description=_summary(cls.__doc__ or ""))
+    return BlockType(name=name, cls=t.cast(type[Block], cls), fields=tuple(fields),
+                     description=_summary(cls.__doc__ or ""))
 
 
 # ── type hints → JSON Schema ──────────────────────────────────────────────────
@@ -494,11 +508,43 @@ def build_schema() -> dict[str, t.Any]:
             "type": "string",
         },
     }
-    return {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": f"briefing report, format {FORMAT_VERSION}",
+    defs["report"] = {
         **_object(root_type(), root=True),
         "description": "A briefing report as JSON: the same blocks and options as in Python. "
-        "Render it with briefing.from_spec(spec, data) and check it with briefing.validate(spec, data).",
+        "Build it with briefing.from_spec(spec, data) and check it with briefing.validate(spec, data).",
+    }
+    defs["deck"] = _deck_object()
+    defs["slide"] = _slide_object()
+    return {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": f"briefing report or deck, format {FORMAT_VERSION}",
+        "description": "A briefing report (\"blocks\") or slide deck (\"slides\") as JSON: the same blocks and "
+        "options as in Python. Check it with briefing.validate(spec, data).",
+        "anyOf": [_ref("report"), _ref("deck")],
         "$defs": defs,
     }
+
+
+def _deck_object() -> dict[str, t.Any]:
+    deck = deck_type()
+    properties: dict[str, t.Any] = {
+        "briefing": {"description": "The format version of this JSON (not briefing's version): "
+                     f"{FORMAT_VERSION}.", "const": FORMAT_VERSION},
+        **{f.key: _property(f) for f in deck.fields},
+        "slides": {"description": "The deck's slides, in order.", "type": "array", "items": _ref("slide"),
+                   "minItems": 1},
+    }
+    return {"description": "A briefing slide deck as JSON (bf.deck.Deck): its slides, each holding blocks. "
+            "Build it with briefing.deck.from_spec(spec, data).", "type": "object", "properties": properties,
+            "required": ["briefing", "slides"], "additionalProperties": False}
+
+
+def _slide_object() -> dict[str, t.Any]:
+    slide = slide_type()
+    properties: dict[str, t.Any] = {
+        "type": {"description": "Optional: a slide is known by its place in \"slides\".", "const": "Slide"},
+        **{f.key: _property(f) for f in slide.fields},
+        "blocks": {"description": "The slide's blocks, top to bottom.", "type": "array", "items": _ref("block")},
+    }
+    return {"description": slide.description, "type": "object", "properties": properties,
+            "anyOf": [{"required": ["blocks"]}, {"required": ["title"]}], "additionalProperties": False}
