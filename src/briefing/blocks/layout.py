@@ -418,7 +418,7 @@ class Briefing(ContainerBlock):
             bf.Text("# My report"),
             bf.Plot(fig),
             export="png",
-            footer="Analytics team",  # "Analytics team · Made with briefing 0.4.1"
+            footer="Analytics team",  # "Analytics team · Made with briefing 0.5.0"
         )
         bf.save(report, "report.html")
     """
