@@ -22,6 +22,11 @@ The same exports run from the command line as ``python -m briefing image`` and
 .. autofunction:: save_image
 .. autofunction:: save_pdf
 
+Comparing runs
+--------------
+
+.. autofunction:: diff
+
 Errors
 ------
 
