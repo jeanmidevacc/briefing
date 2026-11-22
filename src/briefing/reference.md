@@ -243,6 +243,7 @@ GitHub-style calendar heatmap: one cell per day, weeks as columns.
 - `on_click`: one of "rows". `"rows"` lists the rows behind a day or an hour in a panel when it is clicked (up to `ROWS_PER_CELL` rows per cell, embedded in the report); `None` (default) for no click action.
 - `start`: text. The first day shown (`"2026-05-19"` or a date), whatever the data covers; `None` starts at the first day with data or an event. Rows before it are left out, with a warning.
 - `end`: text. The last day shown; `None` ends at the last day with data or an event. Rows after it are left out, with a warning. Calendars with the same `start` and `end` line up week for week.
+- `group_order`: a list of texts. Group names to draw first, in this order (e.g. `["Worldwide", "United States"]`); other groups follow by name. Needs `group`; a name that isn't a group is an error.
 
 ### lab.TimeHeatmap
 
@@ -260,6 +261,7 @@ When something usually happens: a grid that crosses two units of one date column
 - `center`: a number. A midpoint for a diverging scale (e.g. `0`); `colors` is then three hex colours: below, at and above it.
 - `week_start`: one of "monday", "sunday", default `"monday"`. `"monday"` or `"sunday"`: the first weekday of a `weekday` axis.
 - `on_click`: one of "rows". `"rows"` lists the rows behind a cell in a panel when it is clicked (up to `ROWS_PER_CELL` rows per cell, embedded in the report); `None` (default) for no click action.
+- `group_order`: a list of texts. Group names to draw first, in this order (e.g. `["Worldwide", "United States"]`); other groups follow by name. Needs `group`; a name that isn't a group is an error.
 
 ## Diagnostics
 

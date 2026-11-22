@@ -167,7 +167,7 @@ SCENARIOS: dict[str, Build] = {
                                start="2026-02-15", end="2026-05-31")),
     "time-heatmap": lambda df: bf.Briefing(bf.lab.TimeHeatmap(
         df("df_pipeline_log"), date="run_at", rows="weekday", columns="hour", value="rows", group="team",
-        on_click="rows")),
+        group_order=["ingest"], on_click="rows")),
     "time-heatmap-months": lambda df: bf.Briefing(bf.lab.TimeHeatmap(
         df("df_signed"), date="day", rows="day", columns="month", value="balance", agg="mean", center=0,
         colors=["#d73027", "#f7f7f7", "#1a9850"], week_start="sunday")),

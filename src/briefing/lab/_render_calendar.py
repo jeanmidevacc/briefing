@@ -99,6 +99,9 @@ def _aggregate(block: Heatmap, keys: dict[str, t.Any]) -> dict[str | None, dict[
     if block.group:
         for g in sorted({str(x) for x in block.df[block.group].dropna().unique()}):
             out.setdefault(g, {})
+        # group_order first, in its order; the rest as sorted above (#154).
+        first = [g for g in block.group_order or [] if g in out]
+        out = {g: out[g] for g in first + [g for g in out if g not in first]}
     return out or {None: {}}
 
 

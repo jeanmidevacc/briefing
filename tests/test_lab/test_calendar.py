@@ -445,3 +445,37 @@ def test_an_empty_span_draws_an_empty_calendar(df_empty: pd.DataFrame) -> None:
 def test_bad_spans(df_signed: pd.DataFrame, kwargs: dict[str, t.Any], match: str) -> None:
     with pytest.raises(bf.BriefingError, match=match):
         CalendarHeatmap(df_signed, date="day", **kwargs)
+
+
+# ── group order (#154) ────────────────────────────────────────────────────────
+
+
+def _groups(block: CalendarHeatmap) -> list[str]:
+    return [g.get_text() for g in _soup(block).select(".bf-cal__group")]
+
+
+def test_group_order_puts_the_listed_groups_first(df_pipeline_log: pd.DataFrame) -> None:
+    frame = df_pipeline_log.assign(team=df_pipeline_log["team"].replace({"export": "z-export"}))
+    frame.loc[frame.index[:5], "team"] = "middle"
+    assert _groups(CalendarHeatmap(frame, date="run_at", group="team")) == ["ingest", "middle", "z-export"]
+    assert _groups(CalendarHeatmap(frame, date="run_at", group="team", group_order=["z-export"])) == [
+        "z-export", "ingest", "middle"]  # the rest by name
+    assert _groups(CalendarHeatmap(frame, date="run_at", group="team",
+                                   group_order=["middle", "z-export", "ingest"])) == ["middle", "z-export", "ingest"]
+
+
+def test_group_order_and_the_rows_panel(df_pipeline_log: pd.DataFrame) -> None:
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", group="team", group_order=["ingest"],
+                                 on_click="rows"))
+    assert [attr(c, "data-group") for c in soup.select(".bf-cal__calendar")] == ["ingest", "export"]
+
+
+def test_group_order_with_numeric_groups() -> None:
+    frame = pd.DataFrame({"d": pd.date_range("2026-01-01", periods=6), "year": [2024, 2025, 2026] * 2})
+    assert _groups(CalendarHeatmap(frame, date="d", group="year", group_order=["2026"])) == ["2026", "2024", "2025"]
+
+
+def test_unknown_group_names_say_which_groups_exist(df_pipeline_log: pd.DataFrame) -> None:
+    with pytest.raises(bf.BriefingError, match=r"\['Ingest'\], which aren't values of 'team'. "
+                                               r"Pass names from \['export', 'ingest'\]"):
+        CalendarHeatmap(df_pipeline_log, date="run_at", group="team", group_order=["Ingest"])
