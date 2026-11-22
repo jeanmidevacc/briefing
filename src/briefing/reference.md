@@ -174,6 +174,9 @@ Markdown text over a background image: a report cover, a section opener or a soc
 - `focus`: a list of 2 numbers, default `[50, 50]`. `(x, y)` in percent: the point of the image kept in view when it is cropped.
 - `alt`: text. A description of the image; by default it is decorative.
 - `kicker`: text. One short line of plain text above `text`, smaller and in the theme's muted colour, such as `"Data through Nov 20, 2026"`. Escaped, never Markdown.
+- `max_width`: a whole number. Scale the image down to this many pixels wide, if it is wider (needs `pip install "briefing[pillow]"`).
+- `format`: one of "webp", "jpeg", "png". Re-encode the image as `"webp"`, `"jpeg"` or `"png"` (Pillow too).
+- `quality`: a whole number, default `80`. 1 to 100, for WebP and JPEG.
 
 ### Image
 
@@ -183,6 +186,9 @@ A picture: a PNG, JPEG, GIF, WebP or SVG file, embedded in the report.
 - `caption`: text. Optional caption below the image.
 - `alt`: text. What the image shows, for readers who can't see it; by default the caption. With neither, the image is decorative.
 - `width`: text or a whole number. A CSS width such as `"60%"` or `"20rem"`, or a number of pixels.
+- `max_width`: a whole number. Scale the image down to this many pixels wide, if it is wider (needs `pip install "briefing[pillow]"`).
+- `format`: one of "webp", "jpeg", "png". Re-encode the image as `"webp"`, `"jpeg"` or `"png"` (Pillow too).
+- `quality`: a whole number, default `80`. 1 to 100, for WebP and JPEG.
 
 ### Attachment
 

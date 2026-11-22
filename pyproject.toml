@@ -77,6 +77,8 @@ altair = ["altair>=5.0", "vl-convert-python>=1.0"]
 # pip install briefing[lab] — briefing.lab (DataProfile, DataDive, CalendarHeatmap) needs nothing
 #   beyond the core today; the extra stays so existing installs work and lab can grow here.
 lab = []
+# pip install briefing[pillow] — Image/Banner(max_width=, format=, quality=): lighter pictures (#186)
+pillow = ["pillow>=10.0"]
 # pip install briefing[image] — bf.save_image / bf.save_pdf in headless Chromium;
 #   run `playwright install chromium` once after installing
 image = ["playwright>=1.40"]
@@ -108,6 +110,8 @@ dev = [
     "matplotlib>=3.7",
     "altair>=5.0",
     "vl-convert-python>=1.0",
+    # Image/Banner(max_width=, format=) (#186)
+    "pillow>=10.0",
     # browser tests (pytest -m browser); run `playwright install chromium` once
     "pytest-playwright>=0.5",
 ]

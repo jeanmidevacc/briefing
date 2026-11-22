@@ -12,6 +12,7 @@ from pathlib import Path
 
 from briefing._error import BriefingError
 from briefing._frames import looks_like_dataframe, to_pandas
+from briefing.blocks._pictures import lighten
 from briefing.blocks.banner import _image_type
 from briefing.blocks.base import _MAX_CAPTION_LEN, Block, BlockId, _truncate
 
@@ -42,12 +43,17 @@ class Image(Block):
         alt: What the image shows, for readers who can't see it; by default the
             caption. With neither, the image is decorative.
         width: A CSS width such as ``"60%"`` or ``"20rem"``, or a number of pixels.
+        max_width: Scale the image down to this many pixels wide, if it is wider
+            (needs ``pip install "briefing[pillow]"``).
+        format: Re-encode the image as ``"webp"``, ``"jpeg"`` or ``"png"`` (Pillow too).
+        quality: 1 to 100, for WebP and JPEG.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
 
         bf.Image("pipeline.png", caption="How the data flows", width="60%")
+        bf.Image("photo.jpg", max_width=1600, format="webp")  # a lighter report
     """
 
     embed_noun: t.ClassVar[str | None] = "image"
@@ -58,6 +64,9 @@ class Image(Block):
         caption: str | None = None,
         alt: str | None = None,
         width: str | int | None = None,
+        max_width: int | None = None,
+        format: str | None = None,  # noqa: A002
+        quality: int = 80,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
@@ -66,6 +75,7 @@ class Image(Block):
         mime = _image_type(data)
         if mime is None:
             raise BriefingError(f"Image: the image must be a {_FORMATS} file (or its bytes).")
+        data, mime = lighten(data, mime, max_width, format, quality, "Image")
         css = f"{width}px" if isinstance(width, int) and not isinstance(width, bool) and width > 0 else width
         if css is not None and (not isinstance(css, str) or not _WIDTH.match(css)):
             raise BriefingError(

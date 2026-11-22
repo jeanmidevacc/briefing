@@ -33,6 +33,22 @@ image shows at its natural size, shrunk to fit its column. `alt` describes it fo
 who can't see it, and defaults to the caption; with neither, the image is decorative. An
 SVG is shown as an image, so a script inside it never runs.
 
+### Lighter pictures
+
+A photo straight from a camera or a design tool can weigh more than the rest of the
+report. `max_width=2400` scales an image down to that many pixels wide (a narrower one is
+left alone), and `format="webp"` re-encodes it, with `quality=` from 1 to 100 (80 by
+default). `Banner` takes the same options. They need Pillow:
+`pip install "briefing[pillow]"`.
+
+```python
+bf.Image("site-photo.jpg", max_width=1600, format="webp", caption="The site in May")
+bf.Banner("# Q1 review", image="cover.png", max_width=2400, format="webp")
+```
+
+An SVG is vector, so `max_width` leaves it alone and it can't be re-encoded. An animated
+GIF can't be resized without losing its frames, so asking is an error.
+
 ## Files to download
 
 {class}`~briefing.Attachment` puts a file in the report for readers to download: any

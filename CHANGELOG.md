@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Text(text, values={...})` fills `{name}` and `{name:spec}` fields, each value shown exactly
   as written; `bf.fmt.date`, `span`, `percent` and `number` format values for prose; a
   heading ending in `{#auto}` links by a slug of its text, and `bf.slug` is public (#184).
+- `Image` and `Banner` take `max_width=`, `format=` (`"webp"`, `"jpeg"`, `"png"`) and
+  `quality=` to scale a picture down and re-encode it on the way in, with Pillow from a new
+  extra, `briefing[pillow]`; the size warning suggests them when a picture is the heaviest
+  part (#186).
 
 ### Changed
 
