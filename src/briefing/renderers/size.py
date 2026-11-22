@@ -99,9 +99,13 @@ def over_budget(total: int, parts: t.Sequence[Part], limit: int) -> str | None:
         return None
     largest = [p for p in sorted(parts, key=lambda p: -p.size)[:3] if p.size * 100 >= total]  # 1 % or more
     listed = ", ".join(f"{p.what} ({format_size(p.size)})" for p in largest)
+    hint = ""
+    if largest and largest[0].what.startswith(("Image", "Banner")):  # a picture is the heaviest part (#186)
+        hint = (' To make it lighter, give it max_width=2400 and format="webp" '
+                '(pip install "briefing[pillow]").')
     return (
         f"The report is {format_size(total)}, over max_size ({format_size(limit)})"
-        + (f"; its largest parts: {listed}." if listed else ".")
+        + (f"; its largest parts: {listed}." if listed else ".") + hint
     )
 
 

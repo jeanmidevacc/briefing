@@ -66,6 +66,9 @@ _ATTRS: dict[tuple[str, str], str | None] = {
     ("Text", "text"): "content",
     ("Text", "file"): None,  # read once; the JSON form keeps its text
     ("Text", "values"): None,  # filled once; the JSON form keeps the filled text (#184)
+    # Read once: the block keeps the lighter image, and so does its JSON form (#186).
+    ("Image", "max_width"): None, ("Image", "format"): None, ("Image", "quality"): None,
+    ("Banner", "max_width"): None, ("Banner", "format"): None, ("Banner", "quality"): None,
     ("HTML", "html"): "content",
     ("Code", "code"): "content",
     ("Formula", "formula"): "content",
@@ -73,7 +76,7 @@ _ATTRS: dict[tuple[str, str], str | None] = {
 
 def accepted(field: Field) -> bool:
     """Whether the JSON form takes this option: stored on the block, or read once at input (``file``, ``values``)."""
-    return field.attr is not None or field.name in ("file", "values")
+    return field.attr is not None or field.name in ("file", "values", "max_width", "format", "quality")
 
 
 #: Options whose JSON key isn't their parameter's name: ``type`` already names the block.
@@ -84,6 +87,8 @@ _CHOICES: dict[tuple[str, str], tuple[str, ...]] = {
     ("Briefing", "export"): Briefing.EXPORTS,
     ("Banner", "side"): ("left", "right"),
     ("BigNumber", "change_as"): BigNumber.CHANGE_AS,
+    ("Image", "format"): ("webp", "jpeg", "png"),
+    ("Banner", "format"): ("webp", "jpeg", "png"),
     ("lab.DataDive", "layout"): ("scatter", "tile"),
     ("lab.CalendarHeatmap", "agg"): CalendarHeatmap.AGGS,
     ("lab.CalendarHeatmap", "views"): ("days",),

@@ -13,6 +13,7 @@ def test_pandas_is_a_core_dependency() -> None:
 
 def test_only_the_extras_that_add_something_remain() -> None:
     extras = PYPROJECT["project"]["optional-dependencies"]
-    assert sorted(extras) == ["altair", "dev", "docs", "image", "lab"]
+    assert sorted(extras) == ["altair", "dev", "docs", "image", "lab", "pillow"]
     assert extras["lab"] == []  # kept so `pip install "briefing[lab]"` keeps working
     assert any(dep.startswith("vl-convert-python") for dep in extras["altair"])
+    assert extras["pillow"] == ["pillow>=10.0"]  # Image/Banner(max_width=, format=) (#186)

@@ -6,6 +6,7 @@ import typing as t
 from pathlib import Path
 
 from briefing._error import BriefingError
+from briefing.blocks._pictures import lighten
 from briefing.blocks.base import Block, BlockId
 
 _LENGTH = re.compile(r"^\d+(?:\.\d+)?(?:px|rem|em|vh|%)$")
@@ -56,6 +57,10 @@ class Banner(Block):
         height: CSS height such as ``"16rem"`` (default) or a number of pixels.
         focus: ``(x, y)`` in percent: the point of the image kept in view when it is cropped.
         alt: A description of the image; by default it is decorative.
+        max_width: Scale the image down to this many pixels wide, if it is wider
+            (needs ``pip install "briefing[pillow]"``).
+        format: Re-encode the image as ``"webp"``, ``"jpeg"`` or ``"png"`` (Pillow too).
+        quality: 1 to 100, for WebP and JPEG.
         kicker: One short line of plain text above ``text``, smaller and in the
             theme's muted colour, such as ``"Data through Nov 20, 2026"``. Escaped, never Markdown.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
@@ -81,6 +86,9 @@ class Banner(Block):
         focus: tuple[float, float] = (50, 50),
         alt: str | None = None,
         kicker: str | None = None,
+        max_width: int | None = None,
+        format: str | None = None,  # noqa: A002
+        quality: int = 80,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
@@ -95,6 +103,7 @@ class Banner(Block):
         mime = _image_type(data)
         if mime is None:
             raise BriefingError("Banner: the image must be a PNG, JPEG, GIF, WebP or SVG file (or its bytes).")
+        data, mime = lighten(data, mime, max_width, format, quality, "Banner")
         if side not in ("left", "right"):
             raise BriefingError(f"Banner: side must be 'left' or 'right', not {side!r}.")
         css_height = f"{height}px" if isinstance(height, int) and not isinstance(height, bool) else height
