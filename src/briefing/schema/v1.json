@@ -303,6 +303,22 @@
           ],
           "default": "top"
         },
+        "min_width": {
+          "description": "The narrowest a cell may be, such as `\"16rem\"` (or a number of pixels): as many cells per row as fit, up to `columns` when it is above 1. Not with `widths`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "integer",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
         "name": {
           "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
           "anyOf": [

@@ -418,16 +418,22 @@ def _render_alert(block: Alert, _: _IdGen) -> str:
 def _render_group(block: Group, idgen: _IdGen) -> str:
     inner = "\n".join(_render_block(b, idgen) for b in block.blocks)
 
-    if block.widths:
+    extra = ""
+    if block.min_width:  # as many per row as fit, up to columns when above 1 (#27)
+        style = f'style="--bf-min: {block.min_width}; --bf-cols: {block.columns if block.columns > 1 else 0};"'
+        extra = " bf-group--fit"
+    elif block.widths:
         cols_css = " ".join(f"{w}fr" for w in block.widths)
         style = f'style="grid-template-columns: {cols_css};"'
     else:
         style = f'style="--bf-cols: {block.columns};"'
+    if block.columns >= 3 and not block.min_width:
+        extra += " bf-group--wide"  # two per row on tablets (#27)
 
     valign_cls = (
         f" bf-group--valign-{block.valign}" if block.valign != VAlign.TOP else ""
     )
-    return f'<div class="bf-block bf-group{valign_cls}" {style}>{inner}</div>'
+    return f'<div class="bf-block bf-group{extra}{valign_cls}" {style}>{inner}</div>'
 
 
 @renderer_for(Select)

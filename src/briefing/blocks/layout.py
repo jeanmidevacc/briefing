@@ -4,6 +4,7 @@ from __future__ import annotations
 import dataclasses
 import math
 import numbers
+import re
 import typing as t
 import warnings
 from collections.abc import Mapping, Sequence
@@ -112,6 +113,10 @@ class TabStyle:
         return "".join(f" bf-tabs--{n}" for n in names)
 
 
+#: A CSS length for Group(min_width=): a positive number in rem, em or px.
+_LENGTH = re.compile(r"^(?:\d+(?:\.\d+)?|\.\d+)(?:rem|em|px)$")
+
+
 def _is_positive_number(value: object, *, whole: bool = False) -> bool:
     """Whether *value* is a finite number above zero; ``True`` and ``False`` don't count."""
     kind = numbers.Integral if whole else numbers.Real
@@ -133,13 +138,20 @@ class Group(ContainerBlock):
         columns: Number of grid columns, a whole number of 1 or more.
         widths: Relative column widths, positive numbers, one per column (e.g. ``[2, 1]``).
         valign: Vertical alignment of the cells: ``"top"``, ``"center"`` or ``"bottom"``.
+        min_width: The narrowest a cell may be, such as ``"16rem"`` (or a number of
+            pixels): as many cells per row as fit, up to ``columns`` when it is above 1.
+            Not with ``widths``.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
+
+    On phones every Group is one column; on tablets (up to 960 px wide) a Group of
+    three or more columns shows two per row.
 
     Example::
 
         bf.Group(plot, table, columns=2)
         bf.Group(a, b, c, columns=3, widths=[2, 1, 1])
+        bf.Group(*cards, min_width="16rem")  # as many per row as fit
     """
 
     embed_noun: t.ClassVar[str | None] = "section"
@@ -153,9 +165,19 @@ class Group(ContainerBlock):
         columns: int = 1,
         widths: list[int | float] | None = None,
         valign: VAlign | str = VAlign.TOP,
+        min_width: str | int | None = None,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
+        if min_width is not None:
+            css = f"{min_width}px" if _is_positive_number(min_width, whole=True) else min_width
+            if not isinstance(css, str) or not _LENGTH.match(css):
+                raise BriefingError(f"Group 'min_width' must be a CSS length such as '16rem' or a number of pixels, "
+                                    f"not {min_width!r}.")
+            if widths is not None:
+                raise BriefingError("Group takes 'widths' or 'min_width', not both: min_width lets the cells "
+                                    "share each row equally.")
+            min_width = css
         if not _is_positive_number(columns, whole=True):
             raise BriefingError(f"Group 'columns' must be a whole number of 1 or more, not {columns!r}.")
         if widths is not None:
@@ -170,6 +192,7 @@ class Group(ContainerBlock):
         self.columns = int(columns)
         self.widths = widths
         self.valign = VAlign(valign)
+        self.min_width = min_width
 
 
 class Select(ContainerBlock):

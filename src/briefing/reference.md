@@ -89,6 +89,7 @@ Holds `"blocks"`, a list of blocks (it may be empty).
 - `columns`: a whole number, default `1`. Number of grid columns, a whole number of 1 or more.
 - `widths`: a list of numbers. Relative column widths, positive numbers, one per column (e.g. `[2, 1]`).
 - `valign`: one of "top", "center", "bottom", default `"top"`. Vertical alignment of the cells: `"top"`, `"center"` or `"bottom"`.
+- `min_width`: text or a whole number. The narrowest a cell may be, such as `"16rem"` (or a number of pixels): as many cells per row as fit, up to `columns` when it is above 1. Not with `widths`.
 
 ### Select
 

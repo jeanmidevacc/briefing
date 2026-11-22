@@ -106,6 +106,8 @@ SCENARIOS: dict[str, Build] = {
     "alert": lambda _: bf.Briefing(bf.Alert("Drift **detected** in `orders`; see [the runbook](#runbook).",
                                             level="warning", title="Heads *up*")),
     "group-widths": lambda _: bf.Briefing(bf.Group(bf.Text("a"), bf.Text("b"), columns=2, widths=[3, 1])),
+    "group-fit": lambda _: bf.Briefing(bf.Group(*(bf.BigNumber(f"K{i}", i) for i in range(5)), columns=4,
+                                                min_width="12rem")),
     "select-tabs": lambda _: bf.Briefing(tabs(bf.Text("a", label="A"), bf.Text("b", label="B"))),
     "select-dropdown": lambda _: bf.Briefing(
         bf.Select(bf.Text("a", label="A"), bf.Text("b", label="B"), type="dropdown")
