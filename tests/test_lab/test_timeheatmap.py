@@ -93,6 +93,13 @@ def test_groups_stack_on_one_scale_and_the_rows_panel_knows_each_cell() -> None:
     assert all(attr(r, "role") == "button" for r in soup.select("rect.bf-cal__cell"))
 
 
+def test_group_order_puts_the_listed_groups_first() -> None:
+    soup = parse(bf.stringify(bf.lab.TimeHeatmap(_runs(), date="run_at", rows="weekday", columns="hour",
+                                                 group="team", group_order=["b"], on_click="rows")))
+    assert [g.get_text() for g in soup.select(".bf-cal__group")] == ["b", "a"]
+    assert [attr(c, "data-group") for c in soup.select(".bf-cal__calendar")] == ["b", "a"]
+
+
 @pytest.mark.parametrize(
     ("kwargs", "message"),
     [
@@ -105,6 +112,11 @@ def test_groups_stack_on_one_scale_and_the_rows_panel_knows_each_cell() -> None:
         ({"week_start": "friday"}, r"week_start must be 'monday' or 'sunday'"),
         ({"tz": "Mars/Base"}, r"TimeHeatmap: unknown time zone 'Mars/Base'"),
         ({"center": 0}, r"TimeHeatmap: center= needs colors= as three hex colours"),
+        ({"group_order": ["a"]}, r"TimeHeatmap: group_order needs group="),
+        ({"group": "team", "group_order": ["a", "z"]},
+         r"group_order lists \['z'\], which aren't values of 'team'. Pass names from \['a', 'b'\]"),
+        ({"group": "team", "group_order": ["b", "b"]}, r"group_order names a group twice"),
+        ({"group": "team", "group_order": "b"}, r"group_order must be a list of group names"),
     ],
 )
 def test_options_that_dont_fit_say_what_to_pass(kwargs: dict[str, t.Any], message: str) -> None:

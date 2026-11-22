@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CalendarHeatmap(start=, end=)`: the first and last day shown, whatever the data covers,
   so calendars side by side line up week for week. Rows outside the span are left out with
   a warning naming how many; events outside it aren't drawn (#153).
+- `group_order=[...]` on `CalendarHeatmap` and `TimeHeatmap`: the listed groups first, in
+  that order, then the others by name (#154).
 
 ### Fixed
 

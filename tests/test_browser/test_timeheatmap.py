@@ -55,3 +55,13 @@ def test_the_grid_fills_the_width_of_its_block(viewer: Viewer) -> None:
     assert shown == min(block, 2 * natural)  # up to twice its natural size, as the calendar does (#106)
     k = page.locator("figure.bf-timeheatmap").evaluate("f => f.style.getPropertyValue('--bf-cal-k')")
     assert abs(float(k) - shown / natural) < 1e-6
+
+
+def test_the_rows_panel_follows_each_group_in_a_custom_order(viewer: Viewer) -> None:
+    page = viewer.open(_block(group="team", group_order=["b"], on_click="rows"))
+    assert page.locator(".bf-cal__group").all_inner_texts() == ["b", "a"]
+    panel = page.locator(".bf-cal__panel")
+    page.locator('.bf-cal__calendar[data-group="a"] rect[data-cell="0-9"]').click()
+    assert panel.locator(".bf-cal__panel-title").inner_text() == "Mon 09:00 · a · 3 rows"
+    page.locator('.bf-cal__calendar[data-group="b"] rect[data-cell="1-14"]').click()
+    assert panel.locator(".bf-cal__panel-title").inner_text() == "Tue 14:00 · b · 1 row"

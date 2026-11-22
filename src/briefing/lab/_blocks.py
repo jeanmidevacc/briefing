@@ -216,6 +216,9 @@ class CalendarHeatmap(Block):
         end: The last day shown; ``None`` ends at the last day with data or an
             event. Rows after it are left out, with a warning. Calendars with the
             same ``start`` and ``end`` line up week for week.
+        group_order: Group names to draw first, in this order (e.g.
+            ``["Worldwide", "United States"]``); other groups follow by name.
+            Needs ``group``; a name that isn't a group is an error.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
@@ -251,6 +254,7 @@ class CalendarHeatmap(Block):
         on_click: str | None = None,
         start: str | dt.date | None = None,
         end: str | dt.date | None = None,
+        group_order: list[str] | None = None,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
@@ -290,6 +294,7 @@ class CalendarHeatmap(Block):
         self.on_click = on_click
         self.expected = _check_expected(expected, date, group)
         self.events = _check_events(events)
+        self.group_order = _check_group_order(frame, group, group_order, "CalendarHeatmap")
         self.start, self.end = _check_day(start, "start"), _check_day(end, "end")
         if self.start and self.end and self.start > self.end:
             raise BriefingError(f"CalendarHeatmap: start ({self.start}) is after end ({self.end}).")
@@ -329,6 +334,9 @@ class TimeHeatmap(Block):
         on_click: ``"rows"`` lists the rows behind a cell in a panel when it is clicked
             (up to ``ROWS_PER_CELL`` rows per cell, embedded in the report); ``None``
             (default) for no click action.
+        group_order: Group names to draw first, in this order (e.g.
+            ``["Worldwide", "United States"]``); other groups follow by name.
+            Needs ``group``; a name that isn't a group is an error.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
@@ -359,6 +367,7 @@ class TimeHeatmap(Block):
         center: float | None = None,
         week_start: str = "monday",
         on_click: str | None = None,
+        group_order: list[str] | None = None,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
@@ -392,6 +401,7 @@ class TimeHeatmap(Block):
         self.date, self.rows, self.columns = date, rows, columns
         self.value, self.agg, self.group = value, agg, group
         self.tz, self.center, self.week_start, self.on_click = tz, center, week_start, on_click
+        self.group_order = _check_group_order(frame, group, group_order, "TimeHeatmap")
 
 
 _HEX = re.compile(r"^#(?:[0-9a-fA-F]{3}){1,2}$")
@@ -462,6 +472,24 @@ _CSS_COLOR = re.compile(
     r"|[a-zA-Z]+"  # a named colour
     r"|(?:rgb|rgba|hsl|hsla|oklch|oklab)\([0-9.,%\s/-]+\))$"  # a colour function of plain numbers
 )
+
+
+def _check_group_order(frame: pd.DataFrame, group: str | None, order: t.Any, block: str) -> list[str] | None:
+    """``group_order=``: distinct names of existing groups (#154)."""
+    if order is None:
+        return None
+    if isinstance(order, str) or not all(isinstance(name, str) for name in order):
+        raise BriefingError(f"{block}: group_order must be a list of group names, not {order!r}.")
+    if group is None:
+        raise BriefingError(f"{block}: group_order needs group=, the column to split by.")
+    names = sorted({str(x) for x in frame[group].dropna().unique()})
+    unknown = [name for name in order if name not in names]
+    if unknown:
+        raise BriefingError(f"{block}: group_order lists {unknown!r}, which aren't values of {group!r}. "
+                            f"Pass names from {names!r}.")
+    if len(set(order)) != len(order):
+        raise BriefingError(f"{block}: group_order names a group twice: {list(order)!r}.")
+    return list(order)
 
 
 def _check_day(day: t.Any, role: str) -> str | None:

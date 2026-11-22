@@ -70,6 +70,8 @@ different from days with a zero.
 - `start=` and `end=` fix the first and last day shown, whatever the data covers, so
   calendars side by side line up week for week. Rows outside the span are left out, with
   a warning.
+- `group=` draws one calendar per group, stacked on one colour scale, sorted by name;
+  `group_order=["Worldwide", "United States"]` puts those first, in that order.
 - `on_click="rows"` lists the rows behind a day when it is clicked, up to
   `CalendarHeatmap.ROWS_PER_CELL` per cell.
 - `center=` with three `colors` gives a diverging scale, for values that go negative.
@@ -174,4 +176,4 @@ blank; cells with no data have a dashed outline; zeros are grey.
 
 It takes the calendar's other options too: `value` and `agg`, `colors` and `center=`,
 `tz=`, `week_start=` (the first weekday of a `weekday` axis), `group=` (one grid per
-group, on one colour scale) and `on_click="rows"`.
+group, on one colour scale) with `group_order=`, and `on_click="rows"`.

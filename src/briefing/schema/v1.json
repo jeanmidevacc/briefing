@@ -2026,6 +2026,24 @@
           ],
           "default": null
         },
+        "group_order": {
+          "description": "Group names to draw first, in this order (e.g. `[\"Worldwide\", \"United States\"]`); other groups follow by name. Needs `group`; a name that isn't a group is an error.",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
         "name": {
           "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
           "anyOf": [
@@ -2253,6 +2271,24 @@
               "enum": [
                 "rows"
               ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "group_order": {
+          "description": "Group names to draw first, in this order (e.g. `[\"Worldwide\", \"United States\"]`); other groups follow by name. Needs `group`; a name that isn't a group is an error.",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             },
             {
               "$ref": "#/$defs/ref"
