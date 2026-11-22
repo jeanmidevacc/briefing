@@ -7,6 +7,7 @@ HTML
 ----
 
 .. autofunction:: save
+.. autofunction:: run
 .. autofunction:: stringify
 .. autofunction:: embed_assets
 .. autofunction:: preview

@@ -32,6 +32,7 @@ from briefing._error import BriefingError
 from briefing._markdown_first import from_markdown
 from briefing._preview import Preview, preview
 from briefing._prose import slug
+from briefing._run import run
 from briefing._version import __version__
 
 # ── blocks ────────────────────────────────────────────────────────────────────
@@ -286,6 +287,7 @@ __all__: list[str] = [
     "slug",
     "diff",
     "from_markdown",
+    "run",
     "TextAlignment",
     "Width",
     # api

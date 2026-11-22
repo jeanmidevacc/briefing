@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `bf.from_markdown(path_or_text, values=, blocks=, pages=)`: a report written in Markdown,
   with `::: block <name>` slots that Python fills and `{name}` values; errors name their
   line, and `pages=True` starts a page at each `# Heading` (#191).
+- `python -m briefing new <folder>`: a small report project that runs as it is (a build
+  script, its Markdown and its theme), and `bf.run(build, out=...)`, which gives a build
+  script its command line: `--open`, `--max-size`, `--spec` to save its JSON, and `--diff`
+  to show what changed since a saved run (#193).
 
 ## [0.6.0] - 2026-11-22
 
