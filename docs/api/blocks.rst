@@ -44,6 +44,8 @@ Base class
 Prose helpers
 -------------
 
+.. autofunction:: briefing.from_markdown
+
 .. automodule:: briefing.fmt
    :members: date, span, percent, number
 

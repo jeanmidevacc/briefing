@@ -29,6 +29,7 @@ from pathlib import Path
 # the pandas dependency those blocks need at render time.
 from briefing import color, email, fmt, lab
 from briefing._error import BriefingError
+from briefing._markdown_first import from_markdown
 from briefing._preview import Preview, preview
 from briefing._prose import slug
 from briefing._version import __version__
@@ -284,6 +285,7 @@ __all__: list[str] = [
     "fmt",
     "slug",
     "diff",
+    "from_markdown",
     "TextAlignment",
     "Width",
     # api
