@@ -14,6 +14,7 @@ import re
 import typing as t
 import warnings
 
+from briefing._colors import CSS_COLOR
 from briefing._error import BriefingError
 from briefing._frames import to_pandas
 from briefing.blocks.base import Block, BlockId
@@ -455,14 +456,6 @@ def _check_expected(expected: t.Any, date: str, group: str | None) -> t.Any:
     )
 
 
-#: A CSS colour an event may take (#152): a hex, a name, or rgb()/hsl()/oklch() with plain numbers.
-_CSS_COLOR = re.compile(
-    r"^(?:#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})"  # #rgb, #rgba, #rrggbb, #rrggbbaa
-    r"|[a-zA-Z]+"  # a named colour
-    r"|(?:rgb|rgba|hsl|hsla|oklch|oklab)\([0-9.,%\s/-]+\))$"  # a colour function of plain numbers
-)
-
-
 def _check_group_order(frame: pd.DataFrame, group: str | None, order: t.Any, block: str) -> list[str] | None:
     """``group_order=``: distinct names of existing groups (#154)."""
     if order is None:
@@ -526,7 +519,7 @@ def _check_events(events: t.Any) -> t.Any:
             )
         if "color" in events.columns:
             for color in events["color"].dropna():
-                if not isinstance(color, str) or not _CSS_COLOR.match(color.strip()):
+                if not isinstance(color, str) or not CSS_COLOR.match(color.strip()):
                     raise BriefingError(f"CalendarHeatmap: event colours are CSS colours such as '#2dd4bf', "
                                         f"'teal' or 'rgb(45, 212, 191)', not {color!r}.")
         return events

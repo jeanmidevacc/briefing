@@ -15,6 +15,8 @@
   --bf-muted:      #6b7280;
   --bf-border:     #e5e7eb;
   --bf-surface:    #f9fafb;
+  --bf-up:         #16a34a;
+  --bf-down:       #dc2626;
   --bf-radius:     0.5rem;
 }
 
@@ -363,13 +365,15 @@ html.bf-printing .bf-heading-actions { display: none; }
   font-weight: 500;
   margin-top: 0.5rem;
 }
-.bf-bignumber__change--up   { color: #16a34a; }
-.bf-bignumber__change--down { color: #dc2626; }
+.bf-bignumber__change--up   { color: var(--bf-up); }
+.bf-bignumber__change--down { color: var(--bf-down); }
 /* is_positive_intent sets the colour apart from the arrow; declared later, so it wins. */
 .bf-bignumber__change--good { color: #16a34a; }
 .bf-bignumber__change--bad  { color: #dc2626; }
 /* Neither an arrow nor a verdict was given: show the change without judging it. */
 .bf-bignumber__change--neutral { color: var(--bf-muted); }
+/* BigNumber(accent=) (#27): a stripe on the card's left edge, inside its rounded corners. */
+.bf-bignumber--accent { box-shadow: inset 4px 0 0 var(--bf-number-accent); }
 /* A BigNumber's trend (#35): drawn at the card's width, the line keeps its thickness. */
 .bf-bignumber__spark { display: block; width: 100%; height: 2rem; margin-top: 0.5rem; overflow: visible; }
 .bf-bignumber__spark path { fill: none; stroke: var(--bf-accent); stroke-width: 1.75; stroke-linejoin: round;
@@ -395,6 +399,15 @@ html.bf-printing .bf-heading-actions { display: none; }
   border-color: var(--bf-alert);
   color: color-mix(in oklab, var(--bf-alert) 55%, var(--bf-text));
 }
+
+/* ── Chips (#27) ───────────────────────────────────────────────────────────── */
+.bf-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; margin: 0; padding: 0; }
+.bf-chip { padding: 0.2rem 0.7rem; border-radius: 999px; font-size: 0.8125rem; line-height: 1.4;
+  background: var(--bf-surface); border: 1px solid var(--bf-border); color: var(--bf-text); }
+/* A coloured chip: its hue mixed with the theme, so dark themes read (as alerts, #167). */
+.bf-chip--color { border-color: var(--bf-chip); background: color-mix(in oklab, var(--bf-chip) 12%, var(--bf-bg));
+  color: color-mix(in oklab, var(--bf-chip) 55%, var(--bf-text)); }
+.bf-chip[title] { cursor: help; }
 
 /* ── Select / tabs ────────────────────────────────────────────────────────── */
 .bf-select { }

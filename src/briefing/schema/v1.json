@@ -125,6 +125,9 @@
           "$ref": "#/$defs/Alert"
         },
         {
+          "$ref": "#/$defs/Chips"
+        },
+        {
           "$ref": "#/$defs/Banner"
         },
         {
@@ -702,6 +705,21 @@
           ],
           "default": null
         },
+        "accent": {
+          "description": "A colour stripe on the card's left edge: `\"up\"`, `\"down\"` or `\"accent\"` (the theme's colours) or a CSS colour.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
         "name": {
           "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
           "anyOf": [
@@ -824,6 +842,72 @@
       "required": [
         "type",
         "message"
+      ],
+      "additionalProperties": false
+    },
+    "Chips": {
+      "description": "A wrapping row of pills: labels, tags, or values that rose or fell.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Chips"
+        },
+        "items": {
+          "description": "The pills: text, or Chip for a tooltip or a colour.",
+          "anyOf": [
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/chip"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "items"
       ],
       "additionalProperties": false
     },
@@ -2587,6 +2671,25 @@
           "type": "string"
         }
       },
+      "additionalProperties": false
+    },
+    "chip": {
+      "description": "A pill with more than its text (bf.Chip): a tooltip, and a colour: up, down, accent or a CSS colour.",
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "tooltip": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
       "additionalProperties": false
     },
     "tab_style": {

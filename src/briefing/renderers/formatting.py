@@ -101,6 +101,8 @@ class Formatting:
     ``muted_color``    — labels, captions, axis text, icons
     ``border_color``   — table borders, card borders, dividers
     ``surface_color``  — card / table-header / code-block backgrounds
+    ``up_color``       — a BigNumber's ▲, ``"up"`` chips and accents
+    ``down_color``     — a BigNumber's ▼, ``"down"`` chips and accents
     ``font``           — CSS font-family stack
     ``radius``         — border-radius applied to cards, badges, buttons
     ``width``          — report container max-width (NARROW / MEDIUM / FULL or CSS value)
@@ -113,6 +115,8 @@ class Formatting:
         muted_color: Labels, captions, axis text and icons.
         border_color: Table, card and divider borders.
         surface_color: Card, table-header and code-block backgrounds.
+        up_color: Things that went up: a BigNumber's ▲, and ``"up"`` chips and accents.
+        down_color: Things that went down: a BigNumber's ▼, and ``"down"`` chips and accents.
         font: CSS ``font-family`` stack.
         radius: Corner radius of cards, badges and buttons.
         width: Content width: a :class:`Width` (``NARROW``, ``MEDIUM``, ``FULL``) or a CSS value.
@@ -126,6 +130,8 @@ class Formatting:
     muted_color: str = "#6b7280"
     border_color: str = "#e5e7eb"
     surface_color: str = "#f9fafb"
+    up_color: str = "#16a34a"
+    down_color: str = "#dc2626"
 
     # ── typography & shape ────────────────────────────────────────────────────
     #: Fonts every system has (#28): each preset's stack names a font from macOS, Windows and
@@ -167,6 +173,8 @@ class Formatting:
             f"  --bf-muted:      {self.muted_color};\n"
             f"  --bf-border:     {self.border_color};\n"
             f"  --bf-surface:    {self.surface_color};\n"
+            f"  --bf-up:         {self.up_color};\n"
+            f"  --bf-down:       {self.down_color};\n"
             f"  --bf-radius:     {self.radius};\n"
             "}\n"
         )

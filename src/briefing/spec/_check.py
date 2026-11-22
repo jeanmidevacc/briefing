@@ -42,6 +42,7 @@ _DEF_WORDS = {
     "file": "a file path or a data: URI",
     "tab_style": 'a tab style {"layout": "stretch", "sticky": true, ...}',
     "header": 'a header {"subtitle": "...", "author": "...", "as_of": "2026-11-20", ...}',
+    "chip": 'a chip {"text": "...", "tooltip": "...", "color": "up"}',
     "ref": '{"ref": "<name>"}',
     "name": "a name (a letter, then letters, digits, _ or -)",
     "block": "a block",

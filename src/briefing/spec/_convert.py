@@ -21,6 +21,7 @@ from pathlib import Path
 
 from briefing._error import BriefingError
 from briefing.blocks.base import Block, ContainerBlock
+from briefing.blocks.chips import Chip
 from briefing.blocks.header import Header
 from briefing.blocks.layout import Briefing, Select, TabStyle
 from briefing.spec._check import check, describe, refs_in, show
@@ -58,6 +59,8 @@ def _plain(value: object) -> t.Any:
         return {k: _plain(v) for k, v in value.items()}
     if isinstance(value, TabStyle | Header):
         return value.to_dict()
+    if isinstance(value, Chip):
+        return value.to_json()
     raise _NoJSON
 
 

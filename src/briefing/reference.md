@@ -125,6 +125,7 @@ KPI display block — shows a headline metric with optional change indicator.
 - `higher_is_better`: true or false, default `true`. With `prev_value`: `True` shows a rise in green, `False` a fall (churn, cost, latency).
 - `format`: text. How `value` is shown: a format string such as `"{:,.0f}"`, `"$ {:.1f}M"` or `"{:.1%}"`, or a function.
 - `sparkline`: a list of numbers or null. A short series of numbers drawn as a trend line under the value (a list, a Series or an array); missing values leave gaps.
+- `accent`: text. A colour stripe on the card's left edge: `"up"`, `"down"` or `"accent"` (the theme's colours) or a CSS colour.
 
 ### Alert
 
@@ -133,6 +134,12 @@ Styled callout / alert block.
 - `message` (required): text. The alert's text.
 - `level`: one of "info", "success", "warning", "error", default `"info"`. `"info"`, `"success"`, `"warning"` or `"error"` (or an AlertLevel).
 - `title`: text. Optional bold title above the message.
+
+### Chips
+
+A wrapping row of pills: labels, tags, or values that rose or fell.
+
+- `items` (required): a list of texts or a chip {"texts": "...", "tooltip": "...", "color": "up"}. The pills: text, or Chip for a tooltip or a colour.
 
 ### Banner
 

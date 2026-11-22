@@ -105,6 +105,10 @@ SCENARIOS: dict[str, Build] = {
     ),
     "alert": lambda _: bf.Briefing(bf.Alert("Drift **detected** in `orders`; see [the runbook](#runbook).",
                                             level="warning", title="Heads *up*")),
+    "chips": lambda _: bf.Briefing(
+        bf.Chips(["Pizza", bf.Chip("Steam +41%", tooltip="Usual 31, now 44", color="up"),
+                  bf.Chip("Netflix -12%", color="down"), bf.Chip("Teal", color="#0d9488")]),
+        bf.BigNumber("Up more than 25%", "14 searches", accent="up")),
     "group-widths": lambda _: bf.Briefing(bf.Group(bf.Text("a"), bf.Text("b"), columns=2, widths=[3, 1])),
     "group-fit": lambda _: bf.Briefing(bf.Group(*(bf.BigNumber(f"K{i}", i) for i in range(5)), columns=4,
                                                 min_width="12rem")),
@@ -268,6 +272,7 @@ ESCAPE_SCENARIOS: dict[str, Callable[[], tuple[bf.Briefing, str]]] = {
     "formula": lambda: (bf.Briefing(bf.Formula(PAYLOAD, caption=PAYLOAD)), "R"),
     "bignumber": lambda: (bf.Briefing(bf.BigNumber(PAYLOAD, PAYLOAD, change=PAYLOAD, is_upward_change=True)), "R"),
     "alert": lambda: (bf.Briefing(bf.Alert(PAYLOAD, title=PAYLOAD)), "R"),
+    "chips": lambda: (bf.Briefing(bf.Chips([bf.Chip(PAYLOAD, tooltip=PAYLOAD)])), "R"),
     "plot-caption": lambda: (bf.Briefing(bf.Plot(matplotlib_figure(), caption=PAYLOAD)), "R"),
     "table": lambda: (bf.Briefing(bf.Table(_payload_frame(), caption=PAYLOAD)), "R"),
     "datatable": lambda: (bf.Briefing(bf.DataTable(_payload_frame(), caption=PAYLOAD)), "R"),

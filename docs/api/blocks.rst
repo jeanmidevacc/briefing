@@ -22,6 +22,8 @@ Highlights
 .. autoclass:: AlertLevel
    :members:
    :undoc-members:
+.. autoclass:: Chips
+.. autoclass:: Chip
 .. autoclass:: Banner
 .. autoclass:: Image
 .. autoclass:: Attachment
