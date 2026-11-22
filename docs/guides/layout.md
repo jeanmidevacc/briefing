@@ -151,6 +151,37 @@ A Markdown link such as `[the method](#detail/methodology)` jumps there.
 A name must be unique within its page: two blocks or headings with the same name in one
 page raise an error when the report is rendered. Different pages may reuse a name.
 
+## The report header
+
+The header shows the report's name (`bf.save(report, path, name=...)`) and when it was
+rendered. {class}`~briefing.Header` adds a subtitle (with inline Markdown), an author, a
+logo embedded in the report, the date the data runs to, and the time zone for the times
+it shows (UTC without one):
+
+```{briefing-example}
+:title: A report header
+:height: 260
+
+import briefing as bf
+
+logo = (b'<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">'
+        b'<circle cx="32" cy="32" r="28" fill="#4f46e5"/></svg>')
+report = bf.Briefing(
+    bf.Text("Search interest rose after the release."),
+    header=bf.Header(
+        subtitle="Weekly search interest, **worldwide** and US",
+        author="Analytics team",
+        logo=logo,
+        as_of="2026-11-20",
+        tz="America/Montreal",
+    ),
+)
+bf.save(report, "header.html", name="Search report")
+```
+
+The header shows when the report has a name, a `header=` or an export menu. The default
+name, "Report", is never shown as a title.
+
 ## The report footer
 
 Every report ends with a line saying which version of briefing made it, and names the

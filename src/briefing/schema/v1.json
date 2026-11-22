@@ -62,6 +62,21 @@
       ],
       "default": null
     },
+    "header": {
+      "description": "What the header shows besides the name and render time: a Header with a subtitle, author, logo, \"data as of\" date and time zone.",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/header"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/ref"
+        }
+      ],
+      "default": null
+    },
     "blocks": {
       "description": "The report's blocks, in order: all of them Page blocks, or none.",
       "anyOf": [
@@ -2457,6 +2472,28 @@
           "additionalProperties": false
         }
       ]
+    },
+    "header": {
+      "description": "What the report header shows besides the name and render time (bf.Header); every key is optional. The logo is an image file's path or a data: URI; as_of is an ISO date or date and time.",
+      "type": "object",
+      "properties": {
+        "subtitle": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "logo": {
+          "$ref": "#/$defs/image"
+        },
+        "as_of": {
+          "type": "string"
+        },
+        "tz": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
     },
     "tab_style": {
       "description": "How a row of tabs looks (bf.TabStyle); every key is optional.",

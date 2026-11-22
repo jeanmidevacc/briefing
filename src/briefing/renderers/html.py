@@ -39,6 +39,7 @@ from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
 from briefing.renderers.copy_embed import RUNTIME_GLOBALS, embed_label
 from briefing.renderers.formatting import Formatting
 from briefing.renderers.formula import latex_to_mathml
+from briefing.renderers.header import render_header
 from briefing.renderers.inline import inline_markdown, inline_plain
 from briefing.renderers.links import claim_links
 from briefing.renderers.markup import close_open_markup
@@ -598,17 +599,14 @@ def render_report(
 
     return template.render(
         report_name=_html.escape(name),
-        report_date=now.strftime("%Y-%m-%d %H:%M UTC"),
-        report_date_iso=now.isoformat(),
+        header_html=render_header(name, normalised.header, now, _export_menu(export)),
         css_vars=fmt.to_css_vars(),
         report_css=_CSS,
         report_scripts=report_scripts,
         head_scripts=head_scripts,
         content_html=content_html,
-        show_header=name != "Report" or "png" in export,
         version=__version__,
         footer_text=footer_text(normalised.footer),
-        export_html=_export_menu(export),
         export_css=(_EXPORT_CSS if "png" in export else "") + (_COPY_CSS if embed else ""),
         embed_data=embed_data,
     )

@@ -114,6 +114,10 @@ SCENARIOS: dict[str, Build] = {
     ),
     "toggle": lambda _: bf.Briefing(bf.Toggle(bf.Text("hidden"), bf.Text("more"), label="More")),
     "pages": lambda _: bf.Briefing(bf.Page(bf.Text("one"), title="One"), bf.Page(bf.Text("two"), title="Two")),
+    "header": lambda _: bf.Briefing(
+        bf.Text("Body"),
+        header=bf.Header(subtitle="Weekly **search** interest", author="Analytics team", logo=RED_SVG,
+                         as_of="2026-11-20", tz="America/Montreal")),
     "tab-style": lambda _: bf.Briefing(
         bf.Page(bf.Select(bf.Text("a", label="A"), bf.Text("b", label="B"),
                           style=bf.TabStyle(layout="center", size="sm", variant="pills")), title="One"),

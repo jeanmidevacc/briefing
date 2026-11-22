@@ -13,11 +13,8 @@
 </head>
 <body>
   <div class="bf-report">
-    {% if show_header %}
-    <header class="bf-report__header">
-      <span class="bf-report__title">{{ report_name }}</span>
-      <time class="bf-report__date" datetime="{{ report_date_iso }}">{{ report_date }}</time>{{ export_html }}
-    </header>
+    {% if header_html %}
+    {{ header_html }}
     {% endif %}
     <main class="bf-report__body">
       {{ content_html }}

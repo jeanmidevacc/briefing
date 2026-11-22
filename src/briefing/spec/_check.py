@@ -41,6 +41,7 @@ _DEF_WORDS = {
     "image": "an image file path or a data: URI",
     "file": "a file path or a data: URI",
     "tab_style": 'a tab style {"layout": "stretch", "sticky": true, ...}',
+    "header": 'a header {"subtitle": "...", "author": "...", "as_of": "2026-11-20", ...}',
     "ref": '{"ref": "<name>"}',
     "name": "a name (a letter, then letters, digits, _ or -)",
     "block": "a block",
