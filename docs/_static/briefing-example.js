@@ -6,6 +6,11 @@
     var doc;
     try { doc = frame.contentDocument; } catch (e) { return; }
     if (!doc || !doc.body) return;  // e.g. a file:// build, where frames are cross-origin
+    if (doc.querySelector('[data-bf-deck]')) {  // a slide deck fills its frame: give it a slide's shape
+      frame.style.height = 'auto';
+      frame.style.aspectRatio = '16 / 9';
+      return;
+    }
     function resize() {
       var style = doc.defaultView.getComputedStyle(doc.body);
       var height = doc.body.offsetHeight + parseFloat(style.marginTop) + parseFloat(style.marginBottom);

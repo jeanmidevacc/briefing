@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   path, slide=, scale=)` one image per slide (`q3_01.png`, …), from a `Deck` or a saved
   deck. `python -m briefing render` builds a deck from JSON with `"slides"`, and
   `python -m briefing pdf` and `image` export a saved deck, picking slides with `--slide`.
+- A "Slide decks" guide, with a live deck; the docs show a deck example in a 16:9 frame (#197).
 
 ### Changed
 
