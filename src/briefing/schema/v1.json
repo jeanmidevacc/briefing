@@ -131,6 +131,9 @@
           "$ref": "#/$defs/Chips"
         },
         {
+          "$ref": "#/$defs/Legend"
+        },
+        {
           "$ref": "#/$defs/Banner"
         },
         {
@@ -1031,6 +1034,97 @@
       "required": [
         "type",
         "items"
+      ],
+      "additionalProperties": false
+    },
+    "Legend": {
+      "description": "One legend for the blocks that share a Scale, such as a page of calendars.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Legend"
+        },
+        "scale": {
+          "description": "A Scale with a `domain`: the values its colours stand for.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/scale"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "title": {
+          "description": "A short line above the legend, with inline Markdown as in captions.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "events": {
+          "description": "Dates to list, as `CalendarHeatmap(events=)` takes them, with their colours.",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "$ref": "#/$defs/table"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "scale"
       ],
       "additionalProperties": false
     },
@@ -2218,7 +2312,7 @@
           "default": null
         },
         "views": {
-          "description": "`(\"days\",)`, the day calendar. The hour view was removed in 0.5.0: use TimeHeatmap with `rows=\"weekday\", columns=\"hour\"`.",
+          "description": "Only `(\"days\",)`; the hour view was removed in 0.5.0 (use TimeHeatmap).",
           "anyOf": [
             {
               "type": "array",
@@ -2237,7 +2331,7 @@
           ]
         },
         "tz": {
-          "description": "A time zone such as `\"America/Montreal\"`. Converts timezone-aware timestamps only; naive timestamps and plain dates are taken as already local, so a date at midnight never moves to the previous day.",
+          "description": "A time zone such as `\"America/Montreal\"`. Converts timezone-aware timestamps only; naive timestamps and plain dates are taken as already local.",
           "anyOf": [
             {
               "type": [
@@ -2252,7 +2346,7 @@
           "default": null
         },
         "colors": {
-          "description": "`\"github\"` (GitHub's green scale), a list of CSS colours (low to high, spread over the data), or a Scale, whose colours mean the same values in every block that uses it.",
+          "description": "`\"github\"`, a list of CSS colours (low to high, spread over the data), or a Scale (the same colours for the same values everywhere).",
           "anyOf": [
             {
               "type": "string"
@@ -2273,7 +2367,7 @@
           "default": "github"
         },
         "center": {
-          "description": "*Deprecated since 0.6.0:* use `colors=bf.Scale([below, at, above], center=...)`. A midpoint for a diverging scale with three hex colours.",
+          "description": "*Deprecated since 0.6.0:* use `colors=bf.Scale([...], center=...)`.",
           "anyOf": [
             {
               "type": [
@@ -2321,7 +2415,7 @@
           "default": null
         },
         "events": {
-          "description": "Dates to mark: a list of dates, or a DataFrame with `start`, optional `end`, `label` and `color` columns. A single day is outlined and dotted under the calendar; a span draws as a band and leaves its days' colours in view. `color` (any CSS colour) colours an event's marks and legend entry; by default they take the theme's accent.",
+          "description": "Dates to mark: a list of dates, or a DataFrame with `start` and optional `end`, `label` and `color` (a CSS colour; the accent by default) columns. A day is outlined and dotted, a span drawn as a band.",
           "anyOf": [
             {
               "type": "array",
@@ -2342,7 +2436,7 @@
           "default": null
         },
         "on_click": {
-          "description": "`\"rows\"` lists the rows behind a day or an hour in a panel when it is clicked (up to `ROWS_PER_CELL` rows per cell, embedded in the report); `None` (default) for no click action.",
+          "description": "`\"rows\"` lists the rows behind a day in a panel when it is clicked (up to `ROWS_PER_CELL` per cell); `None` for none.",
           "anyOf": [
             {
               "type": "null"
@@ -2407,6 +2501,18 @@
             }
           ],
           "default": null
+        },
+        "legend": {
+          "description": "`False` hides this block's legend (show one Legend instead).",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": true
         },
         "name": {
           "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
@@ -2578,7 +2684,7 @@
           "default": null
         },
         "colors": {
-          "description": "`\"github\"` (GitHub's green scale), a list of CSS colours (low to high, spread over the data), or a Scale, whose colours mean the same values in every block that uses it.",
+          "description": "`\"github\"`, a list of CSS colours (low to high, spread over the data), or a Scale (the same colours for the same values everywhere).",
           "anyOf": [
             {
               "type": "string"
@@ -2599,7 +2705,7 @@
           "default": "github"
         },
         "center": {
-          "description": "*Deprecated since 0.6.0:* use `colors=bf.Scale([below, at, above], center=...)`. A midpoint for a diverging scale with three hex colours.",
+          "description": "*Deprecated since 0.6.0:* use `colors=bf.Scale([...], center=...)`.",
           "anyOf": [
             {
               "type": [
@@ -2629,7 +2735,7 @@
           "default": "monday"
         },
         "on_click": {
-          "description": "`\"rows\"` lists the rows behind a cell in a panel when it is clicked (up to `ROWS_PER_CELL` rows per cell, embedded in the report); `None` (default) for no click action.",
+          "description": "`\"rows\"` lists the rows behind a cell in a panel when it is clicked (up to `ROWS_PER_CELL` per cell); `None` for none.",
           "anyOf": [
             {
               "type": "null"
@@ -2662,6 +2768,18 @@
             }
           ],
           "default": null
+        },
+        "legend": {
+          "description": "`False` hides this block's legend (show one Legend instead).",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": true
         },
         "name": {
           "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",

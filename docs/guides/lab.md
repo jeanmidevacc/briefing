@@ -127,6 +127,31 @@ its colours are mixed in OKLab, so equal steps in value look like equal steps in
 `steps=5` turns it into five classes, and calling a scale with a value gives its colour,
 for chips or anything else. {mod}`briefing.color` has the OKLab helpers (`ramp`, `mix`).
 
+When several calendars share a scale, show its legend once with {class}`~briefing.Legend`
+and give the calendars `legend=False`:
+
+```{briefing-example}
+:title: Calendars on one scale, with one legend
+:height: 480
+
+import numpy as np
+import pandas as pd
+import briefing as bf
+
+rng = np.random.default_rng(2)
+days = pd.date_range("2026-05-19", "2026-08-31", freq="D")
+interest = bf.Scale(["#1b2c80", "#9a3fc4", "#f5479a", "#ffc46b"], domain=(0, 100))
+events = pd.DataFrame({"start": ["2026-06-05"], "label": ["Trailer"], "color": ["#2dd4bf"]})
+
+report = [bf.Legend(interest, title="Search interest, 0 to 100", events=events)]
+for place, level in [("Worldwide", 55), ("United States", 35)]:
+    df = pd.DataFrame({"day": days, "interest": rng.normal(level, 15, len(days)).clip(0, 100).round()})
+    report.append(bf.Text(f"#### {place}"))
+    report.append(bf.lab.CalendarHeatmap(df, date="day", value="interest", colors=interest,
+                                         events=events, legend=False))
+bf.save(report, "one-legend.html", name="One legend")
+```
+
 For values that go negative, such as a daily balance, `center=0` makes the scale
 diverging, with an odd number of colours: the middle one sits at the centre.
 

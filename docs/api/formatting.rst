@@ -17,6 +17,7 @@ Colour scales
 
 .. autoclass:: Scale
    :members: bounds, position, at, gradient
+.. autoclass:: Legend
 
 .. automodule:: briefing.color
    :members: ramp, mix, along, lightness, to_oklab, from_oklab, check_hex

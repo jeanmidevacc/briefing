@@ -66,6 +66,9 @@ from briefing.blocks import (
 # ── export: images and PDFs (Playwright is imported only when called) ────────
 from briefing.export import save_image, save_pdf
 
+# ── the report as JSON: to_spec / from_spec / validate (#31) ─────────────────
+from briefing.lab import Legend
+
 # ── formatting ────────────────────────────────────────────────────────────────
 from briefing.renderers.formatting import Formatting, TextAlignment, Width
 
@@ -73,8 +76,6 @@ from briefing.renderers.formatting import Formatting, TextAlignment, Width
 from briefing.renderers.fragment import render_embed_assets, render_fragment
 from briefing.renderers.html import render_report
 from briefing.renderers.size import DEFAULT_MAX_SIZE, Part, check_size, parse_size
-
-# ── the report as JSON: to_spec / from_spec / validate (#31) ─────────────────
 from briefing.scale import Scale
 from briefing.spec import Diagnostic, from_spec, schema, to_spec, validate
 
@@ -274,6 +275,7 @@ __all__: list[str] = [
     "lab",
     # formatting
     "Formatting",
+    "Legend",
     "Scale",
     "color",
     "TextAlignment",

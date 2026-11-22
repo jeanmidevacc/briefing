@@ -155,8 +155,14 @@ def _block(kind: BlockType) -> str:
     if kind.name == "Text":
         lines.append("Needs `text` or `file`.")
     lines.append("")
-    lines += [_option(f) for f in kind.fields if f.attr is not None or f.name == "file" if f.name not in _COMMON]
+    lines += [_option(f) for f in kind.fields
+              if (f.attr is not None or f.name == "file") and f.name not in _COMMON and not deprecated(f)]
     return "\n".join(lines).rstrip() + "\n"
+
+
+def deprecated(field: Field) -> bool:
+    """Whether an option is deprecated (its docs start so): left out, since agents shouldn't use it."""
+    return field.description.startswith("*Deprecated")
 
 
 def build_reference() -> str:

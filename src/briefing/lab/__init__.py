@@ -29,8 +29,8 @@ from __future__ import annotations
 
 from importlib.resources import files
 
-from briefing.lab._blocks import CalendarHeatmap, DataDive, DataProfile, TimeHeatmap
-from briefing.lab._render_calendar import render_calendar
+from briefing.lab._blocks import CalendarHeatmap, DataDive, DataProfile, Legend, TimeHeatmap
+from briefing.lab._render_calendar import render_calendar, render_legend
 from briefing.lab._render_datadive import render_datadive
 from briefing.lab._render_profile import render_profile
 from briefing.lab._render_timeheatmap import render_timeheatmap
@@ -66,4 +66,10 @@ def _render_timeheatmap_block(block: TimeHeatmap, _: IdGen) -> str:
 # The time-pattern grid shares the calendar's script: sizing, tooltips, the rows panel (#111).
 register_renderer(TimeHeatmap, _render_timeheatmap_block, js_asset=_CALENDAR_JS)
 
-__all__ = ["CalendarHeatmap", "DataDive", "DataProfile", "TimeHeatmap"]
+def _render_legend_block(block: Legend, _: IdGen) -> str:
+    return render_legend(block)
+
+
+register_renderer(Legend, _render_legend_block)  # no script: a legend is static (#177)
+
+__all__ = ["CalendarHeatmap", "DataDive", "DataProfile", "Legend", "TimeHeatmap"]

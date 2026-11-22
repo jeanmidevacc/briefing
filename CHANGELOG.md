@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   equal steps in colour; the heatmaps take it as `colors=`, and calling it with a value
   gives that value's colour. `bf.color` has the OKLab helpers (`ramp`, `mix`,
   `lightness`, …) (#175).
+- `bf.Legend(scale, title=, events=)`: one legend for the blocks that share a `Scale`, and
+  `legend=False` on `CalendarHeatmap` and `TimeHeatmap` to hide their own (#177).
 
 ### Deprecated
 

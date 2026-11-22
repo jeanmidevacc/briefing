@@ -191,6 +191,11 @@ SCENARIOS: dict[str, Build] = {
         df("df_signed"), date="day", rows="day", columns="month", value="balance", agg="mean",
         colors=bf.Scale(["#d73027", "#f7f7f7", "#1a9850"], domain=(-100, 100), center=0, steps=5),
         week_start="sunday")),
+    "legend": lambda df: bf.Briefing(
+        bf.Legend(bf.Scale(["#1b2c80", "#f5479a", "#ffc46b"], domain=(0, 1500)), title="Rows **per day**",
+                  events=df("df_events")),
+        bf.lab.CalendarHeatmap(df("df_pipeline_log"), date="run_at", value="rows", legend=False,
+                               colors=bf.Scale(["#1b2c80", "#f5479a", "#ffc46b"], domain=(0, 1500)))),
     "banner": lambda _: bf.Briefing(
         bf.Banner("# Cover\n\nA **subtitle**.", image=RED_SVG, text_position=55, opacity=80,
                   kicker="Data through <Nov 20>"),
@@ -280,6 +285,7 @@ ESCAPE_SCENARIOS: dict[str, Callable[[], tuple[bf.Briefing, str]]] = {
     "alert": lambda: (bf.Briefing(bf.Alert(PAYLOAD, title=PAYLOAD)), "R"),
     "chips": lambda: (bf.Briefing(bf.Chips([bf.Chip(PAYLOAD, tooltip=PAYLOAD)])), "R"),
     "card": lambda: (bf.Briefing(bf.Card(title=PAYLOAD, icon="<b>", tags=[PAYLOAD])), "R"),  # a body is Text
+    "legend": lambda: (bf.Briefing(bf.Legend(bf.Scale(["#000", "#fff"], domain=(0, 1)), title=PAYLOAD)), "R"),
     "plot-caption": lambda: (bf.Briefing(bf.Plot(matplotlib_figure(), caption=PAYLOAD)), "R"),
     "table": lambda: (bf.Briefing(bf.Table(_payload_frame(), caption=PAYLOAD)), "R"),
     "datatable": lambda: (bf.Briefing(bf.DataTable(_payload_frame(), caption=PAYLOAD)), "R"),
