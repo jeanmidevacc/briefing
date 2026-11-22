@@ -38,6 +38,7 @@ coding agents both write. Reports work offline forever: no CDN, no server.
    guides/embed
    guides/json
    guides/diff
+   guides/email
    guides/lab
    recipes
 

@@ -22,6 +22,15 @@ The same exports run from the command line as ``python -m briefing image`` and
 .. autofunction:: save_image
 .. autofunction:: save_pdf
 
+Email digests
+-------------
+
+.. automodule:: briefing.email
+   :members: Digest, to_message, to_eml, to_html, to_text, Picture
+   :no-index:
+
+.. currentmodule:: briefing
+
 Comparing runs
 --------------
 

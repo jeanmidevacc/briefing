@@ -39,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   change, table rows added, removed and changed, text line by line, and blocks added or
   removed, matched by their link names. A run can be a `Briefing` or the JSON an earlier
   run saved (#30).
+- `bf.email.Digest(...)` and `bf.email.to_message(digest, subject=...)`: a short digest of a
+  few blocks built for mail apps (inline styles, charts as attached PNG images, a plain-text
+  part, a button to the full report), as a standard `EmailMessage` you send your own way;
+  `to_eml` writes it to a file to preview (#42).
 
 ### Changed
 
