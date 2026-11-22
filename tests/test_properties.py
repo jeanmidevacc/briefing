@@ -23,7 +23,7 @@ from briefing.blocks.base import Block
 from tests.contract import MARKER, RULES, check_deterministic, check_user_text_escaped, parse_report
 from tests.golden import NOW
 from tests.html_helpers import find_one
-from tests.strategies import dataframes, markup, texts
+from tests.strategies import dataframes, inline_markdown, markup, texts
 
 
 def _check(make: Callable[[], Block]) -> None:
@@ -71,6 +71,19 @@ def test_table_renders_any_frame(df: pd.DataFrame, caption: str) -> None:
 @given(df=dataframes(), caption=texts)
 def test_datatable_renders_any_frame(df: pd.DataFrame, caption: str) -> None:
     _check(lambda: bf.DataTable(df, caption=caption))
+
+
+@given(text=inline_markdown)
+def test_inline_markdown_fields_render_any_string(text: str) -> None:
+    # Captions, alerts and BigNumber headings render inline Markdown, with raw HTML escaped (#26).
+    assume(text.strip())
+    _check(lambda: bf.Group(bf.Alert(text, title=text), bf.BigNumber(text, 1),
+                            bf.Code("x", caption=text), columns=3))
+    html = bf.stringify(bf.Briefing(bf.Alert(text, title=text)), now=NOW)
+    for tag in parse_report(html).select(".bf-alert__message *, .bf-alert__title *"):
+        assert tag.name in ("strong", "em", "code", "a"), tag
+        assert set(tag.attrs) <= {"href"}, tag
+        assert not str(tag.get("href", "")).lower().startswith(("javascript:", "vbscript:", "data:"))
 
 
 @given(df=dataframes())

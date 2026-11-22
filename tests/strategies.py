@@ -28,6 +28,15 @@ _MARKUP_PIECES = [
 #: Raw HTML as the author of a ``Text`` or ``HTML`` block might leave it, closed or not.
 markup = st.lists(st.sampled_from(_MARKUP_PIECES), max_size=12).map("".join)
 
+#: Pieces of inline Markdown and HTML, joined into a caption, alert or heading (#26).
+_INLINE_PIECES = [
+    "**", "*", "_", "`", "[", "]", "(", ")", "![", "<", ">", "\\", "&", "&amp;", '"', " ", "\n", "a", "#", "- ",
+    "https://example.org", "javascript:alert(1)", "<https://example.org>", "<script>", "onerror=", PAYLOAD,
+]
+
+#: Inline Markdown as a caption, an alert or a BigNumber heading might hold it.
+inline_markdown = st.lists(st.sampled_from(_INLINE_PIECES), max_size=12).map("".join)
+
 _FLOATS = st.floats(allow_nan=True, allow_infinity=True) | st.sampled_from([0.0, -0.0, 1e308, -1e308, 5e-324])
 _INTS = st.integers(min_value=-(2**63), max_value=2**63 - 1)
 _DATETIMES = st.datetimes(min_value=dt.datetime(1900, 1, 1), max_value=dt.datetime(2200, 1, 1))

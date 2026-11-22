@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 from briefing._error import BriefingError
+from briefing.renderers.inline import inline_markdown, inline_plain
 from briefing.renderers.pack import pack
 from briefing.renderers.registry import IdGen
 
@@ -138,7 +139,7 @@ def render_table(block: Table, idgen: IdGen | None = None) -> str:
         )
 
     caption_html = (
-        f'<div class="bf-table__caption">{_html.escape(block.caption)}</div>'
+        f'<div class="bf-table__caption">{inline_markdown(block.caption)}</div>'
         if block.caption
         else ""
     )
@@ -197,7 +198,7 @@ def render_datatable(block: DataTable) -> str:
         data_html = f'<script type="application/json" class="bf-dt__data" data-size="{size}">"{packed}"</script>'
 
     caption_html = (
-        f'<div class="bf-dt__caption">{_html.escape(block.caption)}</div>'
+        f'<div class="bf-dt__caption">{inline_markdown(block.caption)}</div>'
         if block.caption
         else ""
     )
@@ -230,7 +231,7 @@ def _csv_button(block: DataTable) -> str:
     """The "CSV" button of a table with ``download=True`` (#34), and where it says what it did."""
     if not block.download:
         return ""
-    base = block.name or block.caption or "table"
+    base = block.name or inline_plain(block.caption or "") or "table"
     name = re.sub(r"[^A-Za-z0-9]+", "-", base).strip("-").lower()[:60] or "table"
     return (
         f'<button class="bf-dt__csv" type="button" data-bf-filename="{_html.escape(name)}.csv" '

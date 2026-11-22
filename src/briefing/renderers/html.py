@@ -39,6 +39,7 @@ from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
 from briefing.renderers.copy_embed import RUNTIME_GLOBALS, embed_label
 from briefing.renderers.formatting import Formatting
 from briefing.renderers.formula import latex_to_mathml
+from briefing.renderers.inline import inline_markdown, inline_plain
 from briefing.renderers.links import claim_links
 from briefing.renderers.markup import close_open_markup
 from briefing.renderers.normalize import normalize
@@ -196,10 +197,10 @@ def _render_banner(block: Banner, idgen: _IdGen) -> str:
 @renderer_for(Image)
 def _render_image(block: Image, _: _IdGen) -> str:
     src = f"data:{block.mime};base64,{base64.b64encode(block.image).decode('ascii')}"
-    alt = block.alt if block.alt is not None else (block.caption or "")
+    alt = block.alt if block.alt is not None else inline_plain(block.caption or "")
     style = f' style="width: {block.width}"' if block.width else ""
     caption = (
-        f'<figcaption class="bf-image__caption">{_html.escape(block.caption)}</figcaption>' if block.caption else ""
+        f'<figcaption class="bf-image__caption">{inline_markdown(block.caption)}</figcaption>' if block.caption else ""
     )
     return (
         f'<figure class="bf-block bf-image"><img class="bf-image__img" src="{src}" alt="{_html.escape(alt)}"'
@@ -271,7 +272,7 @@ def _render_code(block: Code, _: _IdGen) -> str:
     code = _highlight(block.content, block.language)
     header = f'<div class="bf-code__header"><span>{lang}</span></div>'
     caption = (
-        f'<div class="bf-code__caption">{_html.escape(block.caption)}</div>'
+        f'<div class="bf-code__caption">{inline_markdown(block.caption)}</div>'
         if block.caption
         else ""
     )
@@ -287,7 +288,7 @@ def _render_code(block: Code, _: _IdGen) -> str:
 @renderer_for(Formula)
 def _render_formula(block: Formula, _: _IdGen) -> str:
     caption = (
-        f'<div class="bf-formula__caption">{_html.escape(block.caption)}</div>'
+        f'<div class="bf-formula__caption">{inline_markdown(block.caption)}</div>'
         if block.caption
         else ""
     )
@@ -312,7 +313,7 @@ def _render_formula(block: Formula, _: _IdGen) -> str:
 
 @renderer_for(BigNumber)
 def _render_bignumber(block: BigNumber, _: _IdGen) -> str:
-    heading = _html.escape(str(block.heading))
+    heading = inline_markdown(str(block.heading))
     value = _html.escape(str(block.value))
 
     change_html = ""
@@ -343,14 +344,14 @@ def _render_bignumber(block: BigNumber, _: _IdGen) -> str:
 def _render_alert(block: Alert, _: _IdGen) -> str:
     level = block.level.value
     title_html = (
-        f'<div class="bf-alert__title">{_html.escape(block.title)}</div>'
+        f'<div class="bf-alert__title">{inline_markdown(block.title)}</div>'
         if block.title
         else ""
     )
     return (
         f'<div class="bf-block bf-alert bf-alert--{level}" role="alert">'
         f"{title_html}"
-        f'<div class="bf-alert__message">{_html.escape(block.message)}</div>'
+        f'<div class="bf-alert__message">{inline_markdown(block.message)}</div>'
         f"</div>"
     )
 
