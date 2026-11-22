@@ -55,6 +55,15 @@ body {
   color: var(--bf-muted);
   white-space: nowrap;
 }
+/* A Header's extras (#25): logo, subtitle, author and the "data as of" date. */
+.bf-report__header:has(> .bf-report__heading, > .bf-report__logo) { align-items: center; }
+.bf-report__logo { height: 2.25rem; max-width: 8rem; object-fit: contain; flex: none; }
+.bf-report__heading { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.bf-report__heading > .bf-report__title { flex: none; }
+.bf-report__subtitle { font-size: 0.95rem; color: var(--bf-muted); }
+.bf-report__author { font-size: 0.8125rem; color: var(--bf-muted); }
+.bf-report__asof { font-size: 0.8125rem; color: var(--bf-muted); white-space: nowrap; }
+.bf-report__asof + .bf-report__date::before { content: "Rendered "; }  /* two dates: say which is which */
 
 /* ── report footer ────────────────────────────────────────────────────────── */
 .bf-report__footer {
@@ -790,6 +799,7 @@ html.bf-printing .bf-heading-actions { display: none; }
   .bf-group { grid-template-columns: 1fr !important; }
   .bf-bignumber__value { font-size: 1.5rem; }
   .bf-report__header { flex-direction: column; gap: 0.25rem; }
+  .bf-report__header:has(> .bf-report__heading, > .bf-report__logo) { align-items: flex-start; }
 }
 
 /* ── Banner (#50) ─────────────────────────────────────────────────────────── */

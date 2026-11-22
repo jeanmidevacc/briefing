@@ -11,6 +11,7 @@ from enum import StrEnum
 
 from briefing._error import BriefingError
 from briefing.blocks.base import _MAX_CAPTION_LEN, BlockId, BlockOrPrimitive, ContainerBlock, _truncate
+from briefing.blocks.header import Header
 
 # ── enums ─────────────────────────────────────────────────────────────────────
 
@@ -317,6 +318,8 @@ class Briefing(ContainerBlock):
             turned off.
         tabs: How the page tabs look, for a report made of :class:`Page` blocks: a
             :class:`TabStyle` such as ``bf.TabStyle(layout="stretch", sticky=True)``.
+        header: What the header shows besides the name and render time: a
+            :class:`Header` with a subtitle, author, logo, "data as of" date and time zone.
 
     Example::
 
@@ -340,6 +343,7 @@ class Briefing(ContainerBlock):
     export: tuple[str, ...]
     footer: str | None
     tabs: TabStyle | None
+    header: Header | None
 
     def __init__(
         self,
@@ -348,12 +352,14 @@ class Briefing(ContainerBlock):
         export: str | Sequence[str] = (),
         footer: str | None = None,
         tabs: TabStyle | Mapping[str, t.Any] | None = None,
+        header: Header | Mapping[str, t.Any] | None = None,
     ) -> None:
         # Unwrap if a single Briefing is passed directly (avoids double-wrapping).
         if len(arg_blocks) == 1 and isinstance(arg_blocks[0], Briefing):
             export = export or arg_blocks[0].export
             footer = footer or arg_blocks[0].footer
             tabs = tabs or arg_blocks[0].tabs
+            header = header or arg_blocks[0].header
             arg_blocks = tuple(arg_blocks[0].blocks)
         if footer is not None and not isinstance(footer, str):
             raise BriefingError(f"Briefing 'footer' must be text such as 'Analytics team', not {footer!r}.")
@@ -361,6 +367,7 @@ class Briefing(ContainerBlock):
         self.export = self._check_export(export)
         self.footer = _truncate(footer, _MAX_CAPTION_LEN) if footer else None
         self.tabs = TabStyle.of(tabs, "Briefing tabs=")
+        self.header = Header.of(header)
         if self.tabs is not None and not any(isinstance(b, Page) for b in self.blocks):
             raise BriefingError("Briefing: tabs= styles the page tabs, and this report has no Page. "
                                 "Put its blocks in bf.Page(...)s, or style a Select with Select(style=...).")

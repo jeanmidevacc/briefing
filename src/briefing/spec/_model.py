@@ -99,6 +99,7 @@ _OVERRIDES: dict[tuple[str, str], dict[str, t.Any]] = {
     ("Image", "image"): _ref("image"),
     ("Attachment", "file"): {"anyOf": [_ref("file"), _ref("table")]},
     ("Briefing", "tabs"): {"anyOf": [_ref("tab_style"), {"type": "null"}]},
+    ("Briefing", "header"): {"anyOf": [_ref("header"), {"type": "null"}]},
     ("Select", "style"): {"anyOf": [_ref("tab_style"), {"type": "null"}]},
     ("lab.CalendarHeatmap", "start"): {"anyOf": [{"type": "string", "format": "date"}, {"type": "null"}]},
     ("lab.CalendarHeatmap", "end"): {"anyOf": [{"type": "string", "format": "date"}, {"type": "null"}]},
@@ -403,6 +404,20 @@ def build_schema() -> dict[str, t.Any]:
                 {"type": "object", "properties": {"vega-lite": {"type": "object"}}, "required": ["vega-lite"],
                  "additionalProperties": False},
             ],
+        },
+        "header": {
+            "description": "What the report header shows besides the name and render time (bf.Header); "
+            "every key is optional. The logo is an image file's path or a data: URI; as_of is an ISO "
+            "date or date and time.",
+            "type": "object",
+            "properties": {
+                "subtitle": {"type": "string"},
+                "author": {"type": "string"},
+                "logo": _ref("image"),
+                "as_of": {"type": "string"},
+                "tz": {"type": "string"},
+            },
+            "additionalProperties": False,
         },
         "tab_style": {
             "description": "How a row of tabs looks (bf.TabStyle); every key is optional.",

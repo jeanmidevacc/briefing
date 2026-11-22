@@ -69,6 +69,7 @@ with the same keyword arguments (`{"type": "Group", "columns": 2, "blocks": [...
 - `export`: one of "png", "embed" or a list of values from "png", "embed". Opt-in export menu in the report header: `"png"` adds "Save as PNG" (the open page with a margin around it, drawn in the reader's browser at 2×). Reports without it contain no export code. "Save as PNG" is best effort: charts drawn in iframes (Bokeh) and WebGL Plotly traces come out blank, and fonts are whatever the reader's machine has. For exact, reproducible files use save_image / save_pdf. To print, use the browser's own print (Ctrl+P or ⌘P): it gets the same print layout. `"embed"` puts a `</>` button on each page, labelled group, chart, table, text, number, alert and banner: it copies that part as an embed fragment, as stringify makes with `full_html=False`, to paste into another page. `"pdf"` (the "Print" button) was removed in 0.4.0: print with Ctrl+P, or save a file with save_pdf.
 - `footer`: text. Text to put before the report's footer line, such as a team name. Every report ends with "Made with briefing" and its version; that line can't be turned off.
 - `tabs`: a tab style {"layout": "stretch", "sticky": true, ...}. How the page tabs look, for a report made of Page blocks: a TabStyle such as `bf.TabStyle(layout="stretch", sticky=True)`.
+- `header`: a header {"subtitle": "...", "author": "...", "as_of": "2026-11-20", ...}. What the header shows besides the name and render time: a Header with a subtitle, author, logo, "data as of" date and time zone.
 
 ## Blocks
 

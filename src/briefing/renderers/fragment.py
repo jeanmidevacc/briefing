@@ -11,7 +11,6 @@ import base64
 import functools
 import gzip
 import hashlib
-import html as _html
 import json
 import re
 import typing as t
@@ -24,6 +23,7 @@ from briefing.blocks.base import _NAME_RE, Block
 from briefing.blocks.layout import Briefing
 from briefing.renderers.css_scope import rem_to_var, scope_css
 from briefing.renderers.formatting import Formatting
+from briefing.renderers.header import render_header
 from briefing.renderers.html import (
     _CSS,
     _JS,
@@ -118,12 +118,7 @@ def render_fragment(
                       for defined, source in runtime_sources(scan_for_plots(normalised))]
     header_html = ""
     if header:
-        when = _resolve_now(now)
-        header_html = (
-            f'<header class="bf-report__header"><span class="bf-report__title">{_html.escape(name)}</span>'
-            f'<time class="bf-report__date" datetime="{when.isoformat()}">{when.strftime("%Y-%m-%d %H:%M UTC")}'
-            "</time></header>"
-        )
+        header_html = render_header(name, normalised.header, _resolve_now(now), compact=True)
     theme_css = rem_to_var(fmt.to_css_vars(f"#{known or _TOKEN}"))
     if known is None:
         digest = hashlib.sha256(f"{theme_css}{header_html}{content_html}".encode()).hexdigest()[:8]

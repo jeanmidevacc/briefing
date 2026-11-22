@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   centred or stretched to equal shares, run their line edge to edge, stay at the top while
   scrolling, come in three sizes, and be underlined, pills or boxed. Reports that set no
   style render as before (#22).
+- `Briefing(header=bf.Header(subtitle=, author=, logo=, as_of=, tz=))`: a subtitle with
+  inline Markdown, an author, an embedded logo, a "Data as of" date beside the render time,
+  and a time zone for the times shown (#25).
 
 ### Changed
 
@@ -35,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (bold, italics, code, links); raw HTML in them stays escaped, and block syntax stays text.
   A caption that already holds `*`, backticks or `[…](…)` may now be formatted: write `\*`
   to keep it literal (#26).
+- The default report name, "Report", is no longer shown as a title: a report with an export
+  menu and no name shows only the date and the menu (#25).
 - Theme presets use only fonts every system has, so a preset looks the same to every reader
   (#28). Inter, DM Sans, IBM Plex Sans and Lora were named but never embedded, so most
   readers saw a fallback. The default is now the system UI font; `corporate()` a
