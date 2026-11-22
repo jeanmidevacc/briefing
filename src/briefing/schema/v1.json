@@ -2252,7 +2252,7 @@
           "default": null
         },
         "colors": {
-          "description": "`\"github\"` (GitHub's green scale) or a list of CSS colours, low to high.",
+          "description": "`\"github\"` (GitHub's green scale), a list of CSS colours (low to high, spread over the data), or a Scale, whose colours mean the same values in every block that uses it.",
           "anyOf": [
             {
               "type": "string"
@@ -2264,13 +2264,16 @@
               }
             },
             {
+              "$ref": "#/$defs/scale"
+            },
+            {
               "$ref": "#/$defs/ref"
             }
           ],
           "default": "github"
         },
         "center": {
-          "description": "A midpoint for a diverging scale (e.g. `0` for values that go negative); `colors` is then three hex colours: below, at and above it.",
+          "description": "*Deprecated since 0.6.0:* use `colors=bf.Scale([below, at, above], center=...)`. A midpoint for a diverging scale with three hex colours.",
           "anyOf": [
             {
               "type": [
@@ -2575,7 +2578,7 @@
           "default": null
         },
         "colors": {
-          "description": "`\"github\"` (GitHub's green scale) or a list of CSS colours, low to high.",
+          "description": "`\"github\"` (GitHub's green scale), a list of CSS colours (low to high, spread over the data), or a Scale, whose colours mean the same values in every block that uses it.",
           "anyOf": [
             {
               "type": "string"
@@ -2587,13 +2590,16 @@
               }
             },
             {
+              "$ref": "#/$defs/scale"
+            },
+            {
               "$ref": "#/$defs/ref"
             }
           ],
           "default": "github"
         },
         "center": {
-          "description": "A midpoint for a diverging scale (e.g. `0`); `colors` is then three hex colours: below, at and above it.",
+          "description": "*Deprecated since 0.6.0:* use `colors=bf.Scale([below, at, above], center=...)`. A midpoint for a diverging scale with three hex colours.",
           "anyOf": [
             {
               "type": [
@@ -2794,6 +2800,37 @@
           "type": "string"
         }
       },
+      "additionalProperties": false
+    },
+    "scale": {
+      "description": "A colour scale (bf.Scale): hex colours low to high, mixed in OKLab; domain fixes the values they stand for, center makes it diverging, steps makes it classed.",
+      "type": "object",
+      "properties": {
+        "colors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2
+        },
+        "domain": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "center": {
+          "type": "number"
+        },
+        "steps": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "colors"
+      ],
       "additionalProperties": false
     },
     "chip": {

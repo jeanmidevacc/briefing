@@ -181,15 +181,16 @@ SCENARIOS: dict[str, Build] = {
         events=df("df_events").assign(color=pd.Series(["#2dd4bf", None, "rgb(96, 165, 250)"])),
         tz="America/Montreal", on_click="rows")),
     "calendar-diverging": lambda df: bf.Briefing(
-        bf.lab.CalendarHeatmap(df("df_signed"), date="day", value="balance", center=0,
-                               colors=["#d73027", "#f7f7f7", "#1a9850"], week_start="sunday",
+        bf.lab.CalendarHeatmap(df("df_signed"), date="day", value="balance",
+                               colors=bf.Scale(["#d73027", "#f7f7f7", "#1a9850"], center=0), week_start="sunday",
                                start="2026-02-15", end="2026-05-31")),
     "time-heatmap": lambda df: bf.Briefing(bf.lab.TimeHeatmap(
         df("df_pipeline_log"), date="run_at", rows="weekday", columns="hour", value="rows", group="team",
         group_order=["ingest"], on_click="rows")),
     "time-heatmap-months": lambda df: bf.Briefing(bf.lab.TimeHeatmap(
-        df("df_signed"), date="day", rows="day", columns="month", value="balance", agg="mean", center=0,
-        colors=["#d73027", "#f7f7f7", "#1a9850"], week_start="sunday")),
+        df("df_signed"), date="day", rows="day", columns="month", value="balance", agg="mean",
+        colors=bf.Scale(["#d73027", "#f7f7f7", "#1a9850"], domain=(-100, 100), center=0, steps=5),
+        week_start="sunday")),
     "banner": lambda _: bf.Briefing(
         bf.Banner("# Cover\n\nA **subtitle**.", image=RED_SVG, text_position=55, opacity=80,
                   kicker="Data through <Nov 20>"),

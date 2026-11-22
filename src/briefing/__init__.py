@@ -27,7 +27,7 @@ from pathlib import Path
 # ── lab: custom-visualisation blocks (briefing.lab.DataProfile / .DataDive) ───
 # Same wheel; importing it registers its renderers. `briefing[lab]` only adds
 # the pandas dependency those blocks need at render time.
-from briefing import lab
+from briefing import color, lab
 from briefing._error import BriefingError
 from briefing._preview import Preview, preview
 from briefing._version import __version__
@@ -75,6 +75,7 @@ from briefing.renderers.html import render_report
 from briefing.renderers.size import DEFAULT_MAX_SIZE, Part, check_size, parse_size
 
 # ── the report as JSON: to_spec / from_spec / validate (#31) ─────────────────
+from briefing.scale import Scale
 from briefing.spec import Diagnostic, from_spec, schema, to_spec, validate
 
 # ── public API ────────────────────────────────────────────────────────────────
@@ -273,6 +274,8 @@ __all__: list[str] = [
     "lab",
     # formatting
     "Formatting",
+    "Scale",
+    "color",
     "TextAlignment",
     "Width",
     # api

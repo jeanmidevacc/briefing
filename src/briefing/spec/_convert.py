@@ -24,6 +24,7 @@ from briefing.blocks.base import Block, ContainerBlock
 from briefing.blocks.chips import Chip
 from briefing.blocks.header import Header
 from briefing.blocks.layout import Briefing, Select, TabStyle
+from briefing.scale import Scale
 from briefing.spec._check import check, describe, refs_in, show
 from briefing.spec._data import decode_figure, decode_image, decode_table, encode_figure, encode_image, encode_table
 from briefing.spec._diagnostic import Diagnostic, Severity
@@ -57,7 +58,7 @@ def _plain(value: object) -> t.Any:
         return [_plain(v) for v in value]
     if isinstance(value, dict) and all(isinstance(k, str) for k in value):
         return {k: _plain(v) for k, v in value.items()}
-    if isinstance(value, TabStyle | Header):
+    if isinstance(value, TabStyle | Header | Scale):
         return value.to_dict()
     if isinstance(value, Chip):
         return value.to_json()

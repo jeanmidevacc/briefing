@@ -10,6 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `bf.Scale(colors, domain=, center=, steps=)`: a colour scale whose colours mean the same
+  values in every block that uses it, mixed in OKLab so equal steps in value look like
+  equal steps in colour; the heatmaps take it as `colors=`, and calling it with a value
+  gives that value's colour. `bf.color` has the OKLab helpers (`ramp`, `mix`,
+  `lightness`, …) (#175).
+
+### Deprecated
+
+- The heatmaps' `center=`: pass `colors=bf.Scale([below, at, above], center=...)` instead.
+  It warns from 0.6.0 and goes in 0.8.0 (#175).
+
 ## [0.5.0] - 2026-11-22
 
 ### Added

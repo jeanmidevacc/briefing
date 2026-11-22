@@ -262,8 +262,8 @@ GitHub-style calendar heatmap: one cell per day, weeks as columns.
 - `group`: text. Column to split by: one calendar per group, stacked, on one shared colour scale.
 - `views`: a list of values from "days", default `["days"]`. `("days",)`, the day calendar. The hour view was removed in 0.5.0: use TimeHeatmap with `rows="weekday", columns="hour"`.
 - `tz`: text. A time zone such as `"America/Montreal"`. Converts timezone-aware timestamps only; naive timestamps and plain dates are taken as already local, so a date at midnight never moves to the previous day.
-- `colors`: text or a list of texts, default `"github"`. `"github"` (GitHub's green scale) or a list of CSS colours, low to high.
-- `center`: a number. A midpoint for a diverging scale (e.g. `0` for values that go negative); `colors` is then three hex colours: below, at and above it.
+- `colors`: text or a list of texts or a scale {"colors": ["#...", "#..."], "domain": [0, 100]}, default `"github"`. `"github"` (GitHub's green scale), a list of CSS colours (low to high, spread over the data), or a Scale, whose colours mean the same values in every block that uses it.
+- `center`: a number. *Deprecated since 0.6.0:* use `colors=bf.Scale([below, at, above], center=...)`. A midpoint for a diverging scale with three hex colours.
 - `week_start`: one of "monday", "sunday", default `"monday"`. `"monday"` or `"sunday"`: the first row of the grid.
 - `expected`: a number or a table {"columns": [...], "rows": [[...]]}. A target per day, flagged when a day is below it (days with no data count as below): a number, a Series indexed by date, or a DataFrame with the `date` column, an `expected` column and, with `group`, the group column.
 - `events`: a list of texts or a table {"columns": [...], "rows": [[...]]}. Dates to mark: a list of dates, or a DataFrame with `start`, optional `end`, `label` and `color` columns. A single day is outlined and dotted under the calendar; a span draws as a band and leaves its days' colours in view. `color` (any CSS colour) colours an event's marks and legend entry; by default they take the theme's accent.
@@ -284,8 +284,8 @@ When something usually happens: a grid that crosses two units of one date column
 - `agg`: one of "sum", "mean", "median", "min", "max", "count", default `"sum"`. How to aggregate `value`: `"sum"`, `"mean"`, `"median"`, `"min"`, `"max"` or `"count"`. Sums and counts are averaged per occurrence.
 - `group`: text. Column to split by: one grid per group, stacked, on one shared colour scale.
 - `tz`: text. A time zone such as `"America/Montreal"`. Converts timezone-aware timestamps only; naive timestamps and plain dates are taken as already local.
-- `colors`: text or a list of texts, default `"github"`. `"github"` (GitHub's green scale) or a list of CSS colours, low to high.
-- `center`: a number. A midpoint for a diverging scale (e.g. `0`); `colors` is then three hex colours: below, at and above it.
+- `colors`: text or a list of texts or a scale {"colors": ["#...", "#..."], "domain": [0, 100]}, default `"github"`. `"github"` (GitHub's green scale), a list of CSS colours (low to high, spread over the data), or a Scale, whose colours mean the same values in every block that uses it.
+- `center`: a number. *Deprecated since 0.6.0:* use `colors=bf.Scale([below, at, above], center=...)`. A midpoint for a diverging scale with three hex colours.
 - `week_start`: one of "monday", "sunday", default `"monday"`. `"monday"` or `"sunday"`: the first weekday of a `weekday` axis.
 - `on_click`: one of "rows". `"rows"` lists the rows behind a cell in a panel when it is clicked (up to `ROWS_PER_CELL` rows per cell, embedded in the report); `None` (default) for no click action.
 - `group_order`: a list of texts. Group names to draw first, in this order (e.g. `["Worldwide", "United States"]`); other groups follow by name. Needs `group`; a name that isn't a group is an error.

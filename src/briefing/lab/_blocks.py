@@ -13,11 +13,13 @@ import datetime as dt
 import re
 import typing as t
 import warnings
+from collections.abc import Mapping
 
 from briefing._colors import CSS_COLOR
 from briefing._error import BriefingError
 from briefing._frames import to_pandas
 from briefing.blocks.base import Block, BlockId
+from briefing.scale import Scale
 
 if t.TYPE_CHECKING:
     import pandas as pd
@@ -191,9 +193,11 @@ class CalendarHeatmap(Block):
         tz: A time zone such as ``"America/Montreal"``. Converts timezone-aware
             timestamps only; naive timestamps and plain dates are taken as already
             local, so a date at midnight never moves to the previous day.
-        colors: ``"github"`` (GitHub's green scale) or a list of CSS colours, low to high.
-        center: A midpoint for a diverging scale (e.g. ``0`` for values that go
-            negative); ``colors`` is then three hex colours: below, at and above it.
+        colors: ``"github"`` (GitHub's green scale), a list of CSS colours (low to high,
+            spread over the data), or a :class:`~briefing.Scale`, whose colours mean the
+            same values in every block that uses it.
+        center: *Deprecated since 0.6.0:* use ``colors=bf.Scale([below, at, above],
+            center=...)``. A midpoint for a diverging scale with three hex colours.
         week_start: ``"monday"`` or ``"sunday"``: the first row of the grid.
         expected: A target per day, flagged when a day is below it (days with no
             data count as below): a number, a Series indexed by date, or a
@@ -225,7 +229,7 @@ class CalendarHeatmap(Block):
         bf.lab.CalendarHeatmap(searches, date="day", value="interest",
                                start="2026-05-19", end="2026-12-31")
         bf.lab.CalendarHeatmap(ledger, date="day", value="balance",
-                               center=0, colors=["#dc2626", "#f3f4f6", "#16a34a"])
+                               colors=bf.Scale(["#dc2626", "#f3f4f6", "#16a34a"], center=0))
     """
 
     embed_noun: t.ClassVar[str | None] = "calendar"
@@ -243,7 +247,7 @@ class CalendarHeatmap(Block):
         group: str | None = None,
         views: tuple[str, ...] | list[str] = ("days",),
         tz: str | None = None,
-        colors: str | list[str] = "github",
+        colors: str | list[str] | Scale | Mapping[str, t.Any] = "github",
         center: float | None = None,
         week_start: str = "monday",
         expected: float | pd.Series | pd.DataFrame | None = None,
@@ -317,9 +321,11 @@ class TimeHeatmap(Block):
         group: Column to split by: one grid per group, stacked, on one shared colour scale.
         tz: A time zone such as ``"America/Montreal"``. Converts timezone-aware
             timestamps only; naive timestamps and plain dates are taken as already local.
-        colors: ``"github"`` (GitHub's green scale) or a list of CSS colours, low to high.
-        center: A midpoint for a diverging scale (e.g. ``0``); ``colors`` is then three
-            hex colours: below, at and above it.
+        colors: ``"github"`` (GitHub's green scale), a list of CSS colours (low to high,
+            spread over the data), or a :class:`~briefing.Scale`, whose colours mean the
+            same values in every block that uses it.
+        center: *Deprecated since 0.6.0:* use ``colors=bf.Scale([below, at, above],
+            center=...)``. A midpoint for a diverging scale with three hex colours.
         week_start: ``"monday"`` or ``"sunday"``: the first weekday of a ``weekday`` axis.
         on_click: ``"rows"`` lists the rows behind a cell in a panel when it is clicked
             (up to ``ROWS_PER_CELL`` rows per cell, embedded in the report); ``None``
@@ -353,7 +359,7 @@ class TimeHeatmap(Block):
         agg: str = "sum",
         group: str | None = None,
         tz: str | None = None,
-        colors: str | list[str] = "github",
+        colors: str | list[str] | Scale | Mapping[str, t.Any] = "github",
         center: float | None = None,
         week_start: str = "monday",
         on_click: str | None = None,
@@ -418,14 +424,31 @@ def _has_times(column: t.Any) -> bool:
     return bool(len(stamps)) and bool((stamps.dt.normalize() != stamps).any())
 
 
-def _check_colors(colors: str | list[str], center: float | None, block: str = "CalendarHeatmap") -> str | list[str]:
+#: The heatmaps' center= gave way to bf.Scale(center=) (#175).
+CENTER_DEPRECATION = (
+    "{block}: center= is deprecated since briefing 0.6.0 and will be removed in 0.8.0. Pass "
+    "colors=bf.Scale([below, at, above], center=...) instead: the same diverging scale, mixed in OKLab, "
+    "and one you can share between blocks."
+)
+
+
+def _check_colors(colors: t.Any, center: float | None, block: str = "CalendarHeatmap") -> str | list[str] | Scale:
+    if isinstance(colors, Mapping):
+        colors = Scale.of(colors)
+    if isinstance(colors, Scale):
+        if center is not None:
+            raise BriefingError(f"{block}: with a bf.Scale, put the centre in it: bf.Scale(..., center=...).")
+        return colors
+    if center is not None:
+        # stacklevel 3: _check_colors <- __init__ <- the caller's line
+        warnings.warn(CENTER_DEPRECATION.format(block=block), DeprecationWarning, stacklevel=3)
     if colors == "github":
         if center is not None:
             raise BriefingError(f"{block}: center= needs colors= as three hex colours: below, at and above it.")
-        return colors
+        return "github"
     if isinstance(colors, str) or not isinstance(colors, list | tuple) or len(colors) < 2:
         raise BriefingError(
-            f"{block}: colors must be 'github' or a list of at least two colours, not {colors!r}."
+            f"{block}: colors must be 'github', a list of at least two colours or a bf.Scale, not {colors!r}."
         )
     if center is not None:
         if len(colors) != 3:

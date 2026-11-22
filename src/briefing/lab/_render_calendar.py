@@ -16,12 +16,13 @@ from dataclasses import dataclass
 
 from briefing.renderers.registry import IdGen
 from briefing.renderers.script_json import script_json
+from briefing.scale import Scale
 
 if t.TYPE_CHECKING:
     from briefing.lab._blocks import CalendarHeatmap, TimeHeatmap
 
     #: The heatmaps that share these helpers: the calendar, and the time-pattern grid (#111).
-    Heatmap = CalendarHeatmap | TimeHeatmap
+    Heatmap: t.TypeAlias = "CalendarHeatmap | TimeHeatmap"  # explicit: mypy may read this module first
 
 #: GitHub's contribution greens, from the lowest non-zero level to the highest.
 GITHUB = ["#9be9a8", "#40c463", "#30a14e", "#216e39"]
@@ -165,6 +166,10 @@ def _scale(block: Heatmap, values: list[float]) -> Callable[[float], tuple[str, 
     if not values:
         return lambda v: ("", "bf-cal__day--zero")
     lo, hi = min(values), max(values)
+    if isinstance(block.colors, Scale):  # one meaning in every block (#175): zero is a value like any other
+        scale = block.colors
+        low, high = scale.bounds(values)
+        return lambda v: (scale.at(v, low, high), "")
     if block.colors == "github":
         top = max(hi, 0.0)
 
@@ -349,7 +354,12 @@ def _legend(
         return f'<span class="bf-cal__legend-item">{content}</span>'
 
     items: list[str] = []
-    if block.colors == "github":
+    if isinstance(block.colors, Scale):
+        if values or block.colors.domain is not None:
+            low, high = block.colors.bounds(values)
+            ramp = f'<span class="bf-cal__ramp" style="background:{block.colors.gradient(low, high)}"></span>'
+            items.append(item(f"{_fmt(low)} {ramp} {_fmt(high)}"))
+    elif block.colors == "github":
         items.append(item("Less " + swatch("", "bf-cal__swatch--zero") + "".join(swatch(c) for c in GITHUB) + " More"))
     elif values:
         lo, hi = min(values), max(values)

@@ -96,6 +96,9 @@ def _ref(name: str) -> dict[str, t.Any]:
     return {"$ref": _DEFS + name}
 
 
+#: A heatmap's colors: "github", a list of colours, or a bf.Scale (#175).
+_HEATMAP_COLORS = {"anyOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}, _ref("scale")]}
+
 #: Options whose type hint is too loose (``t.Any``) or too wide to say what JSON they take.
 _OVERRIDES: dict[tuple[str, str], dict[str, t.Any]] = {
     ("Plot", "figure"): _ref("figure"),
@@ -110,6 +113,8 @@ _OVERRIDES: dict[tuple[str, str], dict[str, t.Any]] = {
     ("Select", "style"): {"anyOf": [_ref("tab_style"), {"type": "null"}]},
     ("lab.CalendarHeatmap", "start"): {"anyOf": [{"type": "string", "format": "date"}, {"type": "null"}]},
     ("lab.CalendarHeatmap", "end"): {"anyOf": [{"type": "string", "format": "date"}, {"type": "null"}]},
+    ("lab.CalendarHeatmap", "colors"): _HEATMAP_COLORS,
+    ("lab.TimeHeatmap", "colors"): _HEATMAP_COLORS,
     ("lab.CalendarHeatmap", "events"): {
         "anyOf": [{"type": "array", "items": {"type": "string"}}, _ref("table"), {"type": "null"}]
     },
@@ -424,6 +429,19 @@ def build_schema() -> dict[str, t.Any]:
                 "as_of": {"type": "string"},
                 "tz": {"type": "string"},
             },
+            "additionalProperties": False,
+        },
+        "scale": {
+            "description": "A colour scale (bf.Scale): hex colours low to high, mixed in OKLab; domain fixes "
+            "the values they stand for, center makes it diverging, steps makes it classed.",
+            "type": "object",
+            "properties": {
+                "colors": {"type": "array", "items": {"type": "string"}, "minItems": 2},
+                "domain": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                "center": {"type": "number"},
+                "steps": {"type": "integer"},
+            },
+            "required": ["colors"],
             "additionalProperties": False,
         },
         "chip": {
