@@ -80,6 +80,7 @@ Needs `text` or `file`.
 
 - `text`: text. Markdown; common leading indentation is removed.
 - `file`: text. Path to a `.md` file to read instead of `text`.
+- `values`: an object {"<column>": text or a number or true or false or null}. Fills `{name}` and `{name:spec}` (such as `{share:.1%}`) in the text. Each value shows exactly as written: Markdown and HTML in it are escaped. Other braces, and anything inside code, stay as they are; `{{` and `}}` are braces.
 
 ### Group
 

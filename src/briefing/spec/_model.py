@@ -65,10 +65,16 @@ _TYPES: tuple[tuple[str, type[Block]], ...] = (
 _ATTRS: dict[tuple[str, str], str | None] = {
     ("Text", "text"): "content",
     ("Text", "file"): None,  # read once; the JSON form keeps its text
+    ("Text", "values"): None,  # filled once; the JSON form keeps the filled text (#184)
     ("HTML", "html"): "content",
     ("Code", "code"): "content",
     ("Formula", "formula"): "content",
 }
+
+def accepted(field: Field) -> bool:
+    """Whether the JSON form takes this option: stored on the block, or read once at input (``file``, ``values``)."""
+    return field.attr is not None or field.name in ("file", "values")
+
 
 #: Options whose JSON key isn't their parameter's name: ``type`` already names the block.
 _KEYS: dict[tuple[str, str], str] = {("Select", "type"): "select_type"}
@@ -106,6 +112,8 @@ _OVERRIDES: dict[tuple[str, str], dict[str, t.Any]] = {
     ("Banner", "image"): _ref("image"),
     ("Image", "image"): _ref("image"),
     ("Attachment", "file"): {"anyOf": [_ref("file"), _ref("table")]},
+    ("Text", "values"): {"anyOf": [{"type": "object", "additionalProperties": {
+        "anyOf": [{"type": "string"}, {"type": "number"}, {"type": "boolean"}, {"type": "null"}]}}, {"type": "null"}]},
     ("Briefing", "tabs"): {"anyOf": [_ref("tab_style"), {"type": "null"}]},
     ("Card", "tags"): {"anyOf": [{"type": "array", "items": {"anyOf": [{"type": "string"}, _ref("chip")]}},
                                  {"type": "null"}]},

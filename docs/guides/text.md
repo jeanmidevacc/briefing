@@ -31,6 +31,38 @@ bf.save(report, "text.html", name="Text")
 
 Raw HTML inside the Markdown is passed through, as with `bf.HTML`.
 
+## Prose with values
+
+`values=` fills `{name}` fields in a `Text`, and `{name:spec}` formats them as Python's
+`format` does (`{share:.1%}`, `{total:,}`). A value is shown exactly as written: Markdown
+and HTML in it are escaped. Other braces, and anything inside code, stay as they are, so
+`{#name}` headings and JSON need no escaping; `{{` and `}}` are literal braces.
+`bf.fmt` formats values the way prose wants them: `bf.fmt.date`, `bf.fmt.span`,
+`bf.fmt.percent` and `bf.fmt.number`.
+
+A heading ending in `{#auto}` takes a link name made from its text, as `bf.slug` makes it:
+`## 🍕 Food and delivery {#auto}` links as `#food-and-delivery`.
+
+```{briefing-example}
+:title: Prose with values
+
+import briefing as bf
+
+facts = {
+    "change": bf.fmt.percent(0.253, sign=True),
+    "span": bf.fmt.span("2026-11-19", "2026-11-20"),
+    "searches": bf.fmt.number(12345),
+    "top": "Uber *Eats*",
+}
+report = bf.Text("""
+    ## Food and delivery {#auto}
+
+    Searches rose **{change}** from {span}, across {searches} queries.
+    The biggest mover was {top}.
+""", values=facts)
+bf.save(report, "prose.html", name="Prose with values")
+```
+
 ## Code and formulas
 
 `bf.Code` highlights any language Pygments knows. `bf.Formula` turns LaTeX into

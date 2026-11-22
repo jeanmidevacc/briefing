@@ -40,3 +40,11 @@ Base class
 
 .. autoclass:: Block
 .. autofunction:: wrap_block
+
+Prose helpers
+-------------
+
+.. automodule:: briefing.fmt
+   :members: date, span, percent, number
+
+.. autofunction:: briefing.slug

@@ -14,7 +14,7 @@ import typing as t
 
 from briefing.spec._check import describe
 from briefing.spec._diagnostic import CODES
-from briefing.spec._model import FORMAT_VERSION, BlockType, Field, block_types, root_type
+from briefing.spec._model import FORMAT_VERSION, BlockType, Field, accepted, block_types, root_type
 
 #: Options every block takes, described once instead of under each block.
 _COMMON = ("name", "label")
@@ -156,7 +156,7 @@ def _block(kind: BlockType) -> str:
         lines.append("Needs `text` or `file`.")
     lines.append("")
     lines += [_option(f) for f in kind.fields
-              if (f.attr is not None or f.name == "file") and f.name not in _COMMON and not deprecated(f)]
+              if accepted(f) and f.name not in _COMMON and not deprecated(f)]
     return "\n".join(lines).rstrip() + "\n"
 
 
