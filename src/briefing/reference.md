@@ -239,7 +239,7 @@ GitHub-style calendar heatmap: one cell per day, weeks as columns.
 - `center`: a number. A midpoint for a diverging scale (e.g. `0` for values that go negative); `colors` is then three hex colours: below, at and above it.
 - `week_start`: one of "monday", "sunday", default `"monday"`. `"monday"` or `"sunday"`: the first row of the grid.
 - `expected`: a number or a table {"columns": [...], "rows": [[...]]}. A target per day, flagged when a day is below it (days with no data count as below): a number, a Series indexed by date, or a DataFrame with the `date` column, an `expected` column and, with `group`, the group column.
-- `events`: a list of texts or a table {"columns": [...], "rows": [[...]]}. Dates to mark: a list of dates, or a DataFrame with `start`, optional `end` and `label` columns; spans draw as bands.
+- `events`: a list of texts or a table {"columns": [...], "rows": [[...]]}. Dates to mark: a list of dates, or a DataFrame with `start`, optional `end`, `label` and `color` columns. A single day is outlined and dotted under the calendar; a span draws as a band and leaves its days' colours in view. `color` (any CSS colour) colours an event's marks and legend entry; by default they take the theme's accent.
 - `on_click`: one of "rows". `"rows"` lists the rows behind a day or an hour in a panel when it is clicked (up to `ROWS_PER_CELL` rows per cell, embedded in the report); `None` (default) for no click action.
 
 ### lab.TimeHeatmap

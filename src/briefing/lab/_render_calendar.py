@@ -50,6 +50,12 @@ class _Event:
     start: dt.date
     end: dt.date
     label: str
+    color: str | None = None  # #152
+
+    @property
+    def style(self) -> str:
+        """The attribute that gives this event's marks its colour (CSS reads ``--bf-event``)."""
+        return f' style="--bf-event: {_html.escape(self.color)}"' if self.color else ""
 
 
 # ── data ──────────────────────────────────────────────────────────────────────
@@ -125,12 +131,14 @@ def _events(block: CalendarHeatmap) -> list[_Event]:
     starts = _local_dates(frame["start"])
     ends = _local_dates(frame["end"]) if "end" in frame.columns else starts
     labels = frame["label"] if "label" in frame.columns else pd.Series([""] * len(frame), index=frame.index)
+    colors = frame["color"] if "color" in frame.columns else pd.Series([None] * len(frame), index=frame.index)
     events = []
-    for start, end, label in zip(starts, ends, labels, strict=True):
+    for start, end, label, color in zip(starts, ends, labels, colors, strict=True):
         if pd.isna(start):
             continue
         end = start if pd.isna(end) or end < start else end
-        events.append(_Event(start, end, "" if pd.isna(label) else str(label)))
+        events.append(_Event(start, end, "" if pd.isna(label) else str(label),
+                             None if color is None or pd.isna(color) else str(color).strip()))
     return sorted(events, key=lambda e: (e.start, e.end))
 
 
@@ -234,7 +242,6 @@ def _days_svg(
         lane = next((i for i, end in enumerate(lanes) if end < event.start), len(lanes))
         lanes[lane:lane + 1] = [event.end]
         placed.append((event, lane))
-    event_days = {e.start + dt.timedelta(days=i) for e in events for i in range((e.end - e.start).days + 1)}
 
     grid_h = 7 * _STEP
     width = _LEFT + weeks * _STEP
@@ -284,12 +291,17 @@ def _days_svg(
         if goal is not None and ((value is None and goal > 0) or (value is not None and value < goal)):
             cls.append("bf-cal__day--below")
             tip += f" · below target {_fmt(goal)}"
-        if day in event_days:
+        on_day = [e for e in events if e.start <= day <= e.end]
+        tip += "".join(f" · {e.label}" for e in on_day if e.label)
+        # Only a single-day event outlines its day: a span's band says where it runs, and its days
+        # keep their data colours in view (#152).
+        single = next((e for e in on_day if e.start == e.end), None)
+        if single is not None:
             cls.append("bf-cal__day--event")
-            tip += "".join(f" · {e.label}" for e in events if e.start <= day <= e.end and e.label)
         fill_attr = f' fill="{fill}"' if fill else ""
+        style = single.style if single is not None else ""
         parts.append(f'<rect class="{" ".join(cls)}" x="{x}" y="{y}" width="{_CELL}" height="{_CELL}" rx="2"'
-                     f'{fill_attr}{_clickable(block)} data-date="{day.isoformat()}">'
+                     f'{fill_attr}{style}{_clickable(block)} data-date="{day.isoformat()}">'
                      f"<title>{_html.escape(tip)}</title></rect>")
         day += dt.timedelta(days=1)
 
@@ -301,8 +313,8 @@ def _days_svg(
         tip = _html.escape(f"{event.label} · {span}" if event.label else span)
         if event.end == event.start:
             cx = _LEFT + c1 * _STEP + _CELL / 2
-            parts.append(f'<g class="bf-cal__event bf-cal__event--day"><circle cx="{cx}" cy="{y + 5}" r="4"/>'
-                         f'<title>{tip}</title></g>')
+            parts.append(f'<g class="bf-cal__event bf-cal__event--day"{event.style}>'
+                         f'<circle cx="{cx}" cy="{y + 5}" r="4"/><title>{tip}</title></g>')
         else:
             x1 = _LEFT + c1 * _STEP
             w = (c2 - c1) * _STEP + _CELL
@@ -310,8 +322,9 @@ def _days_svg(
             # every event is also listed, with its dates, under the calendar.
             fits = event.label and len(event.label) * 5.5 + 8 <= w
             text = f'<text x="{x1 + 4}" y="{y + 8.5}">{_html.escape(event.label)}</text>' if fits else ""
-            parts.append(f'<g class="bf-cal__event bf-cal__event--span"><rect x="{x1}" y="{y}" width="{w}" '
-                         f'height="{_LANE - 3}" rx="3"/>{text}<title>{tip}</title></g>')
+            parts.append(f'<g class="bf-cal__event bf-cal__event--span"{event.style}>'
+                         f'<rect x="{x1}" y="{y}" width="{w}" height="{_LANE - 3}" rx="3"/>'
+                         f'{text}<title>{tip}</title></g>')
     parts.append("</svg>")
     return "".join(parts)
 
@@ -325,8 +338,8 @@ def _legend(
     targets: bool,
     blank: bool = False,
 ) -> str:
-    def swatch(fill: str, cls: str = "") -> str:
-        style = f' style="background:{fill}"' if fill else ""
+    def swatch(fill: str, cls: str = "", style: str = "") -> str:
+        style = style or (f' style="background:{fill}"' if fill else "")
         return f'<span class="bf-cal__swatch {cls}"{style}></span>'
 
     def item(content: str) -> str:
@@ -348,7 +361,7 @@ def _legend(
         when = event.start.isoformat() + ("" if event.end == event.start else f" to {event.end.isoformat()}")
         mark = "bf-cal__swatch--event-day" if event.end == event.start else "bf-cal__swatch--event-span"
         text = f"{_html.escape(event.label)} ({when})" if event.label else when
-        items.append(item(swatch("", mark) + text))
+        items.append(item(swatch("", mark, event.style) + text))
     return f'<div class="bf-cal__legend">{"".join(items)}</div>'
 
 

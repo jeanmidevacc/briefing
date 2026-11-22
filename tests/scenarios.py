@@ -158,7 +158,8 @@ SCENARIOS: dict[str, Build] = {
         download=True,
     )),
     "calendar": lambda df: bf.Briefing(bf.lab.CalendarHeatmap(
-        df("df_pipeline_log"), date="run_at", value="rows", group="team", expected=500, events=df("df_events"),
+        df("df_pipeline_log"), date="run_at", value="rows", group="team", expected=500,
+        events=df("df_events").assign(color=pd.Series(["#2dd4bf", None, "rgb(96, 165, 250)"])),
         views=("days", "hours"), tz="America/Montreal", on_click="rows")),
     "calendar-diverging": lambda df: bf.Briefing(
         bf.lab.CalendarHeatmap(df("df_signed"), date="day", value="balance", center=0,

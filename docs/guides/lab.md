@@ -62,7 +62,10 @@ different from days with a zero.
 
 - `expected=` flags days below a target: a number, a Series indexed by date, or a
   DataFrame with `date` and `expected` columns.
-- `events=` marks dates, or spans with a `start`, `end` and `label`.
+- `events=` marks dates, or spans with a `start`, `end` and `label`. A single day is
+  outlined and dotted; a span draws as a band and leaves its days' colours in view.
+  An optional `color` column (any CSS colour) colours an event's marks and legend entry;
+  without it they take the theme's accent.
 - `tz=` converts timezone-aware timestamps before they are placed on a day.
 - `on_click="rows"` lists the rows behind a day when it is clicked, up to
   `CalendarHeatmap.ROWS_PER_CELL` per cell.
@@ -92,7 +95,12 @@ report = bf.lab.CalendarHeatmap(
     date="run_at",
     value="rows",
     expected=900,
-    events=pd.DataFrame({"start": ["2023-12-22"], "end": ["2024-01-02"], "label": ["Freeze"]}),
+    events=pd.DataFrame({
+        "start": ["2023-12-22", "2024-02-14"],
+        "end": ["2024-01-02", None],
+        "label": ["Freeze", "Schema change"],
+        "color": ["#0891b2", "#9333ea"],
+    }),
     on_click="rows",
 )
 bf.save(report, "calendar.html", name="Pipeline runs")

@@ -801,10 +801,12 @@ html.bf-printing .bf-heading-actions { display: none; }
 .bf-cal__year-line { stroke: var(--bf-muted); stroke-dasharray: 2 2; }
 .bf-cal__day--zero, .bf-cal__hour--zero, .bf-cal__cell--zero { fill: var(--bf-border); }
 .bf-cal__day--empty, .bf-cal__hour--empty, .bf-cal__cell--empty { fill: none; stroke: var(--bf-border); stroke-width: 1; stroke-dasharray: 2 1.5; }
-.bf-cal__day--event { stroke: var(--bf-accent); stroke-width: 1.5; }
+/* An event's colour (#152): --bf-event on its marks, else the accent. */
+.bf-cal__day--event { stroke: var(--bf-event, var(--bf-accent)); stroke-width: 1.5; }
 .bf-cal__day--below { stroke: #dc2626; stroke-width: 1.5; stroke-dasharray: none; }
-.bf-cal__event rect { fill: color-mix(in oklab, var(--bf-accent) 25%, transparent); stroke: var(--bf-accent); }
-.bf-cal__event circle { fill: var(--bf-accent); }
+.bf-cal__event rect { fill: color-mix(in oklab, var(--bf-event, var(--bf-accent)) 25%, transparent);
+  stroke: var(--bf-event, var(--bf-accent)); }
+.bf-cal__event circle { fill: var(--bf-event, var(--bf-accent)); }
 .bf-cal__event text { fill: var(--bf-text); font-size: calc(9px * var(--bf-cal-text, 1)); }
 .bf-cal__legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; align-items: center;
   margin-top: 0.5rem; font-size: 0.75rem; color: var(--bf-muted); }
@@ -833,9 +835,9 @@ html.bf-printing .bf-heading-actions { display: none; }
   font-weight: 600; font-size: 0.85rem; }
 .bf-cal__panel-close { border: none; background: none; color: var(--bf-muted); font-size: 1.1rem; cursor: pointer; }
 .bf-cal__panel-note { margin-top: 0.4rem; font-size: 0.75rem; color: var(--bf-muted); }
-.bf-cal__swatch--event-day { background: var(--bf-accent); border-radius: 50%; width: 8px; height: 8px; }
-.bf-cal__swatch--event-span { background: color-mix(in oklab, var(--bf-accent) 25%, transparent);
-  border: 1px solid var(--bf-accent); width: 18px; }
+.bf-cal__swatch--event-day { background: var(--bf-event, var(--bf-accent)); border-radius: 50%; width: 8px; height: 8px; }
+.bf-cal__swatch--event-span { background: color-mix(in oklab, var(--bf-event, var(--bf-accent)) 25%, transparent);
+  border: 1px solid var(--bf-event, var(--bf-accent)); width: 18px; }
 
 /* ── Print ────────────────────────────────────────────────────────────────── */
 /* report.js adds html.bf-printing on beforeprint and removes it on afterprint. It

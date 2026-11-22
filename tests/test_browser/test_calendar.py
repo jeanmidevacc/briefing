@@ -1,6 +1,8 @@
 """lab.CalendarHeatmap as a reader sees it (#19)."""
 from __future__ import annotations
 
+import typing as t
+
 import pandas as pd
 import pytest
 from playwright.sync_api import Page
@@ -240,3 +242,22 @@ def test_weekday_labels_do_not_overlap_when_shrunk(viewer: Viewer) -> None:
     # A text box includes line spacing (about 1.25x the glyphs); the glyphs stay apart when the
     # rows are at least 0.8 of a box apart.
     assert all(below[0] - above[0] >= 0.8 * above[1] for above, below in zip(boxes, boxes[1:], strict=False))
+
+
+def _rgb(page: Page, selector: str, prop: str) -> list[int]:
+    """A computed colour of the first match, read back as RGB through a canvas (it may be oklab())."""
+    return t.cast("list[int]", page.locator(selector).first.evaluate(f"""el => {{
+        const c = document.createElement('canvas').getContext('2d');
+        c.fillStyle = getComputedStyle(el).{prop}; c.fillRect(0, 0, 1, 1);
+        return Array.from(c.getImageData(0, 0, 1, 1).data.slice(0, 3)); }}"""))
+
+
+def test_events_take_their_own_colour(viewer: Viewer, df_pipeline_log: pd.DataFrame) -> None:
+    events = pd.DataFrame({"start": ["2026-02-03", "2026-01-05"], "end": [None, None],
+                           "label": ["Incident", "Plain"], "color": ["#00ff00", None]})
+    page = viewer.open(bf.Briefing(bf.lab.CalendarHeatmap(df_pipeline_log, date="run_at", events=events)),
+                       formatting=bf.Formatting(accent_color="#ff0000"))
+    assert _rgb(page, ".bf-cal__event--day[style] circle", "fill") == [0, 255, 0]
+    assert _rgb(page, ".bf-cal__event--day:not([style]) circle", "fill") == [255, 0, 0]
+    assert _rgb(page, 'rect[data-date="2026-02-03"]', "stroke") == [0, 255, 0]
+    assert _rgb(page, ".bf-cal__swatch--event-day[style]", "backgroundColor") == [0, 255, 0]

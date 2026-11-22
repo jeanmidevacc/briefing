@@ -117,8 +117,32 @@ def test_single_and_multi_day_events(df_pipeline_log: pd.DataFrame, df_events: p
     legend = find_one(soup, ".bf-cal__legend").get_text(" ")
     assert "Holiday freeze (2025-12-22 to 2026-01-02)" in legend and "Incident (2026-02-03)" in legend
     cells = _cells(soup)
-    assert "bf-cal__day--event" in classes(cells["2025-12-30"]) and "bf-cal__day--event" in classes(cells["2026-02-03"])
+    # Only the single-day event outlines its day: a span's days keep their data colours in view (#152).
+    assert "bf-cal__day--event" in classes(cells["2026-02-03"])
+    assert "bf-cal__day--event" not in classes(cells["2025-12-30"])
     assert "bf-cal__day--event" not in classes(cells["2026-02-10"])
+    # A span's days still name it in their tooltip.
+    assert "Holiday freeze" in find_one(cells["2025-12-30"], "title").get_text()
+
+
+def test_event_colours(df_pipeline_log: pd.DataFrame, df_events: pd.DataFrame) -> None:
+    events = df_events.assign(color=pd.Series(["#2dd4bf", None, "rgb(96, 165, 250)"]))  # freeze, migration, incident
+    soup = _soup(CalendarHeatmap(df_pipeline_log, date="run_at", events=events))
+    freeze, migration = soup.select(".bf-cal__event--span")
+    (incident,) = soup.select(".bf-cal__event--day")
+    assert attr(freeze, "style") == "--bf-event: #2dd4bf"
+    assert migration.get("style") is None  # no colour: the theme's accent
+    assert attr(incident, "style") == "--bf-event: rgb(96, 165, 250)"
+    assert attr(_cells(soup)["2026-02-03"], "style") == "--bf-event: rgb(96, 165, 250)"  # its outline
+    swatches = [s.get("style") for s in soup.select(".bf-cal__swatch--event-day, .bf-cal__swatch--event-span")]
+    assert sorted(map(str, swatches)) == ["--bf-event: #2dd4bf", "--bf-event: rgb(96, 165, 250)", "None"]
+
+
+@pytest.mark.parametrize("color", ["red; } body { display: none", "url(x)", "#12", "#12345", "var(--x)", 3])
+def test_event_colour_must_be_a_plain_css_colour(df_pipeline_log: pd.DataFrame, color: t.Any) -> None:
+    events = pd.DataFrame({"start": ["2026-01-05"], "color": [color]})
+    with pytest.raises(bf.BriefingError, match="CSS colours"):
+        CalendarHeatmap(df_pipeline_log, date="run_at", events=events)
 
 
 def test_events_as_single_dates(df_pipeline_log: pd.DataFrame) -> None:
