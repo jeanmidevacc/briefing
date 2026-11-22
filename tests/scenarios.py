@@ -172,7 +172,8 @@ SCENARIOS: dict[str, Build] = {
         df("df_signed"), date="day", rows="day", columns="month", value="balance", agg="mean", center=0,
         colors=["#d73027", "#f7f7f7", "#1a9850"], week_start="sunday")),
     "banner": lambda _: bf.Briefing(
-        bf.Banner("# Cover\n\nA **subtitle**.", image=RED_SVG, text_position=55, opacity=80),
+        bf.Banner("# Cover\n\nA **subtitle**.", image=RED_SVG, text_position=55, opacity=80,
+                  kicker="Data through <Nov 20>"),
         bf.Banner("## Left", image=RED_SVG, side="left", text_position=40, focus=(20, 80), alt="A red field"),
     ),
     "image": lambda _: bf.Briefing(

@@ -132,3 +132,18 @@ def test_uniform_veil_has_one_opacity_everywhere(viewer: Viewer, theme: str, sid
     expected = tuple(round(255 * 0.4 + c * 0.6) if i == 0 else round(c * 0.6) for i, c in enumerate(bg))
     for pixel in samples:  # red under a 60 % veil of the theme background, the same at every x
         assert pixel == pytest.approx(expected, abs=3)
+
+
+def test_the_kicker_is_small_muted_and_prints(viewer: Viewer) -> None:
+    for theme in _THEMES:
+        page = _open(viewer, theme, kicker="Data through Nov 20, 2026")
+        style = page.locator(".bf-banner__kicker").evaluate(
+            "k => { const s = getComputedStyle(k), h = getComputedStyle(k.nextElementSibling);"
+            " const probe = document.createElement('span'); probe.style.color = 'var(--bf-muted)';"
+            " k.closest('.bf-report').append(probe); const muted = getComputedStyle(probe).color; probe.remove();"
+            " return [s.color, muted, parseFloat(s.fontSize), parseFloat(h.fontSize),"
+            " k.getBoundingClientRect().bottom <= k.nextElementSibling.getBoundingClientRect().top]; }")
+        colour, muted, size, heading, above = style
+        assert colour == muted and size < heading and above
+    raw = page.pdf(format="A4", print_background=True)
+    assert "Data through Nov 20, 2026" in read_pdf(raw).pages[0]

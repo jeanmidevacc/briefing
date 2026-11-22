@@ -56,12 +56,15 @@ class Banner(Block):
         height: CSS height such as ``"16rem"`` (default) or a number of pixels.
         focus: ``(x, y)`` in percent: the point of the image kept in view when it is cropped.
         alt: A description of the image; by default it is decorative.
+        kicker: One short line of plain text above ``text``, smaller and in the
+            theme's muted colour, such as ``"Data through Nov 20, 2026"``. Escaped, never Markdown.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
     Example::
 
         bf.Banner("# Q1 2026\\n\\n**Sales briefing**", image="cover.jpg", text_position=55, opacity=80)
+        bf.Banner("# Search interest", image="cover.png", kicker="Data through Nov 20, 2026")
     """
 
     embed_noun: t.ClassVar[str | None] = "banner"
@@ -77,6 +80,7 @@ class Banner(Block):
         height: str | int = "16rem",
         focus: tuple[float, float] = (50, 50),
         alt: str | None = None,
+        kicker: str | None = None,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
@@ -107,6 +111,9 @@ class Banner(Block):
         self.side, self.fade, self.height = side, fade, css_height
         self.focus = (_percent("focus", focus[0]), _percent("focus", focus[1]))
         self.alt = alt
+        if kicker is not None and (not isinstance(kicker, str) or "\n" in kicker.strip()):
+            raise BriefingError(f"Banner: kicker is one line of plain text, not {kicker!r}.")
+        self.kicker = (kicker or "").strip() or None
 
 
 __all__: list[str] = ["Banner"]

@@ -138,6 +138,7 @@ Markdown text over a background image: a report cover, a section opener or a soc
 - `height`: text or a whole number, default `"16rem"`. CSS height such as `"16rem"` (default) or a number of pixels.
 - `focus`: a list of 2 numbers, default `[50, 50]`. `(x, y)` in percent: the point of the image kept in view when it is cropped.
 - `alt`: text. A description of the image; by default it is decorative.
+- `kicker`: text. One short line of plain text above `text`, smaller and in the theme's muted colour, such as `"Data through Nov 20, 2026"`. Escaped, never Markdown.
 
 ### Image
 

@@ -36,10 +36,13 @@ report = bf.Banner(
     text_position=50,
     opacity=85,
     alt="Abstract contour pattern",
+    kicker="Data through 31 March 2024",
 )
 bf.save(report, "banner.html", name="Banner")
 ```
 
+`kicker=` adds one short line of plain text above the text, smaller and in the
+theme's muted colour: a date, a source or a series name.
 `side="left"` puts the text on the left, and the image clear on the right.
 `focus=(x, y)`, in percent, picks the point of the image kept in view when the
 banner crops it. At phone width, the image stacks above the text.

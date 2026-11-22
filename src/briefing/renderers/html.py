@@ -181,13 +181,14 @@ def _render_banner(block: Banner, idgen: _IdGen) -> str:
     src = f"data:{block.mime};base64,{base64.b64encode(block.image).decode('ascii')}"
     alt = f'alt="{_html.escape(block.alt)}"' if block.alt else 'alt="" aria-hidden="true"'
     mode = f"bf-banner--{block.side}" if block.fade else "bf-banner--uniform"
+    kicker = f'<p class="bf-banner__kicker">{_html.escape(block.kicker)}</p>' if block.kicker else ""
     style = (f"--bf-banner-h: {block.height}; --bf-banner-pos: {block.text_position:g}%; "
              f"--bf-banner-focus: {block.focus[0]:g}% {block.focus[1]:g}%")
     return (
         f'<div class="bf-block bf-banner {mode}" style="{style}">'
         f'<img class="bf-banner__image" src="{src}" {alt}>'
         f'<div class="bf-banner__veil" style="{_veil(block)}"></div>'
-        f'<div class="bf-banner__text bf-text">{_markdown(block.text, _headings_of(block, idgen))}</div>'
+        f'<div class="bf-banner__text bf-text">{kicker}{_markdown(block.text, _headings_of(block, idgen))}</div>'
         f"</div>"
     )
 
