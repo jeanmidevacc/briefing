@@ -80,6 +80,29 @@ report = bf.Group(
 bf.save(report, "kpis.html", name="KPIs")
 ```
 
+Give the previous value instead, and briefing works out the change, its arrow and its
+colour. `format=` shows the numbers (a format string as in `DataTable(formats=)`, or a
+function), `change_as=` picks `"percent"` (default), `"absolute"` or `"points"` (for
+rates), `higher_is_better=False` turns a fall green, and `sparkline=` draws a small trend
+from a list, Series or array of numbers:
+
+```{briefing-example}
+:title: BigNumbers with a computed change and a trend
+
+import briefing as bf
+
+report = bf.Group(
+    bf.BigNumber("Revenue", 4_210_000, prev_value=3_810_000, format="${:,.0f}",
+                 sparkline=[3.2, 3.5, 3.3, 3.6, 3.9, 4.0, 4.21]),
+    bf.BigNumber("Churn", 0.031, prev_value=0.034, format="{:.1%}", change_as="points",
+                 higher_is_better=False, sparkline=[0.040, 0.038, 0.036, 0.034, 0.031]),
+    bf.BigNumber("Latency", 182, prev_value=150, format="{} ms", change_as="absolute",
+                 higher_is_better=False),
+    columns=3,
+)
+bf.save(report, "kpi-trends.html", name="KPI trends")
+```
+
 ## Callouts with `Alert`
 
 ```{briefing-example}

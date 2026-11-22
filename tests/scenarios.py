@@ -98,6 +98,8 @@ SCENARIOS: dict[str, Build] = {
             bf.BigNumber("Revenue", "$4.2M", change="+3%", is_upward_change=True),
             bf.BigNumber("Churn", 0.12, change="-1%", is_upward_change=False),
             bf.BigNumber("Users", 1200),
+            bf.BigNumber("Churn", 0.031, prev_value=0.034, format="{:.1%}", change_as="points",
+                         higher_is_better=False, sparkline=[0.04, 0.038, None, 0.034, 0.031]),
             columns=3,
         )
     ),

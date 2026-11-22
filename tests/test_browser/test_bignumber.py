@@ -44,3 +44,15 @@ def test_change_without_direction_is_neutral(viewer: Viewer) -> None:
     second = (changes.nth(1).inner_text(), changes.nth(1).evaluate("e => getComputedStyle(e).color"))
     assert first == ("+3%", "rgb(107, 114, 128)")  # muted, no arrow
     assert second == ("+2", GREEN)  # colour only, no arrow
+
+
+def test_the_sparkline_spans_the_card_and_keeps_its_line_thin(viewer: Viewer) -> None:
+    # #35: the SVG stretches to the card's width; vector-effect keeps the stroke 1.75px wide.
+    block = bf.BigNumber("Revenue", 4.2, prev_value=3.8, sparkline=[3.1, 3.4, 3.2, 3.9, 4.2])
+    page = viewer.open(bf.Briefing(bf.Group(block, bf.BigNumber("Users", 12), columns=2)))
+    card = page.locator(".bf-bignumber").first.bounding_box()
+    spark = page.locator(".bf-bignumber__spark").bounding_box()
+    assert card is not None and spark is not None
+    assert spark["width"] > 0.7 * card["width"] and 28 <= spark["height"] <= 36
+    width = page.locator(".bf-bignumber__spark path").first.evaluate("p => getComputedStyle(p).strokeWidth")
+    assert width == "1.75px"

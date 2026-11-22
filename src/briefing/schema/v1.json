@@ -607,6 +607,85 @@
           ],
           "default": null
         },
+        "prev_value": {
+          "description": "The value to compare with: briefing computes the change, its arrow and its colour (instead of `change`, `is_upward_change` and `is_positive_intent`). Needs a numeric `value`.",
+          "anyOf": [
+            {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "change_as": {
+          "description": "How a computed change is shown: `\"percent\"` (`+10.5%`), `\"absolute\"` (the difference, in `format`) or `\"points\"` (the difference of two rates in percentage points, `-0.3 pt`).",
+          "anyOf": [
+            {
+              "enum": [
+                "percent",
+                "absolute",
+                "points"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": "percent"
+        },
+        "higher_is_better": {
+          "description": "With `prev_value`: `True` shows a rise in green, `False` a fall (churn, cost, latency).",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": true
+        },
+        "format": {
+          "description": "How `value` is shown: a format string such as `\"{:,.0f}\"`, `\"$ {:.1f}M\"` or `\"{:.1%}\"`, or a function.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "sparkline": {
+          "description": "A short series of numbers drawn as a trend line under the value (a list, a Series or an array); missing values leave gaps.",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
         "name": {
           "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
           "anyOf": [

@@ -119,6 +119,11 @@ KPI display block — shows a headline metric with optional change indicator.
 - `change`: text. Optional change to show under the value, e.g. `"+3%"`.
 - `is_upward_change`: true or false. The arrow: `True` shows ▲, `False` shows ▼, `None` shows no arrow.
 - `is_positive_intent`: true or false. The colour: `True` is green (good news), `False` is red (bad news). Leave it `None` and the colour follows the arrow (▲ green, ▼ red); with neither flag the change is shown neutral, in the theme's muted colour.
+- `prev_value`: a number. The value to compare with: briefing computes the change, its arrow and its colour (instead of `change`, `is_upward_change` and `is_positive_intent`). Needs a numeric `value`.
+- `change_as`: one of "percent", "absolute", "points", default `"percent"`. How a computed change is shown: `"percent"` (`+10.5%`), `"absolute"` (the difference, in `format`) or `"points"` (the difference of two rates in percentage points, `-0.3 pt`).
+- `higher_is_better`: true or false, default `true`. With `prev_value`: `True` shows a rise in green, `False` a fall (churn, cost, latency).
+- `format`: text. How `value` is shown: a format string such as `"{:,.0f}"`, `"$ {:.1f}M"` or `"{:.1%}"`, or a function.
+- `sparkline`: a list of numbers or null. A short series of numbers drawn as a trend line under the value (a list, a Series or an array); missing values leave gaps.
 
 ### Alert
 
