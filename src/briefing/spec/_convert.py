@@ -231,7 +231,7 @@ class Reader:
         self.diagnostics: list[Diagnostic] = []
         self.paths: dict[int, str] = {}  # id(block) -> the JSON Pointer it was built from
         self._links: dict[str, str] = {}  # link id -> path of the block that has it
-        self._deck = False  # reading a deck's slides: names are unique in the whole deck
+        self._deck = False  # reading a deck: its named slides scope names, as pages do
 
     # ── diagnostics ──
 
@@ -295,8 +295,10 @@ class Reader:
         self._unknown_keys(spec, path, "A slide", ["type", *(f.key for f in kind.fields), "blocks"])
         options, ok = self._options(spec, kind, path, "The slide")
         name = spec.get("name")
+        scope = None
         if isinstance(name, str) and check(name, {"$ref": "#/$defs/name"}):
             self._claim(name, None, path, "slide")
+            scope = name
         raw = spec.get("blocks", [])
         if not isinstance(raw, list):
             self._add("error", "wrong-type", _join(path, "blocks"),
@@ -306,7 +308,7 @@ class Reader:
             self._add("error", "empty-container", path, "This slide has no blocks and no title.",
                       'Add "blocks": [...], or a "title" for a section slide.')
             return None
-        children = [self.block(child, _join(_join(path, "blocks"), i), page=None) for i, child in enumerate(raw)]
+        children = [self.block(child, _join(_join(path, "blocks"), i), page=scope) for i, child in enumerate(raw)]
         if not ok or None in children:
             return None
         return t.cast(Slide | None, self._construct(Slide, {"blocks": children, **options}, path, "The slide"))
@@ -449,8 +451,8 @@ class Reader:
     def _claim(self, name: str, page: str | None, path: str, type_: str) -> None:
         link = f"{page}/{name}" if page else name
         if link in self._links:
-            where = f" in page {page!r}" if page else ""
-            scope = "in the deck" if self._deck else "within its page"
+            where = f" in {'slide' if self._deck else 'page'} {page!r}" if page else ""
+            scope = "within its slide" if self._deck else "within its page"
             self._add("error", "duplicate-name", path,
                       f"Two blocks{where} are named {name!r}: the one at {self._links[link]} and this {type_}.",
                       f"A name must be unique {scope}, so that the link #{link} leads to one place; "

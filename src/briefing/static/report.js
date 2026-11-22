@@ -218,7 +218,7 @@
     var rows      = tableRows(container, tbody);
     var all       = [];
     for (var n = 0; n < rows.count; n++) all.push(n);
-    var PAGE_SIZE = 25;  // PAGE_ROWS in renderers/table.py
+    var PAGE_SIZE = container.closest('.bf-slide') ? 10 : 25;  // PAGE_ROWS in renderers/table.py; a slide shows 10 (#197)
     var PRINT_ROWS = 1000;
     var page     = 0;
     var sortCol  = -1;

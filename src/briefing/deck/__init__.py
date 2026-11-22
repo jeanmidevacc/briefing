@@ -7,20 +7,93 @@ own renderer (charts stay interactive, tables sort) and the report's theme appli
 Example::
 
     deck = bf.deck.Deck(
-        bf.deck.Slide(bf.Banner("Q3 review", subtitle="Sales and operations")),
+        bf.deck.Slide(bf.Banner("# Q3 review", image="cover.jpg")),
         bf.deck.Slide(bf.Text("Revenue grew in **every** region."), title="Summary"),
         bf.deck.Slide(bf.Plot(fig), title="Revenue by month"),
         footer="Sales analytics",
     )
+    bf.deck.save(deck, "q3-review.html", name="Q3 review")
     spec, data = bf.to_spec(deck)  # its JSON form: {"briefing": 1, "slides": [...]}
 """
 from __future__ import annotations
 
 import typing as t
+import webbrowser
 from collections.abc import Mapping
+from pathlib import Path
 
-from briefing.deck import _render  # noqa: F401  (registers the slide renderer)
 from briefing.deck._blocks import Deck, Slide
+from briefing.deck._render import render_deck
+from briefing.renderers.formatting import Formatting
+from briefing.renderers.size import DEFAULT_MAX_SIZE, Part, check_size, parse_size
+
+
+def _render(deck: Deck, name: str, formatting: Formatting | None, max_size: int | str | None) -> str:
+    limit = parse_size(max_size)
+    parts: list[Part] | None = [] if limit is not None else None
+    html = render_deck(deck, name=name, formatting=formatting, parts=parts, stacklevel=4)  # the caller's line
+    check_size(html, parts or [], limit, stacklevel=3)  # 3: _render <- to_html/save <- the caller
+    return html
+
+
+def to_html(
+    deck: Deck,
+    *,
+    name: str = "Deck",
+    formatting: Formatting | None = None,
+    max_size: int | str | None = DEFAULT_MAX_SIZE,
+) -> str:
+    """The deck as one self-contained HTML page: its slides, in the report's theme.
+
+    Slides are drawn at 1280 × 720 and scaled to the window. The arrow keys, space and Page
+    Up/Down move between them, ``O`` shows every slide, ``F`` goes full screen, and the
+    address bar holds the slide's number (``#3``) or its name.
+
+    Args:
+        deck: The :class:`Deck`.
+        name: The deck's title, shown in the browser tab.
+        formatting: A :class:`~briefing.Formatting`: the same theme as a report's.
+        max_size: Warn when the page is bigger than this, as :func:`briefing.save` does:
+            a number of bytes or a size such as ``"25 MB"``; ``None`` never warns.
+
+    Returns:
+        The HTML page.
+
+    Example::
+
+        html = bf.deck.to_html(deck, name="Q3 review", formatting=bf.Formatting.from_accent("#0f766e"))
+    """
+    return _render(deck, name, formatting, max_size)
+
+
+def save(
+    deck: Deck,
+    path: str | Path,
+    *,
+    open: bool = False,  # noqa: A002
+    name: str = "Deck",
+    formatting: Formatting | None = None,
+    max_size: int | str | None = DEFAULT_MAX_SIZE,
+) -> None:
+    """Save the deck as one self-contained HTML file, to share as it is or print to PDF.
+
+    Args:
+        deck: The :class:`Deck`.
+        path: Where to write it, such as ``"q3-review.html"``.
+        open: Open it in the default browser afterwards.
+        name: The deck's title, shown in the browser tab.
+        formatting: A :class:`~briefing.Formatting`: the same theme as a report's.
+        max_size: Warn when the file is bigger than this, as :func:`briefing.save` does.
+
+    Example::
+
+        bf.deck.save(deck, "q3-review.html", name="Q3 review", open=True)
+    """
+    html = _render(deck, name, formatting, max_size)
+    dest = Path(path)
+    dest.write_text(html, encoding="utf-8")
+    if open:
+        webbrowser.open(dest.resolve().as_uri())
 
 
 def from_spec(spec: object, data: Mapping[str, t.Any] | None = None) -> Deck:
@@ -56,4 +129,4 @@ def from_spec(spec: object, data: Mapping[str, t.Any] | None = None) -> Deck:
     return deck_from_spec(spec, data)
 
 
-__all__ = ["Deck", "Slide", "from_spec"]
+__all__ = ["Deck", "Slide", "from_spec", "save", "to_html"]

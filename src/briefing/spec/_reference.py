@@ -193,7 +193,8 @@ place of `"blocks"`; each slide is an object with its own `"blocks"`, written as
 
 - A slide needs `"blocks"`, a `"title"`, or both; a slide with only a title is a section slide.
 - Slides hold any block but a Page. Lay them out with Group (columns), Select (tabs) or Card.
-- Names are unique in the whole deck: a slide's link is `#name`, as is a block's.
+- A slide's `name` is its link (`#summary`) and scopes names as a page does: a block named
+  `margin` in that slide links as `#summary/margin`, unique within its slide.
 - Check a deck as a report: `python -m briefing validate deck.json`, or `bf.validate(spec, data)`.
   Build it with `bf.deck.from_spec(spec, data)`; `bf.to_spec(deck)` writes it.
 

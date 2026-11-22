@@ -87,21 +87,24 @@ def _validate(report_or_spec: object, data: Mapping[str, t.Any] | None, limit: i
     paths = _paths(report, reader.paths)
     found += _draw_each(report, paths)
     if not any(d.severity == "error" for d in found):
-        found += _render(report, paths, deck=isinstance(built, Deck))
-    if isinstance(built, Deck):
-        return found
+        found += _render_deck(built, paths) if isinstance(built, Deck) else _render(report, paths)
     if limit is not None and not any(d.severity == "error" for d in found):
-        found += _weigh(report, paths, limit)
+        found += _weigh(built, paths, limit)
     return found
 
 
-def _weigh(report: Briefing, paths: dict[int, str], limit: int) -> list[Diagnostic]:
-    """A ``too-big`` warning when the rendered report is over *limit* bytes (#38)."""
+def _weigh(report: Briefing | Deck, paths: dict[int, str], limit: int) -> list[Diagnostic]:
+    """A ``too-big`` warning when the rendered report (or deck) is over *limit* bytes (#38)."""
+    from briefing.deck._render import render_deck
+
     parts: list[Part] = []
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         try:
-            html = render_report(report, parts=parts, paths=paths)
+            if isinstance(report, Deck):
+                html = render_deck(report, parts=parts)
+            else:
+                html = render_report(report, parts=parts, paths=paths)
         except Exception as exc:  # noqa: BLE001 — reported, not raised
             return [Diagnostic("error", "render-error", "", f"{type(exc).__name__}: {exc}")]
     message = over_budget(len(html.encode()), parts, limit)
@@ -193,9 +196,24 @@ class _Tracer(IdGen):
             self.found.append(Diagnostic("error", "name-clash", path, clash_message(link, made)))
 
 
-def _render(report: Briefing, paths: dict[int, str], deck: bool = False) -> list[Diagnostic]:
+def _render_deck(deck: Deck, paths: dict[int, str]) -> list[Diagnostic]:
+    """Render a deck's slides together, as :func:`_render` does a report's blocks."""
+    from briefing.deck._render import long_text, render_slides
+
+    found = [Diagnostic("warning", "block-warning", f"/slides/{i}", message) for i, message in long_text(deck)]
+    tracer = _Tracer(paths)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            render_slides(deck, tracer)
+        except Exception as exc:  # noqa: BLE001 — reported, not raised
+            return [*found, *tracer.found, Diagnostic("error", "render-error", "", f"{type(exc).__name__}: {exc}")]
+    return [*found, *tracer.found]
+
+
+def _render(report: Briefing, paths: dict[int, str]) -> list[Diagnostic]:
     try:
-        normalised = report if deck else normalize(report)  # a deck's slides need no normalising
+        normalised = normalize(report)
     except BriefingError as exc:
         return [Diagnostic("error", "render-error", "", str(exc))]
     paths = dict(paths)

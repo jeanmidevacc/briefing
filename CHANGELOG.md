@@ -17,7 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   but a `Page`; a slide with only a title is a section slide. A deck has a JSON form,
   `{"briefing": 1, "slides": [{"title": ..., "blocks": [...]}]}`: `bf.to_spec(deck)` writes
   it, `bf.deck.from_spec(spec, data)` reads it, and `bf.validate` and
-  `python -m briefing validate` check it, with names unique in the whole deck.
+  `python -m briefing validate` check it. A named slide scopes names as a page does
+  (`#summary/margin`).
+- `bf.deck.save(deck, path)` and `bf.deck.to_html(deck)`: a deck as one self-contained HTML
+  page in the report's theme, every block drawn by its own renderer (#197). Slides are
+  drawn at 1280 × 720 and scaled to the window; the arrow keys, space and Page Up/Down move
+  between them, `O` shows every slide, `F` goes full screen, and the address bar holds the
+  slide's number (`#3`) or a name. What doesn't fit a slide shrinks, down to 70%, then
+  scrolls with a "Doesn't fit" mark; a slide with more than about 120 words of text warns.
+  A DataTable on a slide shows 10 rows a page.
 
 ### Changed
 
