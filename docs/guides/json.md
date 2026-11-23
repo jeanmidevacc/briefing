@@ -158,52 +158,5 @@ The schema's root accepts a report (`"blocks"`) or a slide deck (`"slides"`, see
 
 ## For agents
 
-briefing is newer than most models' training data. An agent can learn it from the
-installed package instead, at the installed version:
-
-| Command | What it does |
-| --- | --- |
-| `python -m briefing reference` | Prints the reference for agents: the format, every block and option with its type, default and description, the diagnostic codes and a complete example. |
-| `python -m briefing validate report.json` | Lists the problems in a report's JSON, one per line (`--json`: as a JSON list), and exits with status 1 when there is an error. |
-| `python -m briefing render report.json -o report.html --name "Q1"` | Builds the report and saves it. |
-| `python -m briefing skill --install` | Writes a Claude Code skill to `.claude/skills/briefing/SKILL.md` in the current project. It tells Claude to read the reference before writing briefing code. |
-
-`validate` and `render` take the tables a JSON names by reference as
-`--data sales=sales.csv` (CSV or Parquet), and read the JSON from standard input when
-given `-`. Without `--data`, `validate` checks the JSON alone and says which references it
-left unchecked.
-
-The documentation publishes the same reference as
-[llms-full.txt](https://briefing.readthedocs.io/en/stable/llms-full.txt), with an index in
-[llms.txt](https://briefing.readthedocs.io/en/stable/llms.txt).
-
-## An agent's loop
-
-```{briefing-example}
-:title: A report built from JSON
-
-import json
-import briefing as bf
-
-draft = json.loads('''
-{
-  "briefing": 1,
-  "blocks": [
-    {"type": "Text", "text": "# Regions, Q1"},
-    {"type": "Group", "colums": 2, "blocks": [
-      {"type": "BigNumber", "heading": "Revenue", "value": "$1.05M", "change": "+8%", "is_upward_change": true},
-      {"type": "BigNumber", "heading": "Regions", "value": 3}
-    ]},
-    {"type": "DataTable", "df": {"columns": ["region", "revenue"],
-                                 "rows": [["North", 412000], ["South", 287500], ["East", 351200]]}}
-  ]
-}
-''')
-
-problems = bf.validate(draft)
-assert [p.code for p in problems] == ["unknown-option"]  # "colums": Did you mean "columns"?
-draft["blocks"][1]["columns"] = draft["blocks"][1].pop("colums")
-
-assert bf.validate(draft) == []
-bf.save(bf.from_spec(draft), "regions.html", name="Regions, Q1")
-```
+Coding agents write this JSON, check it and render it from the command line: see
+{doc}`agents`.
