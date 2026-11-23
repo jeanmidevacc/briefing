@@ -37,9 +37,9 @@ def sample_report(*, export: tuple[str, ...] = ()) -> bf.Briefing:
     return bf.Briefing(
         bf.Page(
             bf.Group(
-                bf.BigNumber("Revenue", "$1.25M", change="+8%", is_upward_change=True),
-                bf.BigNumber("Orders", "10,050", change="+3%", is_upward_change=True),
-                bf.BigNumber("Margin", "29.6 %", change="-0.4 pt", is_upward_change=False),
+                bf.BigNumber("Revenue", 1_249_000, prev_value=1_156_500, format="${:,.0f}"),
+                bf.BigNumber("Orders", 10_050, prev_value=9_757, format="{:,}"),
+                bf.BigNumber("Margin", 0.296, prev_value=0.300, format="{:.1%}"),
                 columns=3,
             ),
             bf.Plot(fig, caption="Daily orders"),

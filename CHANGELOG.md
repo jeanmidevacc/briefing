@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The README presents briefing as one grammar with three outputs (report, slide deck, email
+  digest), with a quick start for each, the ways to write a report (Python, Markdown, a
+  project, JSON for agents) and what's new since 0.4; its screenshot shows the current look
+  (#200).
+
 ## [0.7.0] - 2026-11-22
 
 ### Added
