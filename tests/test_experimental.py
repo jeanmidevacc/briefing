@@ -13,6 +13,7 @@ from briefing import _experimental
 #: Every experimental function, by the name its warning gives it.
 EXPERIMENTAL: dict[str, Callable[..., object]] = {
     "bf.deck.from_report": bf.deck.from_report,
+    "bf.email.from_report": bf.email.from_report,
 }
 
 
