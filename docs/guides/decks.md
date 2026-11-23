@@ -89,7 +89,7 @@ screen, swipe. Keys typed into a search box or a tab list stay theirs.
 
 The address bar holds the slide's number (`q3-review.html#3`), so a link opens a slide.
 A slide's `name` is its link too (`#summary`), and it scopes names as a page does: a block
-named `margin` in that slide links as `#summary/margin`. See the links guide.
+named `margin` in that slide links as `#summary/margin`. See {doc}`links`.
 
 ## Printing and PDF
 

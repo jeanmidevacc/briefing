@@ -189,25 +189,7 @@ bf.save(report, "tab-style.html", name="Tab styles")
 
 ## Links to pages, tabs and headings
 
-A block's `name` is also its link. Links come only from names, never from titles, so
-rewording a title breaks no link:
-
-| What | Name it | Its link |
-| --- | --- | --- |
-| A page | `bf.Page(..., name="detail")` | `q1.html#detail` |
-| A tab, or any block, in that page | `bf.Text(..., label="By region", name="by-region")` | `q1.html#detail/by-region` |
-| A heading in a `Text` in that page | `## Methodology {#methodology}` | `q1.html#detail/methodology` |
-
-Outside a named page, a name links as itself: `q1.html#by-region`.
-
-Opening a link selects its page and tab, opens any `Toggle` around it and scrolls to
-it, also in a file opened offline. Choosing a tab puts its link in the address bar,
-without adding a step to the browser's history, so a reload keeps the tab open and the
-address can be shared. A named heading shows a link icon on hover that copies its link.
-A Markdown link such as `[the method](#detail/methodology)` jumps there.
-
-A name must be unique within its page: two blocks or headings with the same name in one
-page raise an error when the report is rendered. Different pages may reuse a name.
+A block's `name` is its link: see {doc}`links`.
 
 ## The report header
 

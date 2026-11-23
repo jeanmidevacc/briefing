@@ -56,6 +56,18 @@ def sample_report(*, export: tuple[str, ...] = ()) -> bf.Briefing:
     )
 
 
+def _wide_chart() -> object:
+    """The daily orders again, wide and flat, to fit a slide under a row of numbers."""
+    rng = np.random.default_rng(6)
+    days = np.arange(60)
+    fig, ax = plt.subplots(figsize=(10, 2.4))
+    ax.plot(days, 300 + days * 2 + rng.normal(0, 10, 60).cumsum(), color="#4F46E5")
+    ax.set(xlabel="Day", ylabel="Orders")
+    ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     os.environ.setdefault("SOURCE_DATE_EPOCH", "1704067200")
     OUT.mkdir(parents=True, exist_ok=True)
@@ -78,6 +90,31 @@ def main() -> None:
         # Exports hide the menu (#100); show it again, since it is the subject here.
         session.page.add_style_tag(content="html .bf-report .bf-export { display: flex !important; }")
         session.page.locator(".bf-report__header").screenshot(path=str(OUT / "menu.png"))
+
+    # The three outputs, for the landing page: a slide of a deck and an email digest.
+    revenue = bf.BigNumber("Revenue", 1_249_000, prev_value=1_156_500, format="${:,.0f}")
+    margin = bf.BigNumber("Margin", 0.296, prev_value=0.300, format="{:.1%}")
+    deck = bf.deck.Deck(
+        bf.deck.Slide(bf.Text("Revenue grew in **every** region; the margin slipped."),
+                      bf.Group(revenue, margin, columns=2), bf.Plot(_wide_chart()), title="Q1 review"),
+        footer="Sales analytics",
+    )
+    bf.deck.save_image(deck, OUT / "deck.png", slide=1, scale=0.75)
+    digest = bf.email.Digest(
+        bf.Text("## Q1 review\n\nRevenue grew in **every** region; the margin slipped."),
+        bf.Group(revenue, margin, columns=2),
+        link="https://example.com/q1.html",
+        footer="Sales analytics",
+    )
+    html, _ = bf.email.to_html(digest)
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 700, "height": 200})
+        page.set_content(html)
+        page.screenshot(path=str(OUT / "email.png"), full_page=True)
+        browser.close()
 
     for path in sorted(OUT.iterdir()):
         print(f"{path.relative_to(Path(__file__).parent)}  {path.stat().st_size // 1024} KB")
