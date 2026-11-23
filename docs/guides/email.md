@@ -31,7 +31,7 @@ with smtplib.SMTP("localhost") as smtp:  # or the Gmail API, SES…: sending is 
   Anything interactive (`DataTable`, `Select`, `Toggle`, lab blocks) is an error: link to
   the full report for it.
 - **Links:** `link=` adds an "Open the full report" button, and `#anchor` links in `Text`
-  lead into that report (`report.html#detail/sources`); see the links guide.
+  lead into that report (`report.html#detail/sources`); see {doc}`links`.
 - **Charts** become PNG images attached to the email. Matplotlib draws them itself,
   Altair through the `vl-convert` that `briefing[altair]` installs, and Plotly needs
   `pip install kaleido`. Bokeh needs a browser to draw, so it can't go in an email.
