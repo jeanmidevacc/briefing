@@ -439,4 +439,7 @@ def to_eml(digest: Digest, path: str | Path, subject: str, **options: t.Any) -> 
 
 
 
-__all__ = ["ALLOWED", "Digest", "Picture", "to_eml", "to_html", "to_message", "to_text"]
+# The experimental converter (#199) lives in _digest; it imports Digest from here when called.
+from briefing._digest import from_report  # noqa: E402
+
+__all__ = ["ALLOWED", "Digest", "Picture", "from_report", "to_eml", "to_html", "to_message", "to_text"]

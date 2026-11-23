@@ -27,7 +27,7 @@ Email digests
 -------------
 
 .. automodule:: briefing.email
-   :members: Digest, to_message, to_eml, to_html, to_text, Picture
+   :members: Digest, to_message, to_eml, to_html, to_text, Picture, from_report
    :no-index:
 
 .. currentmodule:: briefing

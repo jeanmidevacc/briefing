@@ -48,6 +48,7 @@ cloud account required.
 | **Holds** | Every block: pages, tabs, links | Every block, one slide at a time | Text, numbers, alerts, charts as images, short tables |
 | **Interactive** | Yes | Yes in the browser, as it shows in a PDF | No: mail apps run no script |
 | **Made with** | `bf.Briefing` → `bf.save` | `bf.deck.Deck` → `bf.deck.save` | `bf.email.Digest` → `bf.email.to_message` |
+| **From a report** | — | `bf.deck.from_report` (experimental) | `bf.email.from_report` (experimental) |
 
 ## Install
 

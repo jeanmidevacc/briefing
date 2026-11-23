@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Text`, `# Heading` makes a section slide, `## Heading` starts a slide (its `{#name}`
   names it) and a `---` line starts one that keeps the title; every other block stays whole.
   A `Banner` that opens the report becomes the title slide.
+- `bf.email.from_report(report, link=, page=)` (experimental): a first draft of an email
+  digest from one page of a report, an ordinary `Digest` (#199). Text, numbers, alerts and
+  charts stay; a `DataTable` becomes a `Table` of its first 30 rows with its formats, a
+  `Select` its first panel, a `Card`, `Banner` or `Chips` their text; toggles, images, files,
+  code, raw HTML and lab blocks are left out, named in one warning. Without `link=`, links
+  into the report keep only their words.
 - `bf.ExperimentalWarning`: experimental functions warn once per session that what they
   return may change in any release, without a deprecation period (#199).
 
