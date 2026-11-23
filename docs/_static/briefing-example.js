@@ -11,6 +11,10 @@
       frame.style.aspectRatio = '16 / 9';
       return;
     }
+    // No scrollbar inside a preview: the frame is sized to its content anyway, and a scrollbar that
+    // comes and goes changes the content's width, which re-fits a calendar to a new height, which
+    // resizes the frame: a loop that made the whole docs page shake in some browsers.
+    doc.documentElement.style.overflow = 'hidden';
     function resize() {
       var style = doc.defaultView.getComputedStyle(doc.body);
       var height = doc.body.offsetHeight + parseFloat(style.marginTop) + parseFloat(style.marginBottom);
