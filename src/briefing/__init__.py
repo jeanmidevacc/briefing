@@ -29,6 +29,7 @@ from pathlib import Path
 # the pandas dependency those blocks need at render time.
 from briefing import color, deck, email, fmt, lab
 from briefing._error import BriefingError
+from briefing._experimental import ExperimentalWarning
 from briefing._markdown_first import from_markdown
 from briefing._preview import Preview, preview
 from briefing._prose import slug
@@ -245,6 +246,7 @@ def embed_assets(blocks: Briefing | list[t.Any] | object) -> str:
 __all__: list[str] = [
     # error
     "BriefingError",
+    "ExperimentalWarning",
     # blocks — text
     "Alert",
     "AlertLevel",

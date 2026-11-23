@@ -36,7 +36,7 @@ Slide decks
 -----------
 
 .. automodule:: briefing.deck
-   :members: Deck, Slide, to_html, save, save_pdf, save_image, from_spec
+   :members: Deck, Slide, to_html, save, save_pdf, save_image, from_spec, from_report
    :no-index:
 
 .. currentmodule:: briefing
@@ -50,3 +50,4 @@ Errors
 ------
 
 .. autoexception:: BriefingError
+.. autoexception:: ExperimentalWarning

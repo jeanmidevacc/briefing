@@ -23,6 +23,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from briefing.deck._blocks import Deck, Slide
+from briefing.deck._convert import from_report
 from briefing.deck._export import save_image, save_pdf
 from briefing.deck._render import render_deck
 from briefing.renderers.formatting import Formatting
@@ -130,4 +131,4 @@ def from_spec(spec: object, data: Mapping[str, t.Any] | None = None) -> Deck:
     return deck_from_spec(spec, data)
 
 
-__all__ = ["Deck", "Slide", "from_spec", "save", "save_image", "save_pdf", "to_html"]
+__all__ = ["Deck", "Slide", "from_report", "from_spec", "save", "save_image", "save_pdf", "to_html"]

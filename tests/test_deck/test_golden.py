@@ -36,8 +36,24 @@ def _basic() -> bf.deck.Deck:
     )
 
 
+def _from_report() -> bf.deck.Deck:
+    import warnings
+
+    report = bf.Briefing(
+        bf.Page(bf.Text("## Overview\n\nRevenue grew.\n\n## Numbers {#numbers}"),
+                bf.Group(bf.BigNumber("Revenue", 42), bf.BigNumber("Orders", 7), columns=2),
+                title="Summary", name="summary"),
+        bf.Page(bf.Text("# Detail\n\nBy region.\n\n---\n\nContinued."), title="Detail", name="detail"),
+        footer="Team",
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", bf.ExperimentalWarning)
+        return bf.deck.from_report(report, title="Q3 review")
+
+
 DECKS: dict[str, tuple[Callable[[], bf.deck.Deck], bf.Formatting | None]] = {
     "basic": (_basic, None),
+    "from-report": (_from_report, None),
     "dark-theme": (_basic, bf.Formatting.dark()),
     "plotly": (lambda: bf.deck.Deck(bf.deck.Slide(bf.Plot(plotly_figure()), title="A chart")), None),
     "tabs": (lambda: bf.deck.Deck(bf.deck.Slide(bf.Select(bf.Text("a", label="A"), bf.Text("b", label="B")))), None),

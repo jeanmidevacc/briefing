@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `bf.deck.from_report(report, title=)` (experimental): a first draft of a deck from a
+  report, an ordinary `Deck` to adjust before saving (#199). Each page starts a slide; in a
+  `Text`, `# Heading` makes a section slide, `## Heading` starts a slide (its `{#name}`
+  names it) and a `---` line starts one that keeps the title; every other block stays whole.
+  A `Banner` that opens the report becomes the title slide.
+- `bf.ExperimentalWarning`: experimental functions warn once per session that what they
+  return may change in any release, without a deprecation period (#199).
+
 ### Changed
 
 - The README presents briefing as one grammar with three outputs (report, slide deck, email
