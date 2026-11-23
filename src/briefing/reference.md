@@ -332,6 +332,8 @@ place of `"blocks"`; each slide is an object with its own `"blocks"`, written as
   then `bf.deck.save(deck, "deck.html")`). `python -m briefing pdf deck.html` prints one slide
   per page. `bf.to_spec(deck)` writes a deck's JSON.
 - Slides are 1280 x 720: keep a slide to a few blocks and under about 120 words of text.
+- Experimental: `python -m briefing render report.json --deck deck.html` also writes a first draft of
+  a deck from a report (`bf.deck.from_report` in Python; `bf.email.from_report` drafts an email digest).
 
 The deck's options:
 

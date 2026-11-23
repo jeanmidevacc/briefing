@@ -32,9 +32,11 @@ def run(
     formatting: Formatting | None = None,
     argv: Sequence[str] | None = None,
 ) -> Path:
-    """Build the report and save it, with a command line: ``--out``, ``--open``, ``--max-size``, ``--spec``, ``--diff``.
+    """Build the report and save it, with a command line: ``--out``, ``--open``, ``--spec``, ``--diff``, ….
 
     Put it at the end of a build script; it prints each file it writes and its size.
+    ``--max-size`` sets the size warning, and ``--deck`` also writes a first draft of a slide
+    deck (experimental, :func:`briefing.deck.from_report`).
 
     Args:
         build: A function that returns the report (a ``Briefing``, or what ``save`` takes).
@@ -47,7 +49,7 @@ def run(
 
         if __name__ == "__main__":
             bf.run(build, out="reports/index.html", name="Daily collection")
-            # python build_report.py --open --spec --diff reports/yesterday.json
+            # python build_report.py --open --spec --diff reports/yesterday.json --deck
     """
     from briefing import save, stringify, to_spec
     from briefing.diff import diff
@@ -61,6 +63,8 @@ def run(
                         help="also write the report's JSON next to it, to compare the next run with")
     parser.add_argument("--diff", type=Path, metavar="PREVIOUS.json",
                         help="also write what changed since that run, as <out>-changes.html")
+    parser.add_argument("--deck", action="store_true",
+                        help="also write a first draft of a slide deck, as <out>-deck.html (experimental)")
     args = parser.parse_args(argv)
 
     from briefing.blocks.layout import Briefing
@@ -84,6 +88,12 @@ def run(
         changes.write_text(stringify(diff(args.diff, report), name=f"{name}: what changed", formatting=formatting),
                            encoding="utf-8")
         print(f"{changes}: {format_size(changes.stat().st_size)}")
+    if args.deck:
+        from briefing import deck
+
+        deck_path = path.with_name(f"{path.stem}-deck.html")
+        deck.save(deck.from_report(report), deck_path, name=name, formatting=formatting, max_size=args.max_size)
+        print(f"{deck_path}: {format_size(deck_path.stat().st_size)}")
     if args.open:
         webbrowser.open(path.resolve().as_uri())
     return path

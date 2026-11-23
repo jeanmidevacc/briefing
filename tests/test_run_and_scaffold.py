@@ -47,6 +47,20 @@ def test_spec_warns_when_json_cant_hold_the_report(tmp_path: Path) -> None:
         bf.run(lambda: bf.Briefing(bf.DataTable(frame)), argv=["--out", str(tmp_path / "r.html"), "--spec"])
 
 
+def test_deck_also_writes_a_draft_deck(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    out = tmp_path / "index.html"
+    report = bf.Briefing(bf.Page(bf.Text("## One\n\na\n\n## Two\n\nb"), title="Summary", name="summary"))
+    with pytest.warns(bf.ExperimentalWarning):
+        from briefing import _experimental
+
+        _experimental._warned.discard("bf.deck.from_report")
+        bf.run(lambda: report, out=out, name="Daily", argv=["--deck"])
+    deck = tmp_path / "index-deck.html"
+    html = deck.read_text(encoding="utf-8")
+    assert "data-bf-deck" in html and "<title>Daily</title>" in html and html.count('data-bf-slide=') == 2
+    assert f"{deck}:" in capsys.readouterr().out
+
+
 def test_run_rejects_a_bad_size(tmp_path: Path) -> None:
     with pytest.raises(SystemExit):
         bf.run(_report, argv=["--out", str(tmp_path / "r.html"), "--max-size", "huge"])

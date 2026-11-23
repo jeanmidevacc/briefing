@@ -91,6 +91,8 @@ def _parser() -> argparse.ArgumentParser:
     render.add_argument("spec", help='the report\'s JSON file, or "-" to read it from standard input')
     render.add_argument("-o", "--output", type=Path, help="the HTML file to write (default: next to the JSON)")
     render.add_argument("--name", default=None, help="the report's title (default: Report, or Deck for a deck)")
+    render.add_argument("--deck", type=Path, default=None, metavar="DECK.html",
+                        help="also write a first draft of a slide deck from the report (experimental)")
     render.add_argument("--data", action="append", default=[], metavar="NAME=FILE", help=data_help)
     render.add_argument("--max-size", type=_max_size, default=DEFAULT_MAX_SIZE, metavar="SIZE", help=size_help)
 
@@ -267,10 +269,15 @@ def _render(args: argparse.Namespace) -> int:
             raise BriefingError(f"{exc}\nPass referenced tables as --data name=file.csv.") from exc
         raise
     if isinstance(built, deck.Deck):
+        if args.deck is not None:
+            raise BriefingError("--deck drafts a deck from a report, and this JSON is already a deck: leave it out.")
         deck.save(built, output, name=args.name or "Deck", max_size=args.max_size)
     else:
         save(built, str(output), name=args.name or "Report", max_size=args.max_size)
     print(output)
+    if args.deck is not None and not isinstance(built, deck.Deck):
+        deck.save(deck.from_report(built), args.deck, name=args.name or "Report", max_size=args.max_size)
+        print(args.deck)
     return 0
 
 
