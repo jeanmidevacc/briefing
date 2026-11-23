@@ -90,18 +90,7 @@ the stack should end with a generic family such as `sans-serif`. The presets use
 fonts that ship with macOS, Windows or common Linux systems, with one for each in every
 stack, so a preset looks the same to everyone.
 
-## Checking a palette
+## Colours that mean something
 
-`bf.color.check(colors, background=..., kind=...)` lists what makes a palette hard to read:
-colours below 3:1 contrast against the background, colours too close to tell apart, pairs
-that look alike to colour-blind readers (protanopia and deuteranopia are warnings,
-tritanopia, which is rare, a note), and a sequential palette whose lightness doesn't rise
-all the way. `bf.color.contrast`, `bf.color.simulate` and `bf.color.distance` are there
-for your own checks.
-
-```python
-import briefing as bf
-
-for finding in bf.color.check(["#2dd4bf", "#60a5fa", "#a3e635"], background="#1a1a1a"):
-    print(finding.level, finding.message)
-```
+Scales, legends, chart palettes and the palette check have a page of their own:
+{doc}`colours`.

@@ -34,7 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The documentation is grouped into sections (Get started, Blocks, Reports, Slide decks,
   Email digests, Ways to write it, Look, Examples, API reference). Its landing page shows the
-  three outputs side by side, and two pages are new: "How briefing works" and "Links" (#206).
+  three outputs side by side, and five pages are new: "How briefing works", "Links",
+  "Reports", "Coding agents" and "Colours and scales" (#206).
 - The README presents briefing as one grammar with three outputs (report, slide deck, email
   digest), with a quick start for each, the ways to write a report (Python, Markdown, a
   project, JSON for agents) and what's new since 0.4; its screenshot shows the current look

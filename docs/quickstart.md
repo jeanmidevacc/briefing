@@ -37,25 +37,25 @@ sales = pd.DataFrame({
 })
 
 report = bf.Briefing(
-    bf.Text("# Sales, Q1 2024\n\nRevenue by region, before returns."),
+    bf.Text("# Sales, Q1 2026\n\nRevenue by region, before returns."),
     bf.Group(
-        bf.BigNumber("Revenue", "$1.25M", change="+8%", is_upward_change=True),
-        bf.BigNumber("Regions", 4),
+        bf.BigNumber("Revenue", sales["revenue"].sum(), prev_value=1_156_500, format="${:,.0f}"),
+        bf.BigNumber("Regions", len(sales)),
         columns=2,
     ),
-    bf.DataTable(sales, caption="By region"),
+    bf.DataTable(sales, caption="By region", formats={"revenue": "${:,.0f}", "margin_pct": "{:.1f}%"}),
 )
-bf.save(report, "first.html", name="Sales, Q1 2024")
+bf.save(report, "first.html", name="Sales, Q1 2026")
 ```
 
-The rest of the guides show each family of blocks:
+`BigNumber` computes the change from `prev_value` and colours it: up is good, unless
+`higher_is_better=False`. Next:
 
-- {doc}`guides/text`: Markdown, code, formulas, KPIs and callouts
-- {doc}`guides/tables`: static and interactive tables
-- {doc}`guides/charts`: Plotly, Altair, Matplotlib and Bokeh figures
-- {doc}`guides/layout`: columns, tabs, toggles and pages
-- {doc}`guides/banner`: a text-over-image cover
-- {doc}`guides/assets`: images, raw HTML and report size
+- {doc}`concepts`: how blocks, names, the theme and the three outputs fit together
+- {doc}`guides/text`, {doc}`guides/tables`, {doc}`guides/charts` and {doc}`guides/layout`:
+  the blocks
+- {doc}`guides/decks` and {doc}`guides/email`: the same blocks as a slide deck or an email
+- {doc}`guides/project`: a report project in one command
 
 ## Getting the HTML as a string
 

@@ -40,10 +40,10 @@ three outputs.
 - **Get started:** install, a first report, how briefing works, a report project.
 - **Blocks:** every block, shared by the three outputs: text and numbers, tables, charts,
   images and files, banners, layout, links, and the lab's custom views.
-- **Reports:** printing and PDF, embedding in other pages, comparing runs.
+- **Reports:** saving, the header and footer, size, printing and PDF, embedding, comparing runs.
 - **Slide decks** and **email digests:** each output's own guide.
-- **Ways to write it:** Markdown-first reports, notebooks, and JSON for coding agents.
-- **Look:** themes, colours and chart styles.
+- **Ways to write it:** Markdown-first reports, notebooks, JSON, and coding agents.
+- **Look:** themes, and colours and scales.
 - **Examples** and the **API reference**.
 
 ```{toctree}
@@ -76,6 +76,7 @@ guides/lab
 :maxdepth: 1
 :hidden:
 
+guides/reports
 guides/export
 guides/embed
 guides/diff
@@ -105,6 +106,7 @@ guides/email
 guides/markdown
 guides/notebooks
 guides/json
+guides/agents
 ```
 
 ```{toctree}
@@ -113,6 +115,7 @@ guides/json
 :hidden:
 
 guides/theming
+guides/colours
 ```
 
 ```{toctree}
