@@ -11,6 +11,7 @@ _BUILD = '''"""__TITLE__: build the report.
     python build_report.py --open                # and open it in the browser
     python build_report.py --spec                # also save its JSON (reports/index.json)
     python build_report.py --diff reports/index.json   # and what changed since that run
+    python build_report.py --deck                # and a first draft of a slide deck (experimental)
 """
 from pathlib import Path
 
@@ -113,7 +114,8 @@ python build_report.py --open
 | `reports/` | What the build writes: `index.html`, and with `--spec` its JSON. |
 
 `python build_report.py --help` lists the options: `--open`, `--max-size`, `--spec`, and
-`--diff reports/index.json` to see what changed since the last saved run.
+`--diff reports/index.json` to see what changed since the last saved run, and `--deck` for a
+first draft of a slide deck from the report (experimental: `reports/index-deck.html`).
 
 For an agent: `python -m briefing reference` prints every block and option.
 '''

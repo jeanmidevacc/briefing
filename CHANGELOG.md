@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Select` its first panel, a `Card`, `Banner` or `Chips` their text; toggles, images, files,
   code, raw HTML and lab blocks are left out, named in one warning. Without `link=`, links
   into the report keep only their words.
+- `bf.run(..., argv=["--deck"])` also writes a first draft of a slide deck from the report
+  (`<out>-deck.html`), and `python -m briefing render report.json --deck deck.html` does the
+  same from JSON; both experimental (#199). The decks and email guides each gain a "From a
+  report" section, marked experimental.
 - `bf.ExperimentalWarning`: experimental functions warn once per session that what they
   return may change in any release, without a deprecation period (#199).
 

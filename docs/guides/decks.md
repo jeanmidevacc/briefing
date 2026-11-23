@@ -129,3 +129,40 @@ with its own `"title"`, `"name"` and `"blocks"`.
 `bf.to_spec(deck)` writes it, {func}`briefing.deck.from_spec` reads it, and `bf.validate`
 checks it. From the command line, `python -m briefing validate deck.json` checks it and
 `python -m briefing render deck.json -o deck.html` builds it.
+
+## From a report (experimental)
+
+```{admonition} Experimental
+:class: warning
+
+`bf.deck.from_report` is experimental: what it returns may change in any release, without a
+deprecation period. It warns `bf.ExperimentalWarning` once per session; silence it with
+`warnings.filterwarnings("ignore", category=bf.ExperimentalWarning)`.
+```
+
+`bf.deck.from_report(report)` turns a report into a first draft of a deck: an ordinary
+`Deck`, to adjust before saving.
+
+```python
+deck = bf.deck.from_report(report, title="Q3 review")   # title=: an opening section slide
+del deck.slides[4]                                      # drop, reorder or retitle slides
+deck.slides[2].title = "What changed"
+bf.deck.save(deck, "q3-deck.html")
+```
+
+| In the report | On the slides |
+| --- | --- |
+| A `Banner` that opens the report | The title slide |
+| Each `Page` | Starts a slide titled and named after the page |
+| `# Heading` in a `Text` | A section slide |
+| `## Heading` in a `Text` | Starts a slide with that title; its `{#name}` names the slide |
+| `---` on its own line | Starts a slide that keeps the title |
+| Every other block | Stays whole, in order: groups, tabs, tables, charts, lab blocks |
+
+Headings inside code stay code. A slide that holds too much shows it: the deck shrinks it,
+then marks it "Doesn't fit", and a slide with more than about 120 words warns. Split it
+with a `##` heading or a `---` line in the report, or adjust the deck.
+
+From a build script, `python build_report.py --deck` writes `reports/index-deck.html` next
+to the report (see the project guide), and `python -m briefing render report.json --deck
+deck.html` does the same from JSON.

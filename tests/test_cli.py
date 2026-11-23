@@ -200,6 +200,23 @@ def test_render_builds_a_deck_from_its_json(tmp_path: Path, capsys: pytest.Captu
     assert capsys.readouterr().out == f"{spec.with_suffix('.html')}\n"
 
 
+@pytest.mark.filterwarnings("ignore::briefing.ExperimentalWarning")
+def test_render_deck_also_drafts_a_deck_from_a_report(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    spec = tmp_path / "q3.json"
+    spec.write_text(json.dumps({"briefing": 1, "blocks": [{"type": "Text", "text": "## One\n\na\n\n## Two\n\nb"}]}))
+    deck = tmp_path / "q3-deck.html"
+    assert _cli.main(["render", str(spec), "--deck", str(deck)]) == 0
+    assert capsys.readouterr().out == f"{spec.with_suffix('.html')}\n{deck}\n"
+    assert deck.read_text(encoding="utf-8").count('data-bf-slide=') == 2
+
+
+def test_render_deck_on_a_decks_json_says_it_is_one(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    spec = tmp_path / "d.json"
+    spec.write_text(json.dumps({"briefing": 1, "slides": [{"title": "a"}]}))
+    assert _cli.main(["render", str(spec), "--deck", str(tmp_path / "x.html")]) == 1
+    assert "this JSON is already a deck" in capsys.readouterr().err
+
+
 def test_render_from_standard_input_needs_an_output(capsys: pytest.CaptureFixture[str]) -> None:
     assert _cli.main(["render", "-"]) == 1
     assert "pass --output report.html" in capsys.readouterr().err
