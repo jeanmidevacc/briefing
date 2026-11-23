@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Documentation: the live examples with a calendar no longer make the whole page shake in
+  some browsers. A scrollbar coming and going inside an example changed its width, the
+  calendar re-fitted to a new height, and the example's frame resized, over and over; the
+  frames now never show a scrollbar.
+
 ## [0.7.1] - 2026-11-22
 
 ### Added
