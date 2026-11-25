@@ -243,6 +243,17 @@ SCENARIOS: dict[str, Build] = {
         ),
         export=("png", "embed"),
     ),
+    "snapshot": lambda df: bf.Briefing(
+        bf.Page(
+            bf.Text("# Summary"),
+            bf.Group(bf.BigNumber("Revenue", "$4.2M"), bf.BigNumber("Orders", "1,204"), columns=2, label="Numbers"),
+            bf.Group(bf.Text("An unlabelled group gets no button.")),
+            bf.Plot(matplotlib_figure(), caption="Line"),
+            title="Summary",
+        ),
+        bf.Page(bf.DataTable(df("df_mixed"), name="rows"), title="Detail"),
+        export="snapshot",
+    ),
     "export-menu": lambda _: bf.Briefing(
         bf.Page(bf.Text("# One"), title="One"), bf.Page(bf.Text("# Two"), title="Two"), export="png"
     ),
