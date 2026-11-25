@@ -322,3 +322,88 @@ def test_without_a_title_a_card_is_headed_by_its_row(viewer: Viewer) -> None:
     dive = _dive(page)
     _click_dot(page, dive, 11)
     expect(dive.locator(".bf-dd__card-title")).to_have_text("Row 12")
+
+
+# ── search and filters ──────────────────────────────────────────────────────────
+
+
+def _search(page: Page, dive: Locator, text: str) -> None:
+    """Type *text* in the search box, and wait for the pause in typing that applies it."""
+    dive.locator(".bf-dd__search").fill(text)
+    page.wait_for_function("(t) => document.querySelector('.bf-datadive').briefingDive.searched() === t", arg=text)
+
+
+def _matches(dive: Locator) -> int:
+    count: int = dive.evaluate("d => d.briefingDive.matches()")
+    return count
+
+
+def test_search_highlights_the_matching_dots(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_NAMED, x="a", y="b", color="team", title="name")))
+    dive = _dive(page)
+    _search(page, dive, "player 1")  # Player 1 and Player 10–19
+    assert _matches(dive) == 11
+    assert _shown(dive) == 40  # Highlight: the others stay, dimmed
+    expect(dive.locator(".bf-dd__footer")).to_have_text("11 of 40 match")
+    results = dive.locator(".bf-dd__result")
+    expect(results).to_have_count(8)
+    expect(results.first).to_have_text("Player 1")
+    expect(dive.locator(".bf-dd__result-more")).to_have_text("11 rows match")
+    dive.locator(".bf-dd__search").press("Enter")  # opens the first match's card
+    expect(dive.locator(".bf-dd__card-title")).to_have_text("Player 1")
+    dive.get_by_role("button", name="Filter", exact=True).click()
+    assert _shown(dive) == 11
+    expect(dive.locator(".bf-dd__footer")).to_have_text("11 of 40 shown")
+    _search(page, dive, "")
+    assert _shown(dive) == 40
+    expect(dive.locator(".bf-dd__results")).to_be_hidden()
+
+
+def test_a_category_filter(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_DF, x="a", y="b")))
+    dive = _dive(page)
+    dive.locator(".bf-dd__add").select_option("team")
+    chip = dive.locator(".bf-dd__chip")
+    assert chip.locator(".bf-dd__chip-option").all_inner_texts() == ["red\n20", "blue\n15", "green\n5"]
+    chip.locator(".bf-dd__chip-option", has_text="red").locator("input").uncheck()
+    expect(chip.locator(".bf-dd__chip-count")).to_have_text("2 of 3")
+    assert _matches(dive) == 20
+    dive.get_by_role("button", name="Filter", exact=True).click()
+    assert _shown(dive) == 20 and not _dot(dive, 0)["shown"]
+    dive.get_by_role("button", name="Remove the filter on team").click()
+    assert _shown(dive) == 40
+
+
+def test_a_number_range_filter(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_DF, x="a", y="b")))
+    dive = _dive(page)
+    dive.locator(".bf-dd__add").select_option("score")
+    dive.get_by_label("score at least").fill("10")
+    dive.get_by_label("score at least").press("Tab")
+    dive.get_by_label("score at most").fill("19.5")
+    dive.get_by_label("score at most").press("Tab")
+    assert _matches(dive) == 10  # 10 to 19
+
+
+def test_a_date_range_filter(viewer: Viewer) -> None:
+    days = pd.DataFrame({"day": pd.date_range("2026-01-01", periods=30, freq="D"), "v": range(30)})
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(days, x="day", y="v")))
+    dive = _dive(page)
+    dive.locator(".bf-dd__add").select_option("day")
+    dive.get_by_label("day at least").fill("2026-01-10")
+    dive.get_by_label("day at least").press("Tab")
+    dive.get_by_label("day at most").fill("2026-01-12")
+    dive.get_by_label("day at most").press("Tab")
+    assert _matches(dive) == 3  # the 10th, 11th and 12th, the last day whole
+
+
+def test_an_embedding_map_finds_its_articles(viewer: Viewer) -> None:
+    points = bf.datasets.load("embeddings")
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(points, x="x", y="y", color="cluster", title="title")))
+    dive = _dive(page)
+    _search(page, dive, "music article 7")  # Music article 7, 70–79
+    assert _matches(dive) == 11
+    dive.locator(".bf-dd__result", has_text="Music article 7").first.click()
+    expect(dive.locator(".bf-dd__card-title")).to_have_text("Music article 7")
+    row = dive.evaluate("d => d.briefingDive.cards()[0].row")
+    assert points["title"][row] == "Music article 7" and points["cluster"][row] == "music"

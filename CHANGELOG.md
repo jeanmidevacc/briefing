@@ -47,6 +47,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Esc closes them, and the chart rings the dots whose cards are open. New `title=` names the
   column that heads each card and tooltip; without it, a card is headed by its row number.
   Four-digit numbers such as years no longer get a thousands separator.
+- A `bf.lab.DataDive` has a search box and filters, all in the page (#16). The search finds
+  rows by any text in them and lists the first matches, which open their card; **+ Filter**
+  adds a filter on a column, with a category's values to untick or a range for a number or
+  a date. **Highlight** dims the rows that don't match, **Filter** hides them; with 100,000
+  rows, a search or a filter redraws in under 0.1 s. An embedding map (precomputed `x`,
+  `y` and a cluster column) is now one call: colour by cluster, search, click for the record.
 - The copy-embed `</>` button (and the new camera button) moved to the bottom-right corner
   of its block, clear of the toolbar Plotly draws at a chart's top right; a labelled group's
   sits just below the group, and a page's just above it, under its tab (#215). While hidden,
