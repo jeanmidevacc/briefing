@@ -14,7 +14,6 @@
   var BLANK = '(blank)';
   var LEGEND_MAX = 24;  // categories listed before "+N more"
   var PRINT_VECTOR = 5000;  // up to this many dots print as SVG circles (vector PDFs); more print as the canvas
-  var TILE_BINS = 5;    // bins for a number on a tile axis
 
   // ── colours ─────────────────────────────────────────────────────────────────
 
@@ -140,11 +139,17 @@
     return out;
   }
 
-  // Ticks on round dates: years, months, days or hours, at most about seven.
-  function timeTicks(a, b) {
+  // A round width at least raw: 1, 2, 2.5 or 5 times a power of ten.
+  function niceStep(raw) {
+    var p = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10)), f = raw / p;
+    return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
+  }
+
+  // Ticks on round dates: years, months, days or hours, at most about `most`.
+  function timeTicks(a, b, most) {
     var HOUR = 36e5, DAY = 864e5, span = b - a, out = [], d = new Date(a), step, label;
     if (span > 3 * 365 * DAY) {
-      step = Math.max(1, Math.ceil(span / (365.25 * DAY) / 6));
+      step = Math.max(1, Math.ceil(span / (365.25 * DAY) / (most - 1)));
       for (var y = d.getUTCFullYear(); ; y += step) {
         var at = Date.UTC(y, 0, 1);
         if (at > b) break;
@@ -154,7 +159,7 @@
     }
     if (span > 60 * DAY) {
       var months = span / (30.44 * DAY);
-      step = [1, 2, 3, 6, 12].filter(function (s) { return months / s <= 7; })[0] || 12;
+      step = [1, 2, 3, 6, 12].filter(function (s) { return months / s <= most; })[0] || 12;
       for (var m = d.getUTCFullYear() * 12 + d.getUTCMonth(); ; m++) {
         var t = Date.UTC(Math.floor(m / 12), m % 12, 1);
         if (t > b) break;
@@ -167,7 +172,7 @@
     }
     var unit = span > 2 * DAY ? DAY : HOUR;
     var steps = unit === DAY ? [1, 2, 7, 14, 28] : [1, 3, 6, 12];
-    step = steps.filter(function (s) { return span / (s * unit) <= 7; })[0] || steps[steps.length - 1];
+    step = steps.filter(function (s) { return span / (s * unit) <= most; })[0] || steps[steps.length - 1];
     var first = Math.ceil(a / (step * unit)) * step * unit;
     for (var v = first; v <= b; v += step * unit) {
       out.push({ at: v, label: unit === DAY ? fmtDate(v, false).slice(5) : fmtDate(v, true).slice(11) });
@@ -204,7 +209,8 @@
       var v = col.values[i];
       pos[i] = v === null ? NaN : lo + (v - a) * scale;
     }
-    var marks = col.kind === 'datetime' ? timeTicks(a, b) : niceTicks(a, b, 6).map(function (v) {
+    var most = Math.max(2, Math.min(7, Math.floor(Math.abs(hi - lo) / 60)));  // ticks the room holds
+    var marks = col.kind === 'datetime' ? timeTicks(a, b, most) : niceTicks(a, b, most - 1).map(function (v) {
       return { at: v, label: fmtTick(v) };
     });
     marks.forEach(function (m) { ticks.push({ at: lo + (m.at - a) * scale, label: m.label, grid: true }); });
@@ -352,115 +358,202 @@
     }
 
     // ── placing the dots
-    function placeScatter(W, H) {
-      var ML = 58, MR = 16, MT = 12, MB = 46;
-      var xCol = data.cols[chosen('x')], yCol = data.cols[chosen('y')];
-      var parts = [];
-      if (!xCol || !yCol) { for (var m = 0; m < n; m++) xs[m] = ys[m] = NaN; return parts; }
-      var ax = axis(xCol, n, ML, W - MR, 0), ay = axis(yCol, n, H - MB, MT, 1);
-      for (var i = 0; i < n; i++) { xs[i] = ax.pos[i]; ys[i] = ay.pos[i]; }
-      ax.ticks.forEach(function (t) {
-        if (t.grid) parts.push('<line class="bf-dd__grid" x1="' + t.at.toFixed(1) + '" y1="' + MT + '" x2="' + t.at.toFixed(1) + '" y2="' + (H - MB) + '"/>');
-        parts.push('<text class="bf-dd__tick" x="' + t.at.toFixed(1) + '" y="' + (H - MB + 16) + '" text-anchor="middle">' + esc(t.label) + '</text>');
-      });
-      ay.ticks.forEach(function (t) {
-        if (t.grid) parts.push('<line class="bf-dd__grid" x1="' + ML + '" y1="' + t.at.toFixed(1) + '" x2="' + (W - MR) + '" y2="' + t.at.toFixed(1) + '"/>');
-        parts.push('<text class="bf-dd__tick" x="' + (ML - 6) + '" y="' + t.at.toFixed(1) + '" text-anchor="end" dominant-baseline="middle">' + esc(t.label) + '</text>');
-      });
-      parts.push('<line class="bf-dd__axis" x1="' + ML + '" y1="' + (H - MB) + '" x2="' + (W - MR) + '" y2="' + (H - MB) + '"/>');
-      parts.push('<line class="bf-dd__axis" x1="' + ML + '" y1="' + MT + '" x2="' + ML + '" y2="' + (H - MB) + '"/>');
-      parts.push('<text class="bf-dd__title" x="' + ((ML + W - MR) / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(chosen('x')) + '</text>');
-      parts.push('<text class="bf-dd__title" transform="rotate(-90)" x="' + (-(MT + H - MB) / 2) + '" y="14" text-anchor="middle">' + esc(chosen('y')) + '</text>');
-      return parts;
+
+    // How many groups a column makes when it splits the dots: buckets= for it, else everyone's.
+    var bucketsBy = JSON.parse(container.getAttribute('data-buckets') || '{}');
+    function bucketsFor(name) {
+      return Object.prototype.hasOwnProperty.call(bucketsBy, name) ? bucketsBy[name] : (bucketsBy[''] || 5);
     }
 
-    // The categories of a tile axis: a column's levels, or a number's bins. {labels, of(i) -> index}
-    function tileAxis(col) {
-      if (!col) return { labels: [''], of: function () { return 0; } };
+    // The groups a column splits the dots into (a facet, or a tile axis). {labels, of(i) -> index}
+    // A category keeps its most frequent values plus "other"; a number or date is cut into bins,
+    // a number's with round edges.
+    function groups(name) {
+      var col = name ? data.cols[name] : null;
+      if (!col) return null;
+      var most = bucketsFor(name), labels = [], slot = {};
       if (col.kind === 'categorical') {
-        var order = axisLevels(col), slot = {};
-        order.forEach(function (k, j) { slot[k] = j; });
-        var labels = order.map(function (k) { return col.levels[k]; });
-        if (col.blanks) labels.push(BLANK);
-        return { labels: labels, of: function (i) { var k = col.codes[i]; return k < 0 ? labels.length - 1 : slot[k]; } };
+        var byCount = col.levels.map(function (_, k) { return k; });
+        byCount.sort(function (a, b) { return col.counts[b] - col.counts[a] || natural(col.levels[a], col.levels[b]); });
+        var kept = byCount.length > most ? byCount.slice(0, most) : byCount;
+        kept.sort(function (a, b) { return natural(col.levels[a], col.levels[b]); });
+        kept.forEach(function (k, j) { slot[k] = j; labels.push(col.levels[k]); });
+        var other = byCount.length > most ? labels.push('other') - 1 : -1;
+        var blank = col.blanks ? labels.push(BLANK) - 1 : -1;
+        return {
+          labels: labels,
+          of: function (i) { var k = col.codes[i]; return k < 0 ? blank : (k in slot ? slot[k] : other); }
+        };
       }
       if (col.empty) return { labels: [BLANK], of: function () { return 0; } };
-      var a = col.lo, b = col.hi, bins = a === b ? 1 : TILE_BINS, step = (b - a) / bins || 1;
-      var show = col.kind === 'datetime' ? function (v) { return fmtDate(v, false); } : fmtTick;
-      var names = [];
-      for (var k = 0; k < bins; k++) names.push(bins === 1 ? show(a) : show(a + k * step) + '–' + show(a + (k + 1) * step));
-      var hasBlank = col.values.some(function (v) { return v === null; });
-      if (hasBlank) names.push(BLANK);
+      var a = col.lo, b = col.hi, step, bins, date = col.kind === 'datetime';
+      if (a === b) { step = 1; bins = 1; }
+      else if (date) { step = (b - a) / most; bins = most; }
+      else {
+        step = niceStep((b - a) / most);
+        a = Math.floor(a / step) * step;
+        bins = Math.max(1, Math.ceil((b - a) / step - 1e-9));
+      }
+      var show = date ? function (v) { return fmtDate(v, false); } : function (v) { return fmtTick(+v.toPrecision(10)); };
+      for (var k = 0; k < bins; k++) labels.push(bins === 1 ? show(a) : show(a + k * step) + '–' + show(a + (k + 1) * step));
+      var blanks = col.values.some(function (v) { return v === null; }) ? labels.push(BLANK) - 1 : -1;
       return {
-        labels: names,
+        labels: labels,
         of: function (i) {
           var v = col.values[i];
-          if (v === null) return names.length - 1;
-          return Math.max(0, Math.min(bins - 1, Math.floor((v - a) / step)));
+          return v === null ? blanks : Math.max(0, Math.min(bins - 1, Math.floor((v - a) / step)));
         }
       };
     }
 
-    function placeTile(W, H) {
-      var LX = 96, LY = 42, PAD = 5;
-      var xCol = data.cols[chosen('x')], yCol = chosen('y') ? data.cols[chosen('y')] : null;
+    // The panels the facets make: rows × columns, and which panel each row of data falls in.
+    function facets() {
+      var rows = groups(chosen('frow')), cols = groups(chosen('fcol'));
+      return {
+        rows: rows, cols: cols,
+        nr: rows ? rows.labels.length : 1, nc: cols ? cols.labels.length : 1,
+        r: function (i) { return rows ? rows.of(i) : 0; },
+        c: function (i) { return cols ? cols.of(i) : 0; }
+      };
+    }
+
+    // The facet headers: a column's labels above the panels, a row's to their right.
+    function facetHeads(f, parts, left, top, pw, ph, gap, right) {
+      if (f.cols) {
+        f.cols.labels.forEach(function (label, j) {
+          parts.push('<text class="bf-dd__head" x="' + (left + j * (pw + gap) + pw / 2).toFixed(1) + '" y="' + (top - 7) +
+            '" text-anchor="middle">' + esc(cut(label, Math.max(4, Math.floor(pw / 7)))) + '</text>');
+        });
+        parts.push('<text class="bf-dd__title" x="' + (left + (f.nc * (pw + gap) - gap) / 2).toFixed(1) + '" y="' + (top - 24) +
+          '" text-anchor="middle">' + esc(chosen('fcol')) + '</text>');
+      }
+      if (f.rows) {
+        f.rows.labels.forEach(function (label, j) {
+          var x = right + 13, y = top + j * (ph + gap) + ph / 2;
+          parts.push('<text class="bf-dd__head" transform="rotate(90 ' + x + ' ' + y.toFixed(1) + ')" x="' + x + '" y="' +
+            y.toFixed(1) + '" text-anchor="middle">' + esc(cut(label, Math.max(4, Math.floor(ph / 7)))) + '</text>');
+        });
+        var mid = top + (f.nr * (ph + gap) - gap) / 2, tx = right + 30;
+        parts.push('<text class="bf-dd__title" transform="rotate(90 ' + tx + ' ' + mid.toFixed(1) + ')" x="' + tx + '" y="' +
+          mid.toFixed(1) + '" text-anchor="middle">' + esc(chosen('frow')) + '</text>');
+      }
+    }
+
+    // Two axes, in each panel, on scales shared by every panel. -> {H, parts}
+    function placeScatter(W) {
+      var f = facets(), GAP = 12;
+      var ML = 58, MR = 16 + (f.rows ? 38 : 0), MT = 12 + (f.cols ? 34 : 0), MB = 46;
+      var pw = (W - ML - MR - (f.nc - 1) * GAP) / f.nc;
+      var ph = f.nr * f.nc === 1 ? Math.round(Math.max(240, Math.min(640, W * 0.62))) - MT - MB
+        : Math.round(Math.max(110, Math.min(420, pw * 0.72)));
+      var H = MT + f.nr * ph + (f.nr - 1) * GAP + MB;
+      var xCol = data.cols[chosen('x')], yCol = data.cols[chosen('y')];
       var parts = [];
-      if (!xCol) return parts;
-      var tx = tileAxis(xCol), ty = tileAxis(yCol);
-      var cw = (W - LX) / tx.labels.length, ch = (H - LY) / ty.labels.length;
-      var cells = {}, most = 1, i;
+      if (!xCol || !yCol) { for (var m = 0; m < n; m++) xs[m] = ys[m] = NaN; return { H: H, parts: parts }; }
+      var ax = axis(xCol, n, 0, pw, 0), ay = axis(yCol, n, ph, 0, 1);
+      for (var i = 0; i < n; i++) {
+        var r = f.r(i), c = f.c(i);
+        xs[i] = r < 0 || c < 0 ? NaN : ML + c * (pw + GAP) + ax.pos[i];
+        ys[i] = r < 0 || c < 0 ? NaN : MT + r * (ph + GAP) + ay.pos[i];
+      }
+      for (var pr = 0; pr < f.nr; pr++) {
+        for (var pc = 0; pc < f.nc; pc++) {
+          var x0 = ML + pc * (pw + GAP), y0 = MT + pr * (ph + GAP), x1 = x0 + pw, y1 = y0 + ph;
+          ax.ticks.forEach(function (t) {
+            var x = (x0 + t.at).toFixed(1);
+            if (t.grid) parts.push('<line class="bf-dd__grid" x1="' + x + '" y1="' + y0 + '" x2="' + x + '" y2="' + y1 + '"/>');
+            // Between panels, a label at the edge would run into the next panel's first one.
+            var edge = f.nc > 1 && (t.at < 18 || t.at > pw - 18);
+            if (pr === f.nr - 1 && !edge) parts.push('<text class="bf-dd__tick" x="' + x + '" y="' + (y1 + 16) + '" text-anchor="middle">' + esc(t.label) + '</text>');
+          });
+          ay.ticks.forEach(function (t) {
+            var y = (y0 + t.at).toFixed(1);
+            if (t.grid) parts.push('<line class="bf-dd__grid" x1="' + x0 + '" y1="' + y + '" x2="' + x1 + '" y2="' + y + '"/>');
+            if (pc === 0) parts.push('<text class="bf-dd__tick" x="' + (x0 - 6) + '" y="' + y + '" text-anchor="end" dominant-baseline="middle">' + esc(t.label) + '</text>');
+          });
+          parts.push('<line class="bf-dd__axis" x1="' + x0 + '" y1="' + y1 + '" x2="' + x1 + '" y2="' + y1 + '"/>');
+          parts.push('<line class="bf-dd__axis" x1="' + x0 + '" y1="' + y0 + '" x2="' + x0 + '" y2="' + y1 + '"/>');
+        }
+      }
+      facetHeads(f, parts, ML, MT, pw, ph, GAP, W - MR);
+      parts.push('<text class="bf-dd__title" x="' + ((ML + W - MR) / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(chosen('x')) + '</text>');
+      parts.push('<text class="bf-dd__title" transform="rotate(-90)" x="' + (-(MT + H - MB) / 2) + '" y="14" text-anchor="middle">' + esc(chosen('y')) + '</text>');
+      radius = (count > 20000 ? 1.4 : count > 5000 ? 2 : count > 1000 ? 2.8 : 3.6) * (f.nr * f.nc > 1 ? 0.8 : 1);
+      return { H: H, parts: parts };
+    }
+
+    // Dots packed into cells, in each panel; every cell of every panel uses one dot size. -> {H, parts}
+    function placeTile(W) {
+      var f = facets(), GAP = 12, PAD = 5;
+      var yName = chosen('y'), tx = groups(chosen('x')), ty = groups(yName) || { labels: [''], of: function () { return 0; } };
+      var LX = yName ? 96 : 12, MR = 8 + (f.rows ? 38 : 0), LY = 42 + (f.cols ? 34 : 0);
+      var pw = (W - LX - MR - (f.nc - 1) * GAP) / f.nc;
+      var ph = f.nr * f.nc === 1 ? Math.round(Math.max(240, Math.min(640, W * 0.6))) - LY
+        : Math.round(Math.max(120, Math.min(480, pw * 0.75)));
+      var H = LY + f.nr * ph + (f.nr - 1) * GAP + 4;
+      var parts = [], i;
+      for (i = 0; i < n; i++) xs[i] = ys[i] = NaN;
+      if (!tx) return { H: H, parts: parts };
+      var cw = pw / tx.labels.length, ch = ph / ty.labels.length;
+      var cells = {}, most = 1;
       for (i = 0; i < n; i++) {
-        xs[i] = ys[i] = NaN;
         if (!shown[i]) continue;
-        var key = tx.of(i) + ',' + ty.of(i);
+        var r = f.r(i), c = f.c(i), cx = tx.of(i), cy = ty.of(i);
+        if (r < 0 || c < 0 || cx < 0 || cy < 0) continue;
+        var key = r + ',' + c + ',' + cx + ',' + cy;
         (cells[key] || (cells[key] = [])).push(i);
       }
       Object.keys(cells).forEach(function (k) { most = Math.max(most, cells[k].length); });
       var room = Math.max(1, (cw - 2 * PAD) * (ch - 2 * PAD));
       var step = Math.max(1.5, Math.min(11, Math.floor(Math.sqrt(room / most) * 10) / 10));
       radius = Math.max(0.6, step * 0.42);
-      var rank = colour.kind === 'categorical' ? function (r) { var k = colour.code(r); return k < 0 ? 1e9 : k; } : function (r) { return 0; };
+      var per = Math.max(1, Math.floor((cw - 2 * PAD) / step));
+      var rank = colour.kind === 'categorical' ? function (q) { var k = colour.code(q); return k < 0 ? 1e9 : k; } : function () { return 0; };
       Object.keys(cells).forEach(function (key) {
-        var at = key.split(','), cx = +at[0], cy = +at[1];
+        var at = key.split(',').map(Number);
+        var left = LX + at[1] * (pw + GAP) + at[2] * cw + PAD, top = LY + at[0] * (ph + GAP) + at[3] * ch + PAD;
         var list = cells[key].slice().sort(function (p, q) { return rank(p) - rank(q) || p - q; });
-        var per = Math.max(1, Math.floor((cw - 2 * PAD) / step));
-        list.forEach(function (r, d) {
-          xs[r] = LX + cx * cw + PAD + (d % per) * step + step / 2;
-          ys[r] = LY + cy * ch + PAD + Math.floor(d / per) * step + step / 2;
-          if (ys[r] > LY + (cy + 1) * ch) { xs[r] = ys[r] = NaN; }
+        list.forEach(function (q, d) {
+          var y = top + Math.floor(d / per) * step + step / 2;
+          if (y > top - PAD + ch) return;  // more dots than the cell holds
+          xs[q] = left + (d % per) * step + step / 2;
+          ys[q] = y;
         });
       });
-      tx.labels.forEach(function (label, j) {
-        var x0 = LX + j * cw;
-        parts.push('<line class="bf-dd__grid" x1="' + x0.toFixed(1) + '" y1="' + LY + '" x2="' + x0.toFixed(1) + '" y2="' + H + '"/>');
-        parts.push('<text class="bf-dd__head" x="' + (x0 + cw / 2).toFixed(1) + '" y="' + (LY - 8) + '" text-anchor="middle">' + esc(cut(label, Math.max(4, Math.floor(cw / 7)))) + '</text>');
-      });
-      ty.labels.forEach(function (label, j) {
-        var y0 = LY + j * ch;
-        parts.push('<line class="bf-dd__grid" x1="' + LX + '" y1="' + y0.toFixed(1) + '" x2="' + W + '" y2="' + y0.toFixed(1) + '"/>');
-        if (yCol) parts.push('<text class="bf-dd__head" x="' + (LX - 8) + '" y="' + (y0 + ch / 2).toFixed(1) + '" text-anchor="end" dominant-baseline="middle">' + esc(cut(label, 13)) + '</text>');
-      });
-      parts.push('<rect class="bf-dd__frame" x="' + LX + '" y="' + LY + '" width="' + (W - LX) + '" height="' + (H - LY) + '"/>');
-      parts.push('<text class="bf-dd__title" x="' + (LX + (W - LX) / 2) + '" y="11" text-anchor="middle">' + esc(chosen('x')) + '</text>');
-      if (yCol) parts.push('<text class="bf-dd__title" transform="rotate(-90)" x="' + (-(LY + H) / 2) + '" y="12" text-anchor="middle">' + esc(chosen('y')) + '</text>');
-      return parts;
+      for (var pr = 0; pr < f.nr; pr++) {
+        for (var pc = 0; pc < f.nc; pc++) {
+          var x0 = LX + pc * (pw + GAP), y0 = LY + pr * (ph + GAP);
+          tx.labels.forEach(function (label, j) {
+            var cx0 = x0 + j * cw;
+            if (j) parts.push('<line class="bf-dd__grid" x1="' + cx0.toFixed(1) + '" y1="' + y0 + '" x2="' + cx0.toFixed(1) + '" y2="' + (y0 + ph) + '"/>');
+            if (pr === 0) parts.push('<text class="bf-dd__tick" x="' + (cx0 + cw / 2).toFixed(1) + '" y="' + (y0 - 6) + '" text-anchor="middle">' + esc(cut(label, Math.max(4, Math.floor(cw / 6)))) + '</text>');
+          });
+          ty.labels.forEach(function (label, j) {
+            var cy0 = y0 + j * ch;
+            if (j) parts.push('<line class="bf-dd__grid" x1="' + x0 + '" y1="' + cy0.toFixed(1) + '" x2="' + (x0 + pw).toFixed(1) + '" y2="' + cy0.toFixed(1) + '"/>');
+            if (yName && pc === 0) parts.push('<text class="bf-dd__tick" x="' + (x0 - 8) + '" y="' + (cy0 + ch / 2).toFixed(1) + '" text-anchor="end" dominant-baseline="middle">' + esc(cut(label, 13)) + '</text>');
+          });
+          parts.push('<rect class="bf-dd__frame" x="' + x0 + '" y="' + y0 + '" width="' + pw.toFixed(1) + '" height="' + ph + '"/>');
+        }
+      }
+      facetHeads(f, parts, LX, f.cols ? LY - 18 : LY, pw, ph, GAP, W - MR);
+      parts.push('<text class="bf-dd__title" x="' + (LX + (W - LX - MR) / 2) + '" y="11" text-anchor="middle">' + esc(chosen('x')) + '</text>');
+      if (yName) parts.push('<text class="bf-dd__title" transform="rotate(-90)" x="' + (-(LY + H) / 2) + '" y="12" text-anchor="middle">' + esc(yName) + '</text>');
+      return { H: H, parts: parts };
     }
 
     // ── drawing
     function draw() {
       var W = Math.max(280, Math.round(area.clientWidth || 620));
-      var H = Math.round(Math.max(240, Math.min(640, W * (layout === 'tile' ? 0.6 : 0.62))));
       drawnWidth = area.clientWidth;
       drawnW = W;
+      count = 0;
+      for (var i = 0; i < n; i++) { shown[i] = visible(i) ? 1 : 0; count += shown[i]; }
+      var placed = layout === 'tile' ? placeTile(W) : placeScatter(W), H = placed.H, parts = placed.parts;
       var dpr = Math.min(3, window.devicePixelRatio || 1);
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
       svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-
-      count = 0;
-      for (var i = 0; i < n; i++) { shown[i] = visible(i) ? 1 : 0; count += shown[i]; }
-      var parts = layout === 'tile' ? placeTile(W, H) : placeScatter(W, H);
-      if (layout !== 'tile') radius = count > 20000 ? 1.4 : count > 5000 ? 2 : count > 1000 ? 2.8 : 3.6;
 
       var ctx = canvas.getContext('2d');
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

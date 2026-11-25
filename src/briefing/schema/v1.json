@@ -2048,7 +2048,7 @@
           "default": null
         },
         "facet_row": {
-          "description": "Accepted but not drawn yet (a warning says so); planned for DataDive v2.",
+          "description": "Column that splits the dots into rows of panels at first.",
           "anyOf": [
             {
               "type": [
@@ -2063,7 +2063,7 @@
           "default": null
         },
         "facet_col": {
-          "description": "Accepted but not drawn yet (a warning says so); planned for DataDive v2.",
+          "description": "Column that splits the dots into columns of panels at first.",
           "anyOf": [
             {
               "type": [
@@ -2076,6 +2076,26 @@
             }
           ],
           "default": null
+        },
+        "buckets": {
+          "description": "How many groups a column makes when it splits the dots (a facet, or a `\"tile\"` axis): a number is cut into that many bins with round edges, and categories keep their most frequent values plus an \"other\". One number for every column, or `{\"age\": 4}` per column (the others keep 5).",
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": 5
         },
         "layout": {
           "description": "`\"scatter\"` (two axes) or `\"tile\"` (packed dots per cell).",
