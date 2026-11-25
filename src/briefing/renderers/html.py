@@ -604,9 +604,12 @@ def _render_block(block: Block, idgen: _IdGen) -> str:
         idgen.weights[id(block)] = len(html.encode())  # the size budget's parts (#38)
     link = idgen.link(block)
     marks = ""
-    if idgen.embeds is not None and (label := embed_label(block, page=idgen.is_page(block))) is not None:
+    label = embed_label(block, page=idgen.is_page(block)) if idgen.embeds is not None or idgen.snaps else None
+    if label is not None and idgen.snaps:
+        marks += f' data-bf-snap="{_html.escape(label)}"'  # a snapshot button (#215), for export.js
+    if label is not None and idgen.embeds is not None:
         # A copy-embed button (#124): what copy-embed.js needs to cut this block out as a fragment.
-        marks = f' data-bf-embed="{_html.escape(label)}" data-bf-embed-id="{len(idgen.embeds)}"'
+        marks += f' data-bf-embed="{_html.escape(label)}" data-bf-embed-id="{len(idgen.embeds)}"'
         libraries = scan_for_plots(block)
         idgen.embeds.append({
             "runtimes": sorted(RUNTIME_GLOBALS[lib] for lib in libraries if lib in RUNTIME_GLOBALS),
@@ -670,13 +673,14 @@ def render_report(
     normalised = normalize(blocks)
     export = getattr(normalised, "export", ())
     embed = "embed" in export
+    snaps = "snapshot" in export  # a camera button on each block (#215)
 
     # Pre-pass: detect which library runtimes are needed and build <head> scripts.
     libraries = scan_for_plots(normalised)
     head_scripts = get_runtime_scripts(libraries, tagged=embed)
 
     extra_js = block_scripts(normalised)
-    if "png" in export:  # the menu's script only ships in reports that asked for the menu
+    if "png" in export or snaps:  # the export script only ships in reports that asked for it
         extra_js.append(_EXPORT_JS)
     if embed:
         extra_js.append(_COPY_JS)
@@ -696,14 +700,15 @@ def render_report(
         # it becomes a fragment by renaming that prefix; links keep their addresses.
         from briefing.renderers.fragment import copy_data
 
-        idgen = _IdGen(prefix=_REPORT_TOKEN, prefix_links=False, embeds=True, weigh=parts is not None)
+        idgen = _IdGen(prefix=_REPORT_TOKEN, prefix_links=False, embeds=True, snaps=snaps,
+                       weigh=parts is not None)
         content_html = render_content(normalised, idgen)
         report_id = "bf-r" + hashlib.sha256(content_html.encode()).hexdigest()[:8]
         content_html = content_html.replace(_REPORT_TOKEN, report_id)
         embeds = idgen.embeds or []
         embed_data = copy_data(normalised, fmt, content_html, f"{report_id}-", embeds, scripts) + "\n  "
     else:
-        idgen = _IdGen(weigh=parts is not None)
+        idgen = _IdGen(snaps=snaps, weigh=parts is not None)
         content_html = render_content(normalised, idgen)
 
     if parts is not None:
@@ -726,7 +731,8 @@ def render_report(
         content_html=content_html,
         version=__version__,
         footer_text=footer_text(normalised.footer),
-        export_css=(_EXPORT_CSS if "png" in export else "") + (_COPY_CSS if embed else ""),
+        # copy-embed.css also styles the snapshot button: both sit in one toolbar on a block.
+        export_css=(_EXPORT_CSS if "png" in export else "") + (_COPY_CSS if embed or snaps else ""),
         embed_data=embed_data,
     )
 

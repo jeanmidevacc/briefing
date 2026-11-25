@@ -51,9 +51,11 @@
       var target = a.getAttribute('href').slice(1);
       if (links[target]) a.setAttribute('href', '#' + id + '-' + target);
     });
-    [block].concat(Array.prototype.slice.call(block.querySelectorAll('[data-bf-embed]'))).forEach(function (el) {
+    var marked = block.querySelectorAll('[data-bf-embed], [data-bf-snap]');
+    [block].concat(Array.prototype.slice.call(marked)).forEach(function (el) {
       el.removeAttribute('data-bf-embed');
       el.removeAttribute('data-bf-embed-id');
+      el.removeAttribute('data-bf-snap');  // the snapshot button's mark (#215)
     });
     var html = block.outerHTML.split(data.prefix).join(id + '-');
     var info = data.blocks[n];
@@ -100,6 +102,7 @@
     });
   }
 
+  // The toast export.js uses too (#215): one per root, whichever script makes it first.
   function toast(root, message) {
     var doc = root.ownerDocument || root;
     var el = root.querySelector('.bf-copy__toast');
@@ -142,6 +145,17 @@
     code.select();
   }
 
+  // The block's toolbar, shared with the snapshot button (#215): made by whichever comes first.
+  function toolbar(block) {
+    for (var c = block.firstElementChild; c; c = c.nextElementSibling) {
+      if (c.classList.contains('bf-copy__tools')) return c;
+    }
+    var tools = block.ownerDocument.createElement('div');
+    tools.className = 'bf-copy bf-copy__tools';
+    block.appendChild(tools);
+    return tools;
+  }
+
   function addButton(root, block) {
     var doc = root.ownerDocument || root;
     var label = block.getAttribute('data-bf-embed');
@@ -161,7 +175,7 @@
         });
       });
     });
-    block.appendChild(button);
+    toolbar(block).appendChild(button);
   }
 
   window.briefing.register('copy-embed', function () {

@@ -120,3 +120,34 @@ bf.save(report, "export-menu.html", name="Q1 review")
 traces come out blank, and fonts are whatever the reader's machine has. For exact,
 reproducible files, use `save_image` and `save_pdf`. Inside this page's frame, your
 browser may block the download; open the full page to try it.
+
+## One block as an image
+
+`bf.Briefing(..., export="snapshot")` puts a camera button on each page, labelled
+group, chart, table, text, number, alert and banner: the same blocks that get the
+`</>` button of `export="embed"` ([Embedding](embed.md)). The button shows when you
+hover over the block or tab to it. A click draws that block as it is on screen, at
+2× with a small margin, and copies it to the clipboard, ready to paste into a slide,
+a chat message or an email. When the browser refuses the clipboard (an older
+browser, a notebook's frame), the image downloads instead, named after the report
+and the block (`q1_review_numbers.png`). A message in the corner says which one
+happened.
+
+```{briefing-example}
+:title: A report with snapshot buttons
+
+import briefing as bf
+
+report = bf.Briefing(
+    bf.Text("# Q1 review\n\nHover over a block and click the camera to copy it as an image."),
+    bf.Group(bf.BigNumber("Revenue", "$1.25M"), bf.BigNumber("Orders", "10,050"), columns=2,
+             label="Numbers"),
+    export="snapshot",  # or ("png", "embed", "snapshot") for every button
+)
+bf.save(report, "snapshot.html", name="Q1 review")
+```
+
+With `export=("embed", "snapshot")` both buttons sit side by side. The images have the
+same limits as "Save as PNG", and the buttons never show in prints, in `save_image` or
+`save_pdf` output, or in the images themselves. A report without `"snapshot"` has none
+of this.

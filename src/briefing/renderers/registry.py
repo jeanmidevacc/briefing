@@ -39,13 +39,20 @@ class IdGen:
     """
 
     def __init__(
-        self, prefix: str | None = None, *, prefix_links: bool = True, embeds: bool = False, weigh: bool = False
+        self,
+        prefix: str | None = None,
+        *,
+        prefix_links: bool = True,
+        embeds: bool = False,
+        snaps: bool = False,
+        weigh: bool = False,
     ) -> None:
         """Start numbering ids.
 
         *prefix_links* ``False`` leaves link ids unprefixed: a report with the copy-embed
         button prefixes its made-up ids but keeps its addresses (``#detail/x``). With
         *embeds*, :attr:`embeds` collects the blocks that get that button (#124). With
+        *snaps*, the same blocks get a snapshot button (#215). With
         *weigh*, :attr:`weights` records the bytes of each block's own HTML (#38).
         """
         self._counter = itertools.count(1)
@@ -53,6 +60,8 @@ class IdGen:
         self._link_prefix = self._prefix if prefix_links else ""
         #: What each block with a copy-embed button needs, in the order they render.
         self.embeds: list[dict[str, t.Any]] | None = [] if embeds else None
+        #: Whether the blocks with a copy-embed label get a snapshot button too (#215).
+        self.snaps = snaps
         #: id(block) -> the UTF-8 bytes of its rendered HTML, for each block that isn't a container.
         self.weights: dict[int, int] | None = {} if weigh else None
         self._made: list[str] = []

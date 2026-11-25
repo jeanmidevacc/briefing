@@ -402,7 +402,11 @@ class Briefing(ContainerBlock):
             ``</>`` button on each page, labelled group, chart, table, text,
             number, alert and banner: it copies that part as an embed fragment, as
             :func:`~briefing.stringify` makes with ``full_html=False``, to paste
-            into another page. ``"pdf"`` (the "Print" button) was removed in 0.4.0:
+            into another page. ``"snapshot"`` puts a camera button on the same
+            blocks: it copies that block, as it is on screen, as a PNG image at 2×
+            to the clipboard, ready to paste into a slide or a message, and
+            downloads it when the clipboard is refused. It has the same limits as
+            "Save as PNG". ``"pdf"`` (the "Print" button) was removed in 0.4.0:
             print with Ctrl+P, or save a file with :func:`~briefing.save_pdf`.
         footer: Text to put before the report's footer line, such as a team name. Every
             report ends with "Made with briefing" and its version; that line can't be
@@ -426,7 +430,7 @@ class Briefing(ContainerBlock):
     min_blocks: t.ClassVar[int] = 1
 
     #: The actions export= accepts, in menu order.
-    EXPORTS: t.ClassVar[tuple[str, ...]] = ("png", "embed")
+    EXPORTS: t.ClassVar[tuple[str, ...]] = ("png", "embed", "snapshot")
     #: Accepted with a DeprecationWarning, and dropped: they add no button.
     DEPRECATED_EXPORTS: t.ClassVar[dict[str, str]] = {}
     #: Rejected with what to use instead.
@@ -474,7 +478,7 @@ class Briefing(ContainerBlock):
             a not in cls.EXPORTS and a not in cls.DEPRECATED_EXPORTS for a in actions
         ):
             raise BriefingError(
-                f"export accepts 'png' and 'embed', for example export=('png', 'embed'); got {export!r}."
+                f"export accepts 'png', 'embed' and 'snapshot', for example export=('png', 'snapshot'); got {export!r}."
             )
         unique = tuple(dict.fromkeys(t.cast("Sequence[str]", actions)))
         for action in unique:

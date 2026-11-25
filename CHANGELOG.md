@@ -10,6 +10,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `bf.Briefing(..., export="snapshot")`: a camera button on each page, labelled group,
+  chart, table, text, number, alert, banner and lab block copies that block, as it is on
+  screen, as a PNG image at 2× to the clipboard, ready to paste into a slide or a message
+  (#215). When the clipboard is refused, the image downloads instead, named after the report
+  and the block. With `export="embed"` too, both buttons sit side by side in one toolbar.
+  Images, from the header's "Save as PNG" too, now leave out Plotly's own toolbar.
+
+### Changed
+
+- The copy-embed `</>` button (and the new camera button) moved to the bottom-right corner
+  of its block, clear of the toolbar Plotly draws at a chart's top right; a labelled group's
+  sits just below the group, and a page's just above it, under its tab (#215). While hidden,
+  the buttons no longer catch clicks meant for what is under them.
+
 ### Fixed
 
 - Documentation: the live examples with a calendar no longer make the whole page shake in
