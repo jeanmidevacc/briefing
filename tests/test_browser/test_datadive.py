@@ -407,3 +407,110 @@ def test_an_embedding_map_finds_its_articles(viewer: Viewer) -> None:
     expect(dive.locator(".bf-dd__card-title")).to_have_text("Music article 7")
     row = dive.evaluate("d => d.briefingDive.cards()[0].row")
     assert points["title"][row] == "Music article 7" and points["cluster"][row] == "music"
+
+
+# ── motion and zoom ─────────────────────────────────────────────────────────────
+
+
+def _view(dive: Locator) -> dict[str, float]:
+    view: dict[str, float] = dive.evaluate("d => d.briefingDive.view()")
+    return view
+
+
+def _ctrl_wheel(page: Page, dive: Locator, times: int, at: tuple[float, float] = (0.5, 0.5)) -> None:
+    box = dive.locator("canvas").bounding_box()
+    assert box is not None
+    page.mouse.move(box["x"] + box["width"] * at[0], box["y"] + box["height"] * at[1])
+    page.keyboard.down("Control")
+    for _ in range(times):
+        page.mouse.wheel(0, -120)
+    page.keyboard.up("Control")
+
+
+def test_changing_an_axis_moves_the_dots_to_their_new_places(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_DF, x="a", y="b")))
+    dive = _dive(page)
+    page.locator('select[data-axis="y"]').select_option("score")
+    assert dive.evaluate("d => d.briefingDive.moving()")
+    page.wait_for_function("() => !document.querySelector('.bf-datadive').briefingDive.moving()", timeout=2000)
+
+
+def test_no_motion_when_the_reader_asks_for_less(viewer: Viewer) -> None:
+    viewer.page.emulate_media(reduced_motion="reduce")
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_DF, x="a", y="b")))
+    dive = _dive(page)
+    page.locator('select[data-axis="y"]').select_option("score")
+    assert not dive.evaluate("d => d.briefingDive.moving()")
+
+
+_GRID = pd.DataFrame({"gx": [i % 20 for i in range(400)], "gy": [i // 20 for i in range(400)],
+                      "name": [f"Point {i}" for i in range(400)]})
+
+
+def test_ctrl_wheel_zooms_and_a_plain_wheel_scrolls(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_GRID, x="gx", y="gy", title="name")))
+    dive = _dive(page)
+    zoom_out = dive.get_by_role("button", name="Zoom out")
+    expect(zoom_out).to_be_disabled()
+    box = dive.locator("canvas").bounding_box()
+    assert box is not None
+    page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.mouse.wheel(0, -120)  # a plain wheel: the page scrolls, and a hint says how to zoom
+    expect(dive.locator(".bf-dd__hint")).to_be_visible()
+    assert _view(dive) == {"x0": 0, "x1": 1, "y0": 0, "y1": 1}
+    _ctrl_wheel(page, dive, 8)
+    view = _view(dive)
+    assert view["x1"] - view["x0"] < 0.2 and view["y1"] - view["y0"] < 0.2
+    assert 0.3 < (view["x0"] + view["x1"]) / 2 < 0.7  # around the pointer, here the middle
+    expect(zoom_out).to_be_enabled()
+    expect(dive.locator(".bf-dd__label").first).to_be_visible()  # close up, dots carry their title
+    in_view = dive.evaluate("d => { let k = 0; for (let i = 0; i < 400; i++) { const x = d.briefingDive.dot(i).x;"
+                            " if (x === x) k++; } return k; }")
+    assert 0 < in_view < 40  # the others are out of view
+    expect(dive.locator(".bf-dd__label")).to_have_count(in_view)
+    dive.locator("canvas").dblclick()
+    assert _view(dive) == {"x0": 0, "x1": 1, "y0": 0, "y1": 1}
+    expect(dive.locator(".bf-dd__label")).to_have_count(0)
+
+
+def test_the_zoom_buttons(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_DF, x="a", y="b")))
+    dive = _dive(page)
+    dive.get_by_role("button", name="Zoom in").click()
+    assert _view(dive) == {"x0": 0.25, "x1": 0.75, "y0": 0.25, "y1": 0.75}
+    dive.get_by_role("button", name="Zoom out").click()
+    assert _view(dive) == {"x0": 0, "x1": 1, "y0": 0, "y1": 1}
+    dive.get_by_role("button", name="Zoom in").click()
+    dive.get_by_role("button", name="Show all the data again").click()
+    assert _view(dive) == {"x0": 0, "x1": 1, "y0": 0, "y1": 1}
+
+
+def test_dragging_pans_and_is_not_a_click(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_DF, x="a", y="b")))
+    dive = _dive(page)
+    dive.get_by_role("button", name="Zoom in").click()
+    box = dive.locator("canvas").bounding_box()
+    assert box is not None
+    page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.mouse.down()
+    page.mouse.move(box["x"] + box["width"] / 2 + 80, box["y"] + box["height"] / 2 + 40, steps=6)
+    page.mouse.up()
+    view = _view(dive)
+    assert view["x0"] < 0.25 and view["y0"] > 0.25  # dragged right and down: further left and up
+    assert view["x1"] - view["x0"] == 0.5
+    assert dive.evaluate("d => d.briefingDive.cards()") == []
+
+
+def test_a_click_on_a_zoomed_dot_opens_its_card(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_NAMED, x="a", y="b", title="name")))
+    dive = _dive(page)
+    dive.get_by_role("button", name="Zoom in").click()
+    in_view = "(d, i) => d.briefingDive.dot(i).x === d.briefingDive.dot(i).x"
+    row = next(i for i in range(40) if dive.evaluate(in_view, i))
+    _click_dot(page, dive, row)
+    expect(dive.locator(".bf-dd__card-title")).to_have_text(f"Player {row}")
+
+
+def test_tiles_do_not_zoom(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_DF, x="team", layout="tile")))
+    expect(_dive(page).locator(".bf-dd__zoom")).to_be_hidden()

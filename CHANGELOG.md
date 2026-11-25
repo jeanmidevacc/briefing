@@ -53,6 +53,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a date. **Highlight** dims the rows that don't match, **Filter** hides them; with 100,000
   rows, a search or a filter redraws in under 0.1 s. An embedding map (precomputed `x`,
   `y` and a cluster column) is now one call: colour by cluster, search, click for the record.
+- In a `bf.lab.DataDive`, changing an axis or a facet moves the dots to their new places in
+  about 300 ms (up to 30,000 dots; none with `prefers-reduced-motion`) (#16). Ctrl or ⌘ +
+  scroll, or a trackpad's pinch, zooms in around the pointer; dragging pans; a double-click,
+  or the **+ / − / Reset** buttons, zoom from the keyboard too. A plain scroll still scrolls
+  the page, with a hint on how to zoom. Zoom is shared by every panel, ticks follow it, and
+  close up the dots carry their `title=`.
 - The copy-embed `</>` button (and the new camera button) moved to the bottom-right corner
   of its block, clear of the toolbar Plotly draws at a chart's top right; a labelled group's
   sits just below the group, and a page's just above it, under its tab (#215). While hidden,

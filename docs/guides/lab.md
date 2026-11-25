@@ -46,6 +46,11 @@ plotting them on axes, like Facets Dive.
   listed under it, and Enter or a click opens a match's card. **+ Filter** adds a filter on
   a column: tick a category's values, or give a number or a date a range. **Highlight**
   dims the rows that don't match; **Filter** hides them. All of it happens in the page.
+- Changing an axis or a facet moves the dots to their new places (up to 30,000 dots, and
+  not when the reader's system asks for less motion). Ctrl or ⌘ + scroll (a trackpad's
+  pinch) zooms in around the pointer, dragging pans, and a double-click or **Reset** shows
+  everything again; a plain scroll still scrolls the page. Zoom is shared by every panel,
+  and close up the dots carry their `title=`.
 - `facet_row=` and `facet_col=` split the dots into small multiples, one panel per value,
   on scales shared by every panel; the reader can change or remove them in the controls.
   A number splits into `buckets=` bins with round edges (5 by default), and a category
