@@ -801,6 +801,42 @@ html.bf-printing .bf-heading-actions { display: none; }
 .bf-dd__title { font-size: 12px; fill: var(--bf-muted); }
 .bf-dd__head { font-size: 11px; font-weight: 600; fill: var(--bf-text); }
 .bf-dd__hover { fill: none; stroke: var(--bf-text); stroke-width: 1.5; }
+.bf-dd__picked { fill: none; stroke: var(--bf-accent); stroke-width: 2; stroke-dasharray: 3 2; }
+.bf-dd__picked--pinned { stroke-dasharray: none; }
+
+/* A row's card: opened by a click on its dot; Pin keeps it to compare two side by side (#16). */
+.bf-dd__cards { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; }
+.bf-dd__cards:empty { display: none; }
+.bf-dd__card {
+  flex: 1 1 16rem;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--bf-border);
+  border-radius: var(--bf-radius);
+  background: var(--bf-surface);
+  font-size: 0.8rem;
+}
+.bf-dd__card--pinned { border-color: var(--bf-accent); }
+.bf-dd__card-head { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.4rem; }
+.bf-dd__card-title { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.bf-dd__card-pin, .bf-dd__card-close {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--bf-border);
+  border-radius: 999px;
+  background: var(--bf-bg);
+  color: var(--bf-text);
+  font: inherit;
+  cursor: pointer;
+}
+.bf-dd__card-pin[aria-pressed="true"] { border-color: var(--bf-accent); color: var(--bf-accent); }
+.bf-dd__card-pin:hover, .bf-dd__card-close:hover,
+.bf-dd__card-pin:focus-visible, .bf-dd__card-close:focus-visible { border-color: var(--bf-accent); }
+.bf-dd__card-body { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.15rem 0.75rem; margin: 0; }
+.bf-dd__card-body dt { color: var(--bf-muted); }
+.bf-dd__card-body dd { margin: 0; overflow-wrap: anywhere; }
+.bf-dd__missing { color: var(--bf-muted); }
+.bf-dd__tip-title { font-weight: 700; margin-bottom: 0.15rem; }
 
 .bf-dd__tooltip {
   position: absolute;
@@ -988,6 +1024,8 @@ html.bf-printing .bf-attachment__note,
 html.bf-printing .bf-dt__toolbar,
 html.bf-printing .bf-dt__footer,
 html.bf-printing .bf-dd__controls,
+html.bf-printing .bf-dd__card-pin,
+html.bf-printing .bf-dd__card-close,
 html.bf-printing .bf-toggle__icon { display: none !important; }
 html.bf-printing .bf-select__panel[hidden],
 html.bf-printing .bf-toggle__body[hidden] { display: block !important; }

@@ -318,6 +318,30 @@ class TestFacets:
             DataDive(simple_df, buckets=buckets)
 
 
+# ── title= (#16) ───────────────────────────────────────────────────────────────
+
+
+class TestTitle:
+    def test_the_title_column_travels_to_the_page(self, simple_df):
+        soup = BeautifulSoup(render_datadive(DataDive(simple_df, title="cat")), "html.parser")
+        assert attr(find_one(soup, "div.bf-datadive"), "data-title") == "cat"
+        assert soup.find("div", class_="bf-dd__cards") is not None
+
+    def test_no_title_by_default(self, simple_df):
+        soup = BeautifulSoup(render_datadive(DataDive(simple_df)), "html.parser")
+        assert find_one(soup, "div.bf-datadive").get("data-title") is None
+
+    def test_an_unknown_title_column_raises(self, simple_df):
+        with pytest.raises(bf.BriefingError, match=r"column 'nope' \(passed as 'title'\) not found"):
+            DataDive(simple_df, title="nope")
+
+    def test_a_hostile_title_name_stays_an_attribute(self):
+        name = '"><img src=x onerror=alert(1)>'
+        soup = BeautifulSoup(render_datadive(DataDive(pd.DataFrame({name: ["a"], "v": [1]}), title=name)),
+                             "html.parser")
+        assert soup.find("img") is None and attr(find_one(soup, "div.bf-datadive"), "data-title") == name
+
+
 # ── embedded JSON can't be closed by the data (#55) ───────────────────────────
 
 

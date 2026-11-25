@@ -75,7 +75,8 @@ class DataDive(Block):
     Each row in the DataFrame becomes a dot in a 2-D space. Dropdowns let the
     viewer dynamically reassign which columns drive X position, Y position and
     colour. The legend under them filters: a click hides or shows a category's
-    dots, and Alt+click shows that category alone.
+    dots, and Alt+click shows that category alone. Clicking a dot opens a card
+    with its whole row; **Pin** keeps it, so two rows can be compared side by side.
 
     ``facet_row`` and ``facet_col`` split the dots into small multiples, one panel
     per value, on shared scales; the viewer can change or remove them too.
@@ -99,6 +100,8 @@ class DataDive(Block):
             blocks of the report. A categorical scale colours the categories it names
             (others take the theme's palette); a numeric one colours numbers and dates.
             Without it, categories take the theme's palette and numbers a ramp to its accent.
+        title: Column that names each dot: the heading of its tooltip and of the card that
+            opens when the dot is clicked. Without it, a card is headed by its row number.
         max_rows: Larger frames are sampled down to this many rows, with a warning.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
@@ -127,6 +130,7 @@ class DataDive(Block):
         buckets: int | Mapping[str, int] = 5,
         layout: str = "scatter",
         colors: Scale | Mapping[str, t.Any] | None = None,
+        title: str | None = None,
         max_rows: int = MAX_ROWS,
         name: BlockId | None = None,
         label: str | None = None,
@@ -148,7 +152,7 @@ class DataDive(Block):
         # Validate that explicitly requested columns exist.
         for col_name, col_val in [
             ("x", x), ("y", y), ("color", color),
-            ("facet_row", facet_row), ("facet_col", facet_col),
+            ("facet_row", facet_row), ("facet_col", facet_col), ("title", title),
         ]:
             if col_val is not None and col_val not in df.columns:
                 raise BriefingError(
@@ -168,6 +172,7 @@ class DataDive(Block):
         self.colors = Scale.of(colors) if isinstance(colors, Mapping) else colors
         if self.colors is not None and not isinstance(self.colors, Scale):
             raise BriefingError(f"DataDive: colors must be a bf.Scale, not {colors!r}.")
+        self.title = title
         self.max_rows = max_rows
 
 

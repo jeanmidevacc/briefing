@@ -266,6 +266,7 @@ Interactive dot explorer — similar to Google's Facets Dive.
 - `buckets`: a whole number or an object {"<column>": a whole number}, default `5`. How many groups a column makes when it splits the dots (a facet, or a `"tile"` axis): a number is cut into that many bins with round edges, and categories keep their most frequent values plus an "other". One number for every column, or `{"age": 4}` per column (the others keep 5).
 - `layout`: one of "scatter", "tile", default `"scatter"`. `"scatter"` (two axes) or `"tile"` (packed dots per cell).
 - `colors`: a scale {"colors": ["#...", "#..."], "domain": [0, 100]}. A Scale for the dots' colours, so they match the other blocks of the report. A categorical scale colours the categories it names (others take the theme's palette); a numeric one colours numbers and dates. Without it, categories take the theme's palette and numbers a ramp to its accent.
+- `title`: text. Column that names each dot: the heading of its tooltip and of the card that opens when the dot is clicked. Without it, a card is headed by its row number.
 - `max_rows`: a whole number, default `100000`. Larger frames are sampled down to this many rows, with a warning.
 
 ### lab.CalendarHeatmap

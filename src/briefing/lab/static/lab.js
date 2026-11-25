@@ -63,7 +63,8 @@
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
   function cut(s, n) { return s.length > n ? s.slice(0, n - 1) + '…' : s; }
-  function thousands(s) { return s.replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  // 12,345 but 2024: four digits stay as they are, so years read as years.
+  function thousands(s) { return s.length > 4 ? s.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : s; }
   function fmtNum(v) {
     if (Math.round(v) === v && Math.abs(v) < 1e15) return (v < 0 ? '-' : '') + thousands(String(Math.abs(v)));
     var p = String(+v.toPrecision(5)), parts = p.split('.');
@@ -276,6 +277,10 @@
 
   // ── one DataDive ────────────────────────────────────────────────────────────
 
+  // Esc closes the cards of the DataDive the reader last clicked in: one listener for the page.
+  var escape = null;
+  function onEscape(fn) { escape = fn; }
+
   function setupDive(container, runtime) {
     if (container.briefingDive) return;
     var data = load(container), n = data.n;
@@ -291,6 +296,9 @@
     function chosen(axisName) { return selects[axisName] ? selects[axisName].value : ''; }
 
     var look = theme(container);
+    var titleName = container.getAttribute('data-title') || '';
+    var cardsEl = container.querySelector('.bf-dd__cards');
+    var cards = [];  // the open cards, in order: {row, pinned}
     var colour = null, hidden = {}, drawnWidth = 0, drawnW = 620;
     var xs = new Float32Array(n), ys = new Float32Array(n), shown = new Uint8Array(n), count = 0;
     var grid = null, cell = 12, radius = 3, hover = null;
@@ -441,8 +449,10 @@
 
     // Two axes, in each panel, on scales shared by every panel. -> {H, parts}
     function placeScatter(W) {
-      var f = facets(), GAP = 12;
-      var ML = 58, MR = 16 + (f.rows ? 38 : 0), MT = 12 + (f.cols ? 34 : 0), MB = 46;
+      var f = facets(), GAP = 12, yCat = data.cols[chosen('y')];
+      // Room on the left for the Y labels: a category's names, cut at 14 characters, can be long.
+      var longest = yCat && yCat.kind === 'categorical' ? yCat.levels.reduce(function (m, l) { return Math.max(m, Math.min(14, l.length)); }, 0) : 0;
+      var ML = Math.max(58, Math.min(120, Math.round(longest * 6.2 + 24))), MR = 16 + (f.rows ? 38 : 0), MT = 12 + (f.cols ? 34 : 0), MB = 46;
       var pw = (W - ML - MR - (f.nc - 1) * GAP) / f.nc;
       var ph = f.nr * f.nc === 1 ? Math.round(Math.max(240, Math.min(640, W * 0.62))) - MT - MB
         : Math.round(Math.max(110, Math.min(420, pw * 0.72)));
@@ -588,9 +598,11 @@
       });
       ctx.globalAlpha = 1;
 
+      parts.push('<g class="bf-dd__rings"></g>');
       parts.push('<circle class="bf-dd__hover" r="' + (radius + 2.5) + '" cx="-99" cy="-99"/>');
       svg.innerHTML = parts.join('');
       hover = svg.querySelector('.bf-dd__hover');
+      drawRings();
       footer.textContent = count === n ? fmtNum(n) + ' rows' : fmtNum(count) + ' of ' + fmtNum(n) + ' shown';
       var described = layout === 'tile' ? 'DataDive tiles by ' + chosen('x') + (chosen('y') ? ' and ' + chosen('y') : '')
         : 'DataDive scatter plot of ' + chosen('y') + ' against ' + chosen('x');
@@ -618,7 +630,13 @@
 
     function showTip(i, e) {
       tip.innerHTML = '';
-      data.names.slice(0, 10).forEach(function (name) {
+      if (titleName) {
+        var heading = document.createElement('div');
+        heading.className = 'bf-dd__tip-title';
+        heading.textContent = cut(label(i), 60);
+        tip.appendChild(heading);
+      }
+      data.names.filter(function (name) { return name !== titleName; }).slice(0, titleName ? 9 : 10).forEach(function (name) {
         var line = document.createElement('div'), b = document.createElement('b'), v = display(data.cols[name], i);
         b.textContent = cut(name, 24) + ': ';
         line.appendChild(b);
@@ -634,9 +652,108 @@
       tip.style.top = py + 'px';
     }
 
-    canvas.addEventListener('mousemove', function (e) {
+    // ── the record cards: a click opens a row's card, Pin keeps it (two at most), Esc or × closes
+    function label(i) {
+      var v = titleName ? display(data.cols[titleName], i) : null;
+      return v === null ? 'Row ' + fmtNum(i + 1) : v;
+    }
+
+    function valueNode(name, i) {
+      var v = display(data.cols[name], i), dd = document.createElement('dd');
+      if (v === null) { dd.textContent = '—'; dd.className = 'bf-dd__missing'; return dd; }
+      if (/^https?:\/\/\S+$/i.test(v)) {  // a web address becomes a link, made only now the card is open
+        var a = document.createElement('a');
+        a.href = v;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = v;
+        dd.appendChild(a);
+      } else {
+        dd.textContent = v;
+      }
+      return dd;
+    }
+
+    function cardFor(entry) {
+      var i = entry.row, card = document.createElement('section');
+      card.className = 'bf-dd__card' + (entry.pinned ? ' bf-dd__card--pinned' : '');
+      card.setAttribute('aria-label', label(i));
+      var head = document.createElement('div'), title = document.createElement('span');
+      head.className = 'bf-dd__card-head';
+      title.className = 'bf-dd__card-title';
+      title.textContent = label(i);
+      var pin = document.createElement('button'), close = document.createElement('button');
+      pin.type = close.type = 'button';
+      pin.className = 'bf-dd__card-pin';
+      pin.textContent = entry.pinned ? 'Unpin' : 'Pin';
+      pin.setAttribute('aria-pressed', entry.pinned ? 'true' : 'false');
+      pin.title = entry.pinned ? 'Let the next dot you click replace this card' : 'Keep this card to compare it with another row';
+      pin.addEventListener('click', function () { togglePin(entry); });
+      close.className = 'bf-dd__card-close';
+      close.textContent = '×';
+      close.setAttribute('aria-label', 'Close the card of ' + label(i));
+      close.addEventListener('click', function () { cards.splice(cards.indexOf(entry), 1); renderCards(); });
+      head.appendChild(title); head.appendChild(pin); head.appendChild(close);
+      var body = document.createElement('dl');
+      body.className = 'bf-dd__card-body';
+      data.names.forEach(function (name) {
+        var dt = document.createElement('dt');
+        dt.textContent = name;
+        body.appendChild(dt);
+        body.appendChild(valueNode(name, i));
+      });
+      card.appendChild(head);
+      card.appendChild(body);
+      return card;
+    }
+
+    function drawRings() {
+      var g = svg.querySelector('.bf-dd__rings');
+      if (!g) return;
+      g.innerHTML = cards.filter(function (c) { return xs[c.row] === xs[c.row] && ys[c.row] === ys[c.row]; }).map(function (c) {
+        return '<circle class="bf-dd__picked' + (c.pinned ? ' bf-dd__picked--pinned' : '') + '" r="' + (radius + 3.5).toFixed(1) +
+          '" cx="' + xs[c.row].toFixed(1) + '" cy="' + ys[c.row].toFixed(1) + '"/>';
+      }).join('');
+    }
+
+    function renderCards() {
+      cardsEl.innerHTML = '';
+      cards.forEach(function (entry) { cardsEl.appendChild(cardFor(entry)); });
+      drawRings();
+    }
+
+    function open(i) {
+      if (!cards.some(function (c) { return c.row === i; })) {
+        cards = cards.filter(function (c) { return c.pinned; });  // the open, unpinned card gives way
+        cards.push({ row: i, pinned: false });
+      }
+      renderCards();
+    }
+
+    function togglePin(entry) {
+      if (!entry.pinned) {
+        var pinned = cards.filter(function (c) { return c.pinned; });
+        if (pinned.length >= 2) cards.splice(cards.indexOf(pinned[0]), 1);  // two at most: the oldest goes
+      }
+      entry.pinned = !entry.pinned;
+      renderCards();
+    }
+
+    function closeAll() { cards = []; renderCards(); }
+
+    function pick(e) {
       var rect = canvas.getBoundingClientRect(), unit = drawnW / rect.width;  // screen px -> drawing px
-      var i = nearest((e.clientX - rect.left) * unit, (e.clientY - rect.top) * unit);
+      return nearest((e.clientX - rect.left) * unit, (e.clientY - rect.top) * unit);
+    }
+
+    canvas.addEventListener('click', function (e) {
+      var i = pick(e);
+      if (i >= 0) { open(i); onEscape(closeAll); }
+    });
+    cardsEl.addEventListener('click', function () { onEscape(closeAll); });
+
+    canvas.addEventListener('mousemove', function (e) {
+      var i = pick(e);
       if (i < 0) { tip.hidden = true; hover.setAttribute('cx', '-99'); canvas.style.cursor = ''; return; }
       hover.setAttribute('cx', xs[i].toFixed(1));
       hover.setAttribute('cy', ys[i].toFixed(1));
@@ -694,6 +811,8 @@
     // What tests and other scripts can read: how many dots are drawn, and where.
     container.briefingDive = {
       vector: vector,
+      open: open,
+      cards: function () { return cards.map(function (c) { return { row: c.row, pinned: c.pinned }; }); },
       shown: function () { return count; },
       total: n,
       dot: function (i) { return { x: xs[i], y: ys[i], colour: colour.of(i), shown: !!shown[i] }; },
@@ -704,6 +823,9 @@
 
   window.briefing.register('lab', function (runtime) {
     var dives = [];
+    runtime.on(document, 'keydown', function (e) {
+      if ((e.key === 'Escape' || e.key === 'Esc') && escape) { escape(); escape = null; }
+    });
     runtime.onPrint(function () { dives.forEach(function (d) { d.briefingDive.vector(true); }); },
                     function () { dives.forEach(function (d) { d.briefingDive.vector(false); }); });
     return function (root) {

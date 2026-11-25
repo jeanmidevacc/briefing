@@ -42,6 +42,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `{"age": 4}` per column) sets how many groups a column makes: a number is cut into bins
   with round edges, and a category keeps its most frequent values plus an "other". It also
   sets the cells of a `"tile"` layout.
+- Clicking a dot in a `bf.lab.DataDive` opens a card with its whole row, under the chart, with
+  web addresses as links (#16). **Pin** keeps a card so two rows compare side by side; × or
+  Esc closes them, and the chart rings the dots whose cards are open. New `title=` names the
+  column that heads each card and tooltip; without it, a card is headed by its row number.
+  Four-digit numbers such as years no longer get a thousands separator.
 - The copy-embed `</>` button (and the new camera button) moved to the bottom-right corner
   of its block, clear of the toolbar Plotly draws at a chart's top right; a labelled group's
   sits just below the group, and a page's just above it, under its tab (#215). While hidden,

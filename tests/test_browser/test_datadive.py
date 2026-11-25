@@ -238,3 +238,87 @@ def test_tiles_split_into_facets_with_one_dot_size(viewer: Viewer) -> None:
     low = [_dot(dive, i)["x"] for i in range(20)]
     high = [_dot(dive, i)["x"] for i in range(20, 40)]
     assert max(low) < min(high)
+
+
+# ── record cards and title= ─────────────────────────────────────────────────────
+
+_NAMED = _DF.assign(name=[f"Player {i}" for i in range(40)],
+                    page=[f"https://example.org/p/{i}" if i % 2 == 0 else "not a link" for i in range(40)])
+
+
+def _click_dot(page: Page, dive: Locator, i: int) -> None:
+    box = dive.locator("canvas").bounding_box()
+    assert box is not None
+    dot, unit = _dot(dive, i), box["width"] / dive.evaluate("d => d.briefingDive.width()")
+    page.mouse.click(box["x"] + dot["x"] * unit, box["y"] + dot["y"] * unit)
+
+
+def _cards(dive: Locator) -> list[dict[str, t.Any]]:
+    cards: list[dict[str, t.Any]] = dive.evaluate("d => d.briefingDive.cards()")
+    return cards
+
+
+def test_clicking_a_dot_opens_its_card_with_every_column(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_NAMED, x="a", y="b", color="team", title="name")))
+    dive = _dive(page)
+    _click_dot(page, dive, 8)
+    card = dive.locator(".bf-dd__card")
+    expect(card).to_have_count(1)
+    expect(card.locator(".bf-dd__card-title")).to_have_text("Player 8")
+    assert card.locator("dt").all_inner_texts() == ["a", "b", "team", "score", "name", "page"]
+    assert card.locator("dd").all_inner_texts()[:3] == ["8", "16", "red"]
+    link = card.locator("dd a")
+    expect(link).to_have_attribute("href", "https://example.org/p/8")
+    expect(link).to_have_attribute("rel", "noopener noreferrer")
+    expect(dive.locator(".bf-dd__picked")).to_have_count(1)  # its dot is ringed
+    _click_dot(page, dive, 9)  # another dot replaces an unpinned card
+    expect(card.locator(".bf-dd__card-title")).to_have_text("Player 9")
+    expect(card.locator("dd a")).to_have_count(0)  # "not a link" stays text
+
+
+def test_the_tooltip_is_headed_by_the_title(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_NAMED, x="a", y="b", title="name")))
+    dive = _dive(page)
+    box = dive.locator("canvas").bounding_box()
+    assert box is not None
+    dot, unit = _dot(dive, 3), box["width"] / dive.evaluate("d => d.briefingDive.width()")
+    page.mouse.move(box["x"] + dot["x"] * unit, box["y"] + dot["y"] * unit)
+    expect(dive.locator(".bf-dd__tip-title")).to_have_text("Player 3")
+
+
+def test_two_pinned_cards_sit_side_by_side(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_NAMED, x="a", y="b", title="name")))
+    dive = _dive(page)
+    _click_dot(page, dive, 1)
+    dive.get_by_role("button", name="Pin", exact=True).click()
+    _click_dot(page, dive, 2)
+    assert _cards(dive) == [{"row": 1, "pinned": True}, {"row": 2, "pinned": False}]
+    dive.get_by_role("button", name="Pin", exact=True).click()
+    _click_dot(page, dive, 3)
+    assert _cards(dive) == [{"row": 1, "pinned": True}, {"row": 2, "pinned": True}, {"row": 3, "pinned": False}]
+    boxes = [dive.locator(".bf-dd__card").nth(k).bounding_box() for k in range(2)]
+    assert boxes[0] and boxes[1] and abs(boxes[0]["y"] - boxes[1]["y"]) < 1  # side by side
+    dive.get_by_role("button", name="Pin", exact=True).click()  # a third pin: the oldest pinned card goes
+    assert _cards(dive) == [{"row": 2, "pinned": True}, {"row": 3, "pinned": True}]
+    expect(dive.locator(".bf-dd__picked--pinned")).to_have_count(2)
+
+
+def test_cards_close_with_their_button_or_escape(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_NAMED, x="a", y="b", title="name")))
+    dive = _dive(page)
+    _click_dot(page, dive, 4)
+    dive.get_by_role("button", name="Close the card of Player 4").click()
+    expect(dive.locator(".bf-dd__card")).to_have_count(0)
+    _click_dot(page, dive, 5)
+    dive.get_by_role("button", name="Pin", exact=True).click()
+    _click_dot(page, dive, 6)
+    page.keyboard.press("Escape")
+    expect(dive.locator(".bf-dd__card")).to_have_count(0)
+    expect(dive.locator(".bf-dd__picked")).to_have_count(0)
+
+
+def test_without_a_title_a_card_is_headed_by_its_row(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_DF, x="a", y="b")))
+    dive = _dive(page)
+    _click_dot(page, dive, 11)
+    expect(dive.locator(".bf-dd__card-title")).to_have_text("Row 12")

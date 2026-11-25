@@ -173,7 +173,9 @@ def render_datadive(block: DataDive) -> str:
     rows = len(df)
     return (
         f'<div class="bf-block bf-datadive" data-layout="{layout}" '
-        f'data-buckets="{_html.escape(json.dumps(buckets, separators=(",", ":")))}">'
+        f'data-buckets="{_html.escape(json.dumps(buckets, separators=(",", ":")))}"'
+        + (f' data-title="{_html.escape(str(block.title))}"' if block.title else "")
+        + ">"
         f"{controls}"
         '<div class="bf-dd__legend" aria-label="Legend: click a category to hide or show its dots"></div>'
         '<div class="bf-dd__plot-area">'
@@ -181,6 +183,7 @@ def render_datadive(block: DataDive) -> str:
         '<svg class="bf-dd__axes" aria-hidden="true"></svg>'
         '<div class="bf-dd__tooltip" hidden></div>'
         "</div>"
+        '<div class="bf-dd__cards" aria-live="polite"></div>'
         f'<div class="bf-dd__footer">{rows:,} rows</div>'
         f'<script type="application/json" class="bf-dd__data" data-size="{size}">"{packed}"</script>'
         f"{scale_html}"

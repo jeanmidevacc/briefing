@@ -37,6 +37,11 @@ plotting them on axes, like Facets Dive.
 
 - The legend under the controls filters: a click hides or shows a category's dots, and
   Alt+click shows that category alone. A number or a date column colours along a ramp.
+- Clicking a dot opens a card with its whole row, under the chart; web addresses in it are
+  links. **Pin** keeps a card, so the next click opens another beside it: two pinned rows
+  compare side by side. × or Esc closes them. `title=` names the column that heads each
+  card and tooltip, such as a product's or an article's name; without it, a card is
+  headed by its row number.
 - `facet_row=` and `facet_col=` split the dots into small multiples, one panel per value,
   on scales shared by every panel; the reader can change or remove them in the controls.
   A number splits into `buckets=` bins with round edges (5 by default), and a category
@@ -96,7 +101,8 @@ import briefing as bf
 points = bf.datasets.load("embeddings")
 topics = bf.Scale(["#2563eb", "#16a34a", "#9333ea", "#ea580c", "#dc2626", "#0891b2"],
                   domain=["sports", "finance", "science", "travel", "food", "music"])
-bf.save(bf.lab.DataDive(points, x="x", y="y", color="cluster", colors=topics), "map.html", name="Articles")
+bf.save(bf.lab.DataDive(points, x="x", y="y", color="cluster", colors=topics, title="title"), "map.html",
+        name="Articles")
 ```
 
 ## `CalendarHeatmap`: one cell per day
