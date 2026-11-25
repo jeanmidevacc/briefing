@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import typing as t
+import warnings
 
 import pandas as pd
 import pytest
@@ -276,35 +277,45 @@ class TestDataDiveInReport:
             assert not str(tag.get("href", "")).startswith("http")
 
 
-# ── facets are not drawn yet (#6) ─────────────────────────────────────────────
+# ── facets and buckets= (#16, retiring the #6 warning) ────────────────────────
 
 
-class TestFacetParameters:
-    @pytest.mark.parametrize("param", ["facet_row", "facet_col"])
-    def test_passing_a_facet_warns_and_points_to_v2(self, simple_df, param):
-        with pytest.warns(UserWarning, match=rf"{param}.*not drawn.*DataDive v2.*issues/16"):
-            if param == "facet_row":
-                DataDive(simple_df, facet_row="cat")
-            else:
-                DataDive(simple_df, facet_col="cat")
-
-    def test_both_facets_warn_once(self, simple_df):
-        with pytest.warns(UserWarning, match="facet_row and facet_col") as record:
-            DataDive(simple_df, facet_row="cat", facet_col="cat")
-        assert len([w for w in record if "facet" in str(w.message)]) == 1
-
-    def test_no_warning_without_facets(self, simple_df):
-        import warnings
-
+class TestFacets:
+    def test_facets_no_longer_warn(self, simple_df):
         with warnings.catch_warnings():
             warnings.simplefilter("error")
-            DataDive(simple_df)
+            DataDive(simple_df, facet_row="cat", facet_col="cat")
+
+    def test_the_facets_are_chosen_in_their_dropdowns(self, simple_df):
+        soup = BeautifulSoup(render_datadive(DataDive(simple_df, facet_col="cat")), "html.parser")
+        assert attr(find_one(soup, 'select[data-axis="fcol"] option[selected]'), "value") == "cat"
+        assert find_one(soup, 'select[data-axis="frow"] option').get_text() == "— none —"
+        assert soup.select_one('select[data-axis="frow"] option[selected]') is None
 
     def test_unknown_facet_column_still_raises(self, simple_df):
         from briefing import BriefingError
 
         with pytest.raises(BriefingError, match="facet_row"):
             DataDive(simple_df, facet_row="nope")
+
+    @pytest.mark.parametrize(("buckets", "sent"), [(5, {"": 5}), (3, {"": 3}), ({"x": 4}, {"x": 4})])
+    def test_buckets_travel_to_the_page(self, simple_df, buckets, sent):
+        soup = BeautifulSoup(render_datadive(DataDive(simple_df, buckets=buckets)), "html.parser")
+        assert json.loads(attr(find_one(soup, "div.bf-datadive"), "data-buckets")) == sent
+
+    @pytest.mark.parametrize(
+        ("buckets", "message"),
+        [
+            (0, r"buckets must be a whole number of groups, 1 or more; got 0"),
+            (2.5, r"got 2\.5"),
+            (True, r"got True"),
+            ({"nope": 3}, r"buckets names 'nope', which isn't a column"),
+            ({"x": 0}, r"buckets\['x'\] must be a whole number"),
+        ],
+    )
+    def test_wrong_buckets_say_what_to_pass(self, simple_df, buckets, message):
+        with pytest.raises(bf.BriefingError, match=message):
+            DataDive(simple_df, buckets=buckets)
 
 
 # ── embedded JSON can't be closed by the data (#55) ───────────────────────────

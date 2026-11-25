@@ -158,8 +158,11 @@ def render_datadive(block: DataDive) -> str:
         + _control("x", x_label, _options(x_def, False))
         + _control("y", y_label, y_options)
         + _control("color", "Color", _options(color_def, True))
+        + _control("frow", "Facet rows", _options(block.facet_row or "", True))
+        + _control("fcol", "Facet columns", _options(block.facet_col or "", True))
         + "</div>"
     )
+    buckets = block.buckets if isinstance(block.buckets, dict) else {"": block.buckets}
 
     packed, size = pack(_serialise(df), level=6)  # megabytes at 100,000 rows: 9 would take seconds
     scale = _scale(block.colors)
@@ -169,7 +172,8 @@ def render_datadive(block: DataDive) -> str:
     )
     rows = len(df)
     return (
-        f'<div class="bf-block bf-datadive" data-layout="{layout}">'
+        f'<div class="bf-block bf-datadive" data-layout="{layout}" '
+        f'data-buckets="{_html.escape(json.dumps(buckets, separators=(",", ":")))}">'
         f"{controls}"
         '<div class="bf-dd__legend" aria-label="Legend: click a category to hide or show its dots"></div>'
         '<div class="bf-dd__plot-area">'

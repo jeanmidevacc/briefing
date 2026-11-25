@@ -183,3 +183,58 @@ def test_a_big_dive_prints_as_its_canvas(viewer: Viewer) -> None:
     dive = _dive(page)
     expect(dive.locator(".bf-dd__print")).to_have_count(0)
     expect(dive.locator("canvas")).to_have_css("visibility", "visible")
+
+
+# ── facets and buckets= ─────────────────────────────────────────────────────────
+
+
+def test_facet_columns_split_the_dots_into_panels(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_DF, x="a", y="b", color="team", facet_col="team")))
+    dive = _dive(page)
+    assert _shown(dive) == 40
+    xs = {team: [_dot(dive, i)["x"] for i in range(40) if _DF["team"][i] == team] for team in ("blue", "green", "red")}
+    # One panel per team, in natural order, side by side: every blue dot left of every green one, and so on.
+    assert max(xs["blue"]) < min(xs["green"]) and max(xs["green"]) < min(xs["red"])
+    heads = dive.locator(".bf-dd__axes .bf-dd__head").all_text_contents()
+    assert heads == ["blue", "green", "red"]
+    # Shared scales: across every panel, a dot's height is one linear function of its b.
+    ys, bs = [_dot(dive, i)["y"] for i in range(40)], list(_DF["b"])
+    slope = (ys[1] - ys[0]) / (bs[1] - bs[0])
+    assert all(abs(ys[i] - ys[0] - slope * (bs[i] - bs[0])) < 0.5 for i in range(40))
+    page.locator('select[data-axis="fcol"]').select_option("")
+    expect(dive.locator(".bf-dd__axes .bf-dd__head")).to_have_count(0)
+
+
+def test_facet_rows_stack_panels_and_the_legend_still_filters(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_DF, x="a", y="b", color="team", facet_row="team")))
+    dive = _dive(page)
+    ys = {team: [_dot(dive, i)["y"] for i in range(40) if _DF["team"][i] == team] for team in ("blue", "green", "red")}
+    assert max(ys["blue"]) < min(ys["green"]) and max(ys["green"]) < min(ys["red"])
+    dive.get_by_role("button", name="red 20").click()
+    assert _shown(dive) == 20
+
+
+def test_numbers_split_into_round_buckets(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_DF, x="a", y="b", facet_col="score", buckets={"score": 4})))
+    dive = _dive(page)
+    assert dive.locator(".bf-dd__axes .bf-dd__head").all_text_contents() == ["0–10", "10–20", "20–30", "30–40"]
+
+
+def test_a_category_keeps_its_most_frequent_values_and_an_other(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_DF, x="a", y="b", facet_col="team", buckets=2)))
+    dive = _dive(page)
+    assert dive.locator(".bf-dd__axes .bf-dd__head").all_text_contents() == ["blue", "red", "other"]
+    others = [_dot(dive, i)["x"] for i in range(35, 40)]  # the five green rows
+    reds = [_dot(dive, i)["x"] for i in range(20)]
+    assert min(others) > max(reds)
+
+
+def test_tiles_split_into_facets_with_one_dot_size(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(_DF, x="team", color="team", layout="tile", facet_col="score",
+                                                   buckets={"score": 2})))
+    dive = _dive(page)
+    assert _shown(dive) == 40
+    assert dive.locator(".bf-dd__axes .bf-dd__head").all_text_contents() == ["0–20", "20–40"]
+    low = [_dot(dive, i)["x"] for i in range(20)]
+    high = [_dot(dive, i)["x"] for i in range(20, 40)]
+    assert max(low) < min(high)

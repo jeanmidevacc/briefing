@@ -77,8 +77,8 @@ class DataDive(Block):
     colour. The legend under them filters: a click hides or shows a category's
     dots, and Alt+click shows that category alone.
 
-    ``facet_row`` and ``facet_col`` are accepted but not drawn yet: passing one
-    emits a ``UserWarning``. Faceting is planned for DataDive v2 (#16).
+    ``facet_row`` and ``facet_col`` split the dots into small multiples, one panel
+    per value, on shared scales; the viewer can change or remove them too.
 
     Fully self-contained: the dots are drawn on a canvas with vanilla JS (no Vega,
     D3, or CDN), from the data embedded in the page, packed by column.
@@ -88,8 +88,12 @@ class DataDive(Block):
         x: Column on the X axis at first (the viewer can change it).
         y: Column on the Y axis at first.
         color: Column that colours the dots at first.
-        facet_row: Accepted but not drawn yet (a warning says so); planned for DataDive v2.
-        facet_col: Accepted but not drawn yet (a warning says so); planned for DataDive v2.
+        facet_row: Column that splits the dots into rows of panels at first.
+        facet_col: Column that splits the dots into columns of panels at first.
+        buckets: How many groups a column makes when it splits the dots (a facet, or a
+            ``"tile"`` axis): a number is cut into that many bins with round edges, and
+            categories keep their most frequent values plus an "other". One number for
+            every column, or ``{"age": 4}`` per column (the others keep 5).
         layout: ``"scatter"`` (two axes) or ``"tile"`` (packed dots per cell).
         colors: A :class:`~briefing.Scale` for the dots' colours, so they match the other
             blocks of the report. A categorical scale colours the categories it names
@@ -120,6 +124,7 @@ class DataDive(Block):
         color: str | None = None,
         facet_row: str | None = None,
         facet_col: str | None = None,
+        buckets: int | Mapping[str, int] = 5,
         layout: str = "scatter",
         colors: Scale | Mapping[str, t.Any] | None = None,
         max_rows: int = MAX_ROWS,
@@ -151,15 +156,7 @@ class DataDive(Block):
                     f"not found in DataFrame. Available: {list(df.columns)}"
                 )
 
-        facets = [p for p, v in (("facet_row", facet_row), ("facet_col", facet_col)) if v is not None]
-        if facets:
-            warnings.warn(
-                f"DataDive: {' and '.join(facets)} {'are' if len(facets) > 1 else 'is'} accepted but not drawn "
-                "yet; the dots are not split into facets. Faceting is planned for DataDive v2 "
-                "(https://github.com/jeanmidevacc/briefing/issues/16).",
-                UserWarning,
-                stacklevel=2,
-            )
+        self.buckets = _check_buckets(buckets, df.columns)
 
         self.df = df
         self.x = x
@@ -172,6 +169,22 @@ class DataDive(Block):
         if self.colors is not None and not isinstance(self.colors, Scale):
             raise BriefingError(f"DataDive: colors must be a bf.Scale, not {colors!r}.")
         self.max_rows = max_rows
+
+
+def _check_buckets(buckets: t.Any, columns: t.Any) -> int | dict[str, int]:
+    """``buckets=`` as a whole number of 1 or more, or such a number per column name."""
+    def whole(value: t.Any, where: str) -> int:
+        if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+            raise BriefingError(f"DataDive: {where} must be a whole number of groups, 1 or more; got {value!r}.")
+        return value
+
+    if isinstance(buckets, Mapping):
+        unknown = [str(k) for k in buckets if k not in columns]
+        if unknown:
+            raise BriefingError(f"DataDive: buckets names {unknown[0]!r}, which isn't a column. "
+                                f"Available: {list(columns)}")
+        return {str(k): whole(v, f"buckets[{k!r}]") for k, v in buckets.items()}
+    return whole(buckets, "buckets")
 
 
 #: The hour view, deprecated in 0.2.2, was removed in 0.5.0 (#111).

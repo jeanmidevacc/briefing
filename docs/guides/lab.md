@@ -37,6 +37,11 @@ plotting them on axes, like Facets Dive.
 
 - The legend under the controls filters: a click hides or shows a category's dots, and
   Alt+click shows that category alone. A number or a date column colours along a ramp.
+- `facet_row=` and `facet_col=` split the dots into small multiples, one panel per value,
+  on scales shared by every panel; the reader can change or remove them in the controls.
+  A number splits into `buckets=` bins with round edges (5 by default), and a category
+  keeps its most frequent values plus an "other". `buckets={"age": 4}` sets it per
+  column; it also sets the cells of a `"tile"` layout.
 - `colors=` takes a `bf.Scale`, so the dots match the report's other charts. A categorical
   scale colours the categories it names; a numeric one colours numbers and dates. Without
   it, categories take the theme's palette and numbers a ramp to its accent.
@@ -62,6 +67,22 @@ stores = pd.DataFrame({
     "format": rng.choice(["mall", "street", "outlet"], n),
 })
 bf.save(bf.lab.DataDive(stores, x="revenue", y="margin_pct", color="region"), "dive.html", name="Stores")
+```
+
+Facets compare groups side by side, here customers by plan and region:
+
+```{briefing-example}
+:title: A DataDive in facets
+:height: 760
+
+import briefing as bf
+
+customers = bf.datasets.load("train_test").train
+bf.save(
+    bf.lab.DataDive(customers, x="age", y="income_k", color="churned", facet_row="plan", facet_col="region"),
+    "facets.html",
+    name="Customers",
+)
 ```
 
 An embedding map is a DataDive of precomputed coordinates, coloured by cluster:

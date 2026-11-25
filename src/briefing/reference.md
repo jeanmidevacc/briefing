@@ -261,8 +261,9 @@ Interactive dot explorer — similar to Google's Facets Dive.
 - `x`: text. Column on the X axis at first (the viewer can change it).
 - `y`: text. Column on the Y axis at first.
 - `color`: text. Column that colours the dots at first.
-- `facet_row`: text. Accepted but not drawn yet (a warning says so); planned for DataDive v2.
-- `facet_col`: text. Accepted but not drawn yet (a warning says so); planned for DataDive v2.
+- `facet_row`: text. Column that splits the dots into rows of panels at first.
+- `facet_col`: text. Column that splits the dots into columns of panels at first.
+- `buckets`: a whole number or an object {"<column>": a whole number}, default `5`. How many groups a column makes when it splits the dots (a facet, or a `"tile"` axis): a number is cut into that many bins with round edges, and categories keep their most frequent values plus an "other". One number for every column, or `{"age": 4}` per column (the others keep 5).
 - `layout`: one of "scatter", "tile", default `"scatter"`. `"scatter"` (two axes) or `"tile"` (packed dots per cell).
 - `colors`: a scale {"colors": ["#...", "#..."], "domain": [0, 100]}. A Scale for the dots' colours, so they match the other blocks of the report. A categorical scale colours the categories it names (others take the theme's palette); a numeric one colours numbers and dates. Without it, categories take the theme's palette and numbers a ramp to its accent.
 - `max_rows`: a whole number, default `100000`. Larger frames are sampled down to this many rows, with a warning.

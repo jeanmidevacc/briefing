@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   other charts; without it, categories take the theme's palette. Dates read as dates on an
   axis, and categories spread their dots across their band. In prints and `save_pdf`, up to
   5,000 dots stay vector; more print as a picture.
+- `bf.lab.DataDive` draws `facet_row=` and `facet_col=` (#16), which until now were accepted
+  with a warning (#6): small multiples, one panel per value, on scales shared by every panel,
+  in both layouts, and two more dropdowns to change them. New `buckets=` (5 by default, or
+  `{"age": 4}` per column) sets how many groups a column makes: a number is cut into bins
+  with round edges, and a category keeps its most frequent values plus an "other". It also
+  sets the cells of a `"tile"` layout.
 - The copy-embed `</>` button (and the new camera button) moved to the bottom-right corner
   of its block, clear of the toolbar Plotly draws at a chart's top right; a labelled group's
   sits just below the group, and a page's just above it, under its tab (#215). While hidden,

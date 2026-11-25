@@ -131,6 +131,8 @@ _OVERRIDES: dict[tuple[str, str], dict[str, t.Any]] = {
     ("lab.CalendarHeatmap", "colors"): _HEATMAP_COLORS,
     ("lab.TimeHeatmap", "colors"): _HEATMAP_COLORS,
     ("lab.DataDive", "colors"): {"anyOf": [_ref("scale"), {"type": "null"}]},
+    ("lab.DataDive", "buckets"): {"anyOf": [{"type": "integer", "minimum": 1}, {
+        "type": "object", "additionalProperties": {"type": "integer", "minimum": 1}}]},
     ("lab.CalendarHeatmap", "events"): {
         "anyOf": [{"type": "array", "items": {"type": "string"}}, _ref("table"), {"type": "null"}]
     },
