@@ -103,7 +103,8 @@ def _figure_marker(match: re.Match[str]) -> str:
 
 
 _PACKED_TABLE = re.compile(
-    r'(<script type="application/json" class="(?:bf-dt__data|bf-attachment__data)" data-size="(\d+)"(?: data-packed)?>)'
+    r'(<script type="application/json" class="(?:bf-dt__data|bf-dd__data|bf-attachment__data)" '
+    r'data-size="(\d+)"(?: data-packed)?>)'
     r'"([A-Za-z0-9+/=]*)"(</script>)'
 )
 

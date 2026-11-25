@@ -154,4 +154,5 @@ def test_a_script_registered_after_init_sets_up_the_roots_already_there(viewer: 
     assert lab_js in scripts
     report_first = scripts.replace(lab_js, "") + INIT_DOCUMENT + "\n" + lab_js
     page = viewer.open(f"{head}</head><body>{body}<script>{report_first}</script></body></html>")
-    expect(page.locator(".bf-dd__dot")).to_have_count(3)
+    page.wait_for_function("() => document.querySelector('.bf-datadive').briefingDive")
+    assert page.evaluate("document.querySelector('.bf-datadive').briefingDive.shown()") == 3

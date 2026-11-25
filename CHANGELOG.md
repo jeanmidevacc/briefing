@@ -28,6 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `bf.lab.DataDive` draws its dots on a canvas, from data packed by column, and stays quick
+  up to 100,000 rows: the new `DataDive.MAX_ROWS` (was 10,000), measured at 0.3 s to open a
+  100,000-row report and under 0.1 s to redraw (#16). Under its controls, a legend colours
+  the dots and filters them: a click hides or shows a category, Alt+click shows it alone.
+  New `colors=` takes a `bf.Scale`, categorical or numeric, so the dots match the report's
+  other charts; without it, categories take the theme's palette. Dates read as dates on an
+  axis, and categories spread their dots across their band. In prints and `save_pdf`, up to
+  5,000 dots stay vector; more print as a picture.
 - The copy-embed `</>` button (and the new camera button) moved to the bottom-right corner
   of its block, clear of the toolbar Plotly draws at a chart's top right; a labelled group's
   sits just below the group, and a page's just above it, under its tab (#215). While hidden,

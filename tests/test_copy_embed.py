@@ -109,7 +109,8 @@ def test_each_block_names_the_runtimes_and_scripts_it_needs() -> None:
     assert [b["runtimes"] for b in blocks] == [["Plotly"], []]
     assert [[scripts[i] for i in b["scripts"]] for b in blocks] == [
         [static_files()["static/report.js"]],
-        [static_files()["static/report.js"], static_files()["lab/static/lab.js"]],
+        # A DataDive's columns are packed (#16): its fragment brings the unpacker too.
+        [static_files()["static/report.js"], static_files()["static/unpack.js"], static_files()["lab/static/lab.js"]],
     ]
     assert find_one(parse(html), 'script[data-bf-runtime="Plotly"]')
 
