@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bf.datasets` (#46): sample data generated on your machine from a seed, the same rows for
+  the same name, size and seed everywhere, with no download or data file.
+  `bf.datasets.load(name, n=, seed=, engine=)` returns a pandas, polars or pyarrow table, or a
+  `bf.datasets.Tables` of several; `bf.datasets.names()` lists them: `sales`,
+  `collection_log`, `corpus`, `train_test`, `recsys` and `embeddings`. A new guide shows each
+  one with its columns. The project that `python -m briefing new` makes now starts from
+  `collection_log`.
 - `bf.Briefing(..., export="snapshot")`: a camera button on each page, labelled group,
   chart, table, text, number, alert, banner and lab block copies that block, as it is on
   screen, as a PNG image at 2× to the clipboard, ready to paste into a slide or a message
