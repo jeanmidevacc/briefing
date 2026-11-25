@@ -152,7 +152,7 @@ for place, level in [("Worldwide", 55), ("United States", 35)]:
 bf.save(report, "one-legend.html", name="One legend")
 ```
 
-For values that go negative, such as a daily balance, `center=0` makes the scale
+For values that go negative, such as a daily balance, `bf.Scale(..., center=0)` makes the scale
 diverging, with an odd number of colours: the middle one sits at the centre.
 
 ```{briefing-example}

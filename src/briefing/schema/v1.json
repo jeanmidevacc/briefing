@@ -2274,21 +2274,6 @@
           ],
           "default": "github"
         },
-        "center": {
-          "description": "*Deprecated since 0.6.0:* use `colors=bf.Scale([...], center=...)`.",
-          "anyOf": [
-            {
-              "type": [
-                "number",
-                "null"
-              ]
-            },
-            {
-              "$ref": "#/$defs/ref"
-            }
-          ],
-          "default": null
-        },
         "week_start": {
           "description": "`\"monday\"` or `\"sunday\"`: the first row of the grid.",
           "anyOf": [
@@ -2611,21 +2596,6 @@
             }
           ],
           "default": "github"
-        },
-        "center": {
-          "description": "*Deprecated since 0.6.0:* use `colors=bf.Scale([...], center=...)`.",
-          "anyOf": [
-            {
-              "type": [
-                "number",
-                "null"
-              ]
-            },
-            {
-              "$ref": "#/$defs/ref"
-            }
-          ],
-          "default": null
         },
         "week_start": {
           "description": "`\"monday\"` or `\"sunday\"`: the first weekday of a `weekday` axis.",

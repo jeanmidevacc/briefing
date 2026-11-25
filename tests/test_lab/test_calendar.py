@@ -34,8 +34,7 @@ def _cells(soup: BeautifulSoup) -> dict[str, Tag]:
         ({"week_start": "friday"}, "week_start"),
         ({"colors": "viridis"}, "colors"),
         ({"colors": ["#000"]}, "colors"),
-        ({"center": 0, "colors": ["#ff0000", "#00ff00"]}, "three"),
-        ({"center": 0, "colors": ["red", "white", "blue"]}, "hex"),
+        ({"center": 0, "colors": ["#ff0000", "#ffffff", "#00ff00"]}, r"center= was removed in briefing 0\.8\.0"),
         ({"group": "nope"}, "column 'nope'"),
     ],
 )
@@ -147,12 +146,11 @@ def test_events_as_single_dates(df_pipeline_log: pd.DataFrame) -> None:
     assert len(soup.select(".bf-cal__event--day")) == 2
 
 
-@pytest.mark.filterwarnings("ignore:CalendarHeatmap. center= is deprecated:DeprecationWarning")
-def test_center_gives_a_diverging_scale(df_signed: pd.DataFrame) -> None:
-    # The deprecated center= (#175) keeps working until 0.8.0.
+def test_a_centred_scale_is_diverging(df_signed: pd.DataFrame) -> None:
+    # What the heatmap's own center= did until 0.8.0 (#175, #196).
     df = pd.concat([df_signed, pd.DataFrame({"day": [pd.Timestamp("2026-05-01")], "balance": [0.0]})])
-    soup = _soup(CalendarHeatmap(df, date="day", value="balance", center=0,
-                                 colors=["#ff0000", "#ffffff", "#0000ff"]))
+    soup = _soup(CalendarHeatmap(df, date="day", value="balance",
+                                 colors=bf.Scale(["#ff0000", "#ffffff", "#0000ff"], center=0)))
     cells = _cells(soup)
     def rgb(cell: Tag) -> tuple[int, int, int]:
         h = attr(cell, "fill").lstrip("#")

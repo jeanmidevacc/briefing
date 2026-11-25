@@ -111,7 +111,7 @@ def test_group_order_puts_the_listed_groups_first() -> None:
         ({"on_click": "line"}, r"on_click must be 'rows' or None"),
         ({"week_start": "friday"}, r"week_start must be 'monday' or 'sunday'"),
         ({"tz": "Mars/Base"}, r"TimeHeatmap: unknown time zone 'Mars/Base'"),
-        ({"center": 0}, r"TimeHeatmap: center= needs colors= as three hex colours"),
+        ({"center": 0}, r"TimeHeatmap: center= was removed in briefing 0\.8\.0"),
         ({"group_order": ["a"]}, r"TimeHeatmap: group_order needs group="),
         ({"group": "team", "group_order": ["a", "z"]},
          r"group_order lists \['z'\], which aren't values of 'team'. Pass names from \['a', 'b'\]"),
@@ -119,7 +119,6 @@ def test_group_order_puts_the_listed_groups_first() -> None:
         ({"group": "team", "group_order": "b"}, r"group_order must be a list of group names"),
     ],
 )
-@pytest.mark.filterwarnings("ignore:TimeHeatmap. center= is deprecated:DeprecationWarning")
 def test_options_that_dont_fit_say_what_to_pass(kwargs: dict[str, t.Any], message: str) -> None:
     options = {"date": "run_at", "rows": "weekday", "columns": "month", **kwargs}
     with pytest.raises(bf.BriefingError, match=message):
