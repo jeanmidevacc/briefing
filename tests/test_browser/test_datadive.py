@@ -514,3 +514,32 @@ def test_a_click_on_a_zoomed_dot_opens_its_card(viewer: Viewer) -> None:
 def test_tiles_do_not_zoom(viewer: Viewer) -> None:
     page = viewer.open(bf.Briefing(bf.lab.DataDive(_DF, x="team", layout="tile")))
     expect(_dive(page).locator(".bf-dd__zoom")).to_be_hidden()
+
+
+# ── thumbnails= ─────────────────────────────────────────────────────────────────
+
+
+def test_tiles_show_the_pictures_when_there_is_room(viewer: Viewer) -> None:
+    films = bf.datasets.load("recsys").catalog
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(films, x="genre", color="genre", layout="tile", title="title",
+                                                   thumbnails="thumbnail", buckets=6)))
+    dive = _dive(page)
+    page.locator('select[data-axis="y"]').select_option("")
+    assert dive.evaluate("d => d.briefingDive.pictured()")
+    assert dive.evaluate("d => d.briefingDive.shown()") == 96
+    _click_dot(page, dive, 0)
+    expect(dive.locator(".bf-dd__card-thumb")).to_have_attribute("src", films["thumbnail"][0])
+    page.evaluate("window.dispatchEvent(new Event('beforeprint'))")  # pictures print as the canvas
+    expect(dive.locator(".bf-dd__print")).to_have_count(0)
+
+
+def test_a_scatter_keeps_its_dots_and_the_tooltip_shows_the_picture(viewer: Viewer) -> None:
+    films = bf.datasets.load("recsys").catalog
+    page = viewer.open(bf.Briefing(bf.lab.DataDive(films, x="year", y="genre", thumbnails="thumbnail")))
+    dive = _dive(page)
+    assert not dive.evaluate("d => d.briefingDive.pictured()")
+    box = dive.locator("canvas").bounding_box()
+    assert box is not None
+    dot, unit = _dot(dive, 5), box["width"] / dive.evaluate("d => d.briefingDive.width()")
+    page.mouse.move(box["x"] + dot["x"] * unit, box["y"] + dot["y"] * unit)
+    expect(dive.locator(".bf-dd__tip-thumb")).to_be_visible()

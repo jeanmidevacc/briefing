@@ -56,7 +56,7 @@
       var t = i / 63 * 2, k = Math.min(1, Math.floor(t));
       ramp.push(hex(mix(stops[k], stops[k + 1], t - k)));
     }
-    return { palette: palette, ramp: ramp, dim: hex(mix(bg, text, 0.45)) };
+    return { palette: palette, ramp: ramp, dim: hex(mix(bg, text, 0.45)), bg: hex(bg) };
   }
 
   // ── text ────────────────────────────────────────────────────────────────────
@@ -109,7 +109,8 @@
       }
     });
     var scaleEl = container.querySelector('script.bf-dd__scale');
-    return { n: payload.rows, cols: cols, names: names, scale: scaleEl ? JSON.parse(scaleEl.textContent) : null };
+    return { n: payload.rows, cols: cols, names: names, scale: scaleEl ? JSON.parse(scaleEl.textContent) : null,
+             thumbs: payload.thumbs || null };
   }
 
   // A cell as text for the tooltip, or null when it is missing.
@@ -547,9 +548,13 @@
         (cells[key] || (cells[key] = [])).push(i);
       }
       Object.keys(cells).forEach(function (k) { most = Math.max(most, cells[k].length); });
-      var room = Math.max(1, (cw - 2 * PAD) * (ch - 2 * PAD));
-      var step = Math.max(1.5, Math.min(11, Math.floor(Math.sqrt(room / most) * 10) / 10));
-      radius = Math.max(0.6, step * 0.42);
+      // The biggest step at which the fullest cell's rows still fit: dots stay small (11 px at
+      // most); with thumbnails, cells with room show the pictures, up to 56 px.
+      var wide = cw - 2 * PAD, tall = ch - 2 * PAD, step = data.thumbs ? 56 : 11;
+      while (step > 1.5 && Math.ceil(most / Math.max(1, Math.floor(wide / step))) * step > tall) step -= step > 8 ? 1 : 0.25;
+      step = Math.max(1.5, step);
+      tileStep = step;
+      radius = Math.max(0.6, Math.min(5, step * 0.42));
       var per = Math.max(1, Math.floor((cw - 2 * PAD) / step));
       var rank = colour.kind === 'categorical' ? function (q) { var k = colour.code(q); return k < 0 ? 1e9 : k; } : function () { return 0; };
       Object.keys(cells).forEach(function (key) {
@@ -558,7 +563,7 @@
         var list = cells[key].slice().sort(function (p, q) { return rank(p) - rank(q) || p - q; });
         list.forEach(function (q, d) {
           var y = top + Math.floor(d / per) * step + step / 2;
-          if (y > top - PAD + ch) return;  // more dots than the cell holds
+          if (y + step / 2 > top - PAD + ch) return;  // more than the cell holds, even at the smallest step
           xs[q] = left + (d % per) * step + step / 2;
           ys[q] = y;
         });
@@ -592,6 +597,7 @@
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);
       var alpha = layout === 'tile' ? 0.85 : count > 20000 ? 0.55 : 0.72, square = radius < 1.8;
+      if (pictured()) { paintPictures(ctx, px, py); return; }
       painted.order.forEach(function (c) {
         ctx.fillStyle = c === DIM ? look.dim : c;
         ctx.globalAlpha = c === DIM ? 0.28 : alpha;
@@ -611,6 +617,41 @@
           ctx.arc(px[p], py[p], radius, 0, 2 * Math.PI);
         }
         ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    // ── thumbnails (#16): in tiles with room, each dot shows its picture, framed in its colour
+    var pictures = [], tileStep = 0;
+    function pictured() { return !!data.thumbs && layout === 'tile' && tileStep >= 16; }
+    function picture(k) {  // made when first needed; the page repaints once it has loaded
+      if (!pictures[k]) {
+        var img = new Image();
+        img.onload = function () { if (pictured()) paint(xs, ys); };
+        img.src = data.thumbs.images[k];
+        pictures[k] = img;
+      }
+      return pictures[k];
+    }
+    function paintPictures(ctx, px, py) {
+      var size = tileStep - 3, half = size / 2;
+      painted.order.forEach(function (c) {
+        var list = painted.groups[c];
+        for (var j = 0; j < list.length; j++) {
+          var q = list[j];
+          if (px[q] !== px[q]) continue;
+          var k = data.thumbs.codes[q], img = k >= 0 ? picture(k) : null;
+          ctx.globalAlpha = c === DIM ? 0.25 : 1;
+          ctx.fillStyle = c === DIM ? look.dim : c;
+          ctx.fillRect(px[q] - half - 1, py[q] - half - 1, size + 2, size + 2);  // its colour, as a frame
+          if (img && img.complete && img.naturalWidth) {
+            var fit = Math.min(size / img.naturalWidth, size / img.naturalHeight);
+            var w = img.naturalWidth * fit, h = img.naturalHeight * fit;
+            ctx.fillStyle = look.bg;
+            ctx.fillRect(px[q] - half, py[q] - half, size, size);
+            ctx.drawImage(img, px[q] - w / 2, py[q] - h / 2, w, h);
+          }
+        }
       });
       ctx.globalAlpha = 1;
     }
@@ -657,7 +698,7 @@
 
       var groups = {}, order = [], dimmed = [], lit = 0, dim = narrowing && mode === 'highlight';
       grid = {};
-      cell = Math.max(8, radius * 3);
+      cell = Math.max(8, radius * 3, pictured() ? tileStep : 0);
       for (i = 0; i < n; i++) {
         if (!shown[i] || xs[i] !== xs[i] || ys[i] !== ys[i]) continue;
         if (dim && !match[i]) { dimmed.push(i); } else {
@@ -692,7 +733,8 @@
 
     // ── hover
     function nearest(x, y) {
-      var gx = Math.floor(x / cell), gy = Math.floor(y / cell), best = -1, bestD = (radius + 4) * (radius + 4);
+      var reach = pictured() ? tileStep / 2 : radius + 4;
+      var gx = Math.floor(x / cell), gy = Math.floor(y / cell), best = -1, bestD = reach * reach;
       for (var dx = -1; dx <= 1; dx++) {
         for (var dy = -1; dy <= 1; dy++) {
           var list = grid[(gx + dx) + ',' + (gy + dy)];
@@ -706,8 +748,19 @@
       return best;
     }
 
+    function thumbFor(i, cls) {
+      var k = data.thumbs ? data.thumbs.codes[i] : -1;
+      if (k < 0) return null;
+      var img = el('img', cls);
+      img.src = data.thumbs.images[k];
+      img.alt = '';
+      return img;
+    }
+
     function showTip(i, e) {
       tip.innerHTML = '';
+      var tipPicture = thumbFor(i, 'bf-dd__tip-thumb');
+      if (tipPicture) tip.appendChild(tipPicture);
       if (titleName) {
         var heading = document.createElement('div');
         heading.className = 'bf-dd__tip-title';
@@ -781,6 +834,8 @@
         body.appendChild(valueNode(name, i));
       });
       card.appendChild(head);
+      var cardPicture = thumbFor(i, 'bf-dd__card-thumb');
+      if (cardPicture) card.appendChild(cardPicture);
       card.appendChild(body);
       return card;
     }
@@ -1166,7 +1221,7 @@
       var old = svg.querySelector('.bf-dd__print');
       if (old) old.parentNode.removeChild(old);
       canvas.style.visibility = '';
-      if (!on || count > PRINT_VECTOR) return;
+      if (!on || count > PRINT_VECTOR || pictured()) return;  // pictures print as the canvas
       var dots = [], alpha = layout === 'tile' ? 0.85 : 0.72;
       for (var i = 0; i < n; i++) {
         if (!shown[i] || xs[i] !== xs[i] || ys[i] !== ys[i]) continue;
@@ -1189,6 +1244,7 @@
       searched: function () { return query; },
       view: function () { return { x0: view.x0, x1: view.x1, y0: view.y0, y1: view.y1 }; },
       moving: function () { return moving; },
+      pictured: pictured,
       cards: function () { return cards.map(function (c) { return { row: c.row, pinned: c.pinned }; }); },
       shown: function () { return count; },
       total: n,

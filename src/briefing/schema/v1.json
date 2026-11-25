@@ -2142,6 +2142,21 @@
           ],
           "default": null
         },
+        "thumbnails": {
+          "description": "Column of pictures, one per row: data URIs (`data:image/png;base64,…`), paths to PNG, JPEG, GIF, WebP or SVG files, or their bytes. In the `\"tile\"` layout, dots become their pictures when the cells have room; the tooltip and the card show them too. Each distinct picture is embedded once. Web addresses are refused: the report must work offline.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
         "max_rows": {
           "description": "Larger frames are sampled down to this many rows, with a warning.",
           "anyOf": [

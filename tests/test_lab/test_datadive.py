@@ -342,6 +342,53 @@ class TestTitle:
         assert soup.find("img") is None and attr(find_one(soup, "div.bf-datadive"), "data-title") == name
 
 
+# ── thumbnails= (#16) ─────────────────────────────────────────────────────────
+
+_PNG = bytes.fromhex("89504e470d0a1a0a0000000d4948445200000001000000010806000000"
+                     "1f15c4890000000d49444154789c6360000002000154a24f5d0000000049454e44ae426082")
+_SVG_URI = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4="
+
+
+class TestThumbnails:
+    def test_each_distinct_picture_travels_once(self):
+        df = pd.DataFrame({"v": [1, 2, 3, 4], "pic": [_SVG_URI, _SVG_URI, None, _PNG]})
+        data = _data(render_datadive(DataDive(df, thumbnails="pic")))
+        assert data["thumbs"]["codes"] == [0, 0, -1, 1]
+        images = data["thumbs"]["images"]
+        assert images[0] == _SVG_URI and images[1].startswith("data:image/png;base64,") and len(images) == 2
+
+    def test_the_picture_column_is_not_a_column_to_plot(self):
+        html = render_datadive(DataDive(pd.DataFrame({"v": [1], "pic": [_SVG_URI]}), thumbnails="pic"))
+        assert [c["name"] for c in _data(html)["columns"]] == ["v"]
+        assert "pic" not in [attr(o, "value") for o in BeautifulSoup(html, "html.parser").select("option")]
+
+    def test_files_are_read(self, tmp_path):
+        path = tmp_path / "one.png"
+        path.write_bytes(_PNG)
+        block = DataDive(pd.DataFrame({"v": [1, 2], "pic": [str(path), path]}), thumbnails="pic")
+        assert block.pictures is not None and len(block.pictures[0]) == 1 and block.pictures[1] == [0, 0]
+
+    @pytest.mark.parametrize(
+        ("value", "message"),
+        [
+            ("https://example.org/a.png", r"thumbnails must be in the report, not at an address"),
+            ("missing.png", r"thumbnail file not found"),
+            (b"not a picture", r"thumbnails must be PNG, JPEG, GIF, WebP or SVG pictures"),
+            (3.5, r"a thumbnail is a file path, bytes or a data URI, not 3\.5"),
+        ],
+    )
+    def test_what_isnt_a_picture_says_what_to_pass(self, value, message):
+        with pytest.raises(bf.BriefingError, match=message):
+            DataDive(pd.DataFrame({"v": [1], "pic": [value]}), thumbnails="pic")
+
+    def test_an_unknown_column_raises(self, simple_df):
+        with pytest.raises(bf.BriefingError, match=r"column 'nope' \(passed as 'thumbnails'\)"):
+            DataDive(simple_df, thumbnails="nope")
+
+    def test_no_pictures_without_thumbnails(self, simple_df):
+        assert "thumbs" not in _data(render_datadive(DataDive(simple_df)))
+
+
 # ── embedded JSON can't be closed by the data (#55) ───────────────────────────
 
 
