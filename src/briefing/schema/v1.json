@@ -2127,6 +2127,21 @@
           ],
           "default": null
         },
+        "title": {
+          "description": "Column that names each dot: the heading of its tooltip and of the card that opens when the dot is clicked. Without it, a card is headed by its row number.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
         "max_rows": {
           "description": "Larger frames are sampled down to this many rows, with a warning.",
           "anyOf": [
