@@ -801,6 +801,39 @@ html.bf-printing .bf-heading-actions { display: none; }
 .bf-dd__title { font-size: 12px; fill: var(--bf-muted); }
 .bf-dd__head { font-size: 11px; font-weight: 600; fill: var(--bf-text); }
 .bf-dd__hover { fill: none; stroke: var(--bf-text); stroke-width: 1.5; }
+.bf-dd__label { font-size: 10px; fill: var(--bf-text); paint-order: stroke; stroke: var(--bf-bg); stroke-width: 3px; }
+/* Zoom (#16): Ctrl or ⌘ + wheel on the plot, or these buttons; a plain wheel scrolls the page. */
+.bf-dd__zoom { position: absolute; top: 0.25rem; right: 0.25rem; z-index: 4; display: inline-flex; }
+.bf-dd__zoom[hidden] { display: none; }
+.bf-dd__zoom-btn {
+  min-width: 1.7rem;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--bf-border);
+  background: var(--bf-bg);
+  color: var(--bf-text);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.bf-dd__zoom-btn + .bf-dd__zoom-btn { margin-left: -1px; }
+.bf-dd__zoom-btn:first-child { border-radius: 999px 0 0 999px; }
+.bf-dd__zoom-btn:last-child { border-radius: 0 999px 999px 0; }
+.bf-dd__zoom-btn:disabled { color: var(--bf-muted); cursor: default; opacity: 0.6; }
+.bf-dd__zoom-btn:not(:disabled):hover, .bf-dd__zoom-btn:focus-visible { border-color: var(--bf-accent); position: relative; }
+.bf-dd__hint {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  transform: translate(-50%, -50%);
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--bf-radius);
+  background: var(--bf-text);
+  color: var(--bf-bg);
+  font-size: 0.8rem;
+  pointer-events: none;
+  opacity: 0.85;
+}
+.bf-dd__hint[hidden] { display: none; }
 .bf-dd__picked { fill: none; stroke: var(--bf-accent); stroke-width: 2; stroke-dasharray: 3 2; }
 .bf-dd__picked--pinned { stroke-dasharray: none; }
 
@@ -1130,6 +1163,7 @@ html.bf-printing .bf-dt__toolbar,
 html.bf-printing .bf-dt__footer,
 html.bf-printing .bf-dd__controls,
 html.bf-printing .bf-dd__filters,
+html.bf-printing .bf-dd__zoom,
 html.bf-printing .bf-dd__card-pin,
 html.bf-printing .bf-dd__card-close,
 html.bf-printing .bf-toggle__icon { display: none !important; }

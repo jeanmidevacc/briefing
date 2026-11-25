@@ -14,6 +14,7 @@
   var BLANK = '(blank)';
   var DIM = '\u0000dim';  // the group of dots that don't match, in Highlight mode
   var LEGEND_MAX = 24;  // categories listed before "+N more"
+  var MOTION_MAX = 30000;  // above this many dots, a change redraws at once: each frame would take too long
   var PRINT_VECTOR = 5000;  // up to this many dots print as SVG circles (vector PDFs); more print as the canvas
 
   // ── colours ─────────────────────────────────────────────────────────────────
@@ -184,21 +185,27 @@
 
   // Where each row sits along one axis, from lo to hi px: numbers and dates on a linear scale,
   // categories in bands with a little jitter. {pos: Float32Array (NaN when missing), ticks, title}
-  function axis(col, n, lo, hi, salt) {
+  // w0 and w1 are the zoom window: the part of the full range shown, as fractions (0 and 1: all of it).
+  function axis(col, n, lo, hi, salt, w0, w1) {
     var pos = new Float32Array(n), ticks = [], i;
+    if (w0 === undefined) { w0 = 0; w1 = 1; }
+    var zoom = 1 / (w1 - w0);
     if (col.kind === 'categorical') {
       var order = axisLevels(col), slot = {}, bands = order.length + (col.blanks ? 1 : 0) || 1;
       order.forEach(function (k, j) { slot[k] = j; });
-      var band = (hi - lo) / bands;
+      var at = function (f) { return lo + (f - w0) * zoom * (hi - lo); };  // f: a fraction of the full range
       for (i = 0; i < n; i++) {
         var k = col.codes[i], j = k < 0 ? bands - 1 : slot[k];
-        pos[i] = lo + (j + 0.5 + jitter(i, salt) * 0.7) * band;
+        pos[i] = at((j + 0.5 + jitter(i, salt) * 0.7) / bands);
       }
-      var every = Math.max(1, Math.ceil(bands / Math.max(2, Math.floor(Math.abs(hi - lo) / 60))));
-      order.forEach(function (k, j) {
-        if (j % every === 0) ticks.push({ at: lo + (j + 0.5) * band, label: cut(col.levels[k], 14), grid: false });
+      var seen = Math.max(1, bands / zoom);
+      var every = Math.max(1, Math.ceil(seen / Math.max(2, Math.floor(Math.abs(hi - lo) / 60))));
+      var labels = order.map(function (k) { return col.levels[k]; });
+      if (col.blanks) labels.push(BLANK);
+      labels.forEach(function (label, j) {
+        var f = (j + 0.5) / bands;
+        if (j % every === 0 && f >= w0 && f <= w1) ticks.push({ at: at(f), label: cut(label, 14), grid: false });
       });
-      if (col.blanks) ticks.push({ at: lo + (bands - 0.5) * band, label: BLANK, grid: false });
       return { pos: pos, ticks: ticks };
     }
     var a = col.lo, b = col.hi;
@@ -206,6 +213,9 @@
     if (a === b) { var w = col.kind === 'datetime' ? 864e5 : Math.abs(a) || 1; a -= w; b += w; }
     var padding = (b - a) * 0.03;
     a -= padding; b += padding;
+    var full = b - a;
+    a += full * w0;
+    b = a + full * (w1 - w0);
     var scale = (hi - lo) / (b - a);
     for (i = 0; i < n; i++) {
       var v = col.values[i];
@@ -301,6 +311,8 @@
     var cardsEl = container.querySelector('.bf-dd__cards');
     var cards = [];  // the open cards, in order: {row, pinned}
     var filters = [], query = '', mode = 'highlight', narrowing = false, match = new Uint8Array(n), lastLit = n;
+    var view = { x0: 0, x1: 1, y0: 0, y1: 1 }, geo = null, dpr = 1, drawnH = 400, painted = { groups: {}, order: [] };
+    function zoomed() { return 1 / Math.max(view.x1 - view.x0, view.y1 - view.y0); }
     var colour = null, hidden = {}, drawnWidth = 0, drawnW = 620;
     var xs = new Float32Array(n), ys = new Float32Array(n), shown = new Uint8Array(n), count = 0;
     var grid = null, cell = 12, radius = 3, hover = null;
@@ -465,12 +477,14 @@
       var xCol = data.cols[chosen('x')], yCol = data.cols[chosen('y')];
       var parts = [];
       if (!xCol || !yCol) { for (var m = 0; m < n; m++) xs[m] = ys[m] = NaN; return { H: H, parts: parts }; }
-      var ax = axis(xCol, n, 0, pw, 0), ay = axis(yCol, n, ph, 0, 1);
+      var ax = axis(xCol, n, 0, pw, 0, view.x0, view.x1), ay = axis(yCol, n, ph, 0, 1, view.y0, view.y1);
       for (var i = 0; i < n; i++) {
-        var r = f.r(i), c = f.c(i);
-        xs[i] = r < 0 || c < 0 ? NaN : ML + c * (pw + GAP) + ax.pos[i];
-        ys[i] = r < 0 || c < 0 ? NaN : MT + r * (ph + GAP) + ay.pos[i];
+        var r = f.r(i), c = f.c(i), lx = ax.pos[i], ly = ay.pos[i];
+        var out = r < 0 || c < 0 || lx < -1 || lx > pw + 1 || ly < -1 || ly > ph + 1;  // zoomed out of its panel
+        xs[i] = out ? NaN : ML + c * (pw + GAP) + lx;
+        ys[i] = out ? NaN : MT + r * (ph + GAP) + ly;
       }
+      geo = { left: ML, top: MT, pw: pw, ph: ph, gap: GAP, nr: f.nr, nc: f.nc };
       for (var pr = 0; pr < f.nr; pr++) {
         for (var pc = 0; pc < f.nc; pc++) {
           var x0 = ML + pc * (pw + GAP), y0 = MT + pr * (ph + GAP), x1 = x0 + pw, y1 = y0 + ph;
@@ -494,7 +508,21 @@
       parts.push('<text class="bf-dd__title" x="' + ((ML + W - MR) / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(chosen('x')) + '</text>');
       parts.push('<text class="bf-dd__title" transform="rotate(-90)" x="' + (-(MT + H - MB) / 2) + '" y="14" text-anchor="middle">' + esc(chosen('y')) + '</text>');
       radius = (count > 20000 ? 1.4 : count > 5000 ? 2 : count > 1000 ? 2.8 : 3.6) * (f.nr * f.nc > 1 ? 0.8 : 1);
+      if (zoomed() > 1) radius = Math.min(5, radius * Math.sqrt(zoomed()));  // bigger dots as they spread out
       return { H: H, parts: parts };
+    }
+
+    // Zoomed in far enough, dots are labelled by title=: only the ones in view, a few hundred at most.
+    function labels() {
+      if (!titleName || layout === 'tile' || zoomed() < 3) return '';
+      var out = [], dim = narrowing && mode === 'highlight';
+      for (var i = 0; i < n && out.length < 250; i++) {
+        if (!shown[i] || xs[i] !== xs[i] || (dim && !match[i])) continue;
+        var right = geo && xs[i] > geo.left + geo.nc * (geo.pw + geo.gap) - geo.gap - 130;  // near the edge: label on the left
+        out.push('<text class="bf-dd__label" x="' + (right ? xs[i] - radius - 3 : xs[i] + radius + 3).toFixed(1) + '" y="' +
+          (ys[i] + 3.5).toFixed(1) + '"' + (right ? ' text-anchor="end"' : '') + '>' + esc(cut(label(i), 24)) + '</text>');
+      }
+      return out.join('');
     }
 
     // Dots packed into cells, in each panel; every cell of every panel uses one dot size. -> {H, parts}
@@ -558,22 +586,75 @@
     }
 
     // ── drawing
-    function draw() {
+    // Paint the dots of `groups` (colour -> rows, in `order`) at px, py.
+    function paint(px, py) {
+      var ctx = canvas.getContext('2d'), W = drawnW, H = drawnH;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      var alpha = layout === 'tile' ? 0.85 : count > 20000 ? 0.55 : 0.72, square = radius < 1.8;
+      painted.order.forEach(function (c) {
+        ctx.fillStyle = c === DIM ? look.dim : c;
+        ctx.globalAlpha = c === DIM ? 0.28 : alpha;
+        var list = painted.groups[c];
+        if (square) {
+          for (var j = 0; j < list.length; j++) {
+            var q = list[j];
+            if (px[q] === px[q]) ctx.fillRect(px[q] - radius, py[q] - radius, radius * 2, radius * 2);
+          }
+          return;
+        }
+        ctx.beginPath();
+        for (var k = 0; k < list.length; k++) {
+          var p = list[k];
+          if (px[p] !== px[p]) continue;
+          ctx.moveTo(px[p] + radius, py[p]);
+          ctx.arc(px[p], py[p], radius, 0, 2 * Math.PI);
+        }
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var frame = 0, moving = false;
+    // Move the dots from where they were (fromX, fromY) to where they are now, in about 300 ms.
+    function glide(fromX, fromY) {
+      var start = null, px = new Float32Array(n), py = new Float32Array(n), mine = ++frame;
+      moving = true;
+      function step(now) {
+        if (mine !== frame) return;  // a newer draw took over
+        if (start === null) start = now;
+        var t = Math.min(1, (now - start) / 300), e = 1 - Math.pow(1 - t, 3);
+        for (var i = 0; i < n; i++) {
+          var a = fromX[i], b = fromY[i];
+          if (a !== a || b !== b) { px[i] = xs[i]; py[i] = ys[i]; continue; }  // new in view: in place
+          px[i] = a + (xs[i] - a) * e;
+          py[i] = b + (ys[i] - b) * e;
+        }
+        paint(px, py);
+        if (t < 1) window.requestAnimationFrame(step); else moving = false;
+      }
+      window.requestAnimationFrame(step);
+    }
+
+    function draw(animate) {
+      // Motion only where it stays smooth: up to MOTION_MAX dots, and never when the reader asks for less.
+      var fromX = animate && !REDUCED && !printing && count <= MOTION_MAX ? xs.slice() : null, fromY = fromX ? ys.slice() : null;
+      frame++;
+      moving = false;
       var W = Math.max(280, Math.round(area.clientWidth || 620));
       drawnWidth = area.clientWidth;
       drawnW = W;
       count = 0;
       for (var i = 0; i < n; i++) { shown[i] = visible(i) ? 1 : 0; count += shown[i]; }
       var placed = layout === 'tile' ? placeTile(W) : placeScatter(W), H = placed.H, parts = placed.parts;
-      var dpr = Math.min(3, window.devicePixelRatio || 1);
+      if (layout === 'tile') geo = null;
+      dpr = Math.min(3, window.devicePixelRatio || 1);
+      drawnH = H;
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
       svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
 
-      var ctx = canvas.getContext('2d');
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, W, H);
-      ctx.globalAlpha = layout === 'tile' ? 0.85 : count > 20000 ? 0.55 : 0.72;
       var groups = {}, order = [], dimmed = [], lit = 0, dim = narrowing && mode === 'highlight';
       grid = {};
       cell = Math.max(8, radius * 3);
@@ -588,26 +669,11 @@
         var key = Math.floor(xs[i] / cell) + ',' + Math.floor(ys[i] / cell);
         (grid[key] || (grid[key] = [])).push(i);
       }
-      var square = radius < 1.8, alpha = ctx.globalAlpha;
       if (dimmed.length) { groups[DIM] = dimmed; order.unshift(DIM); }  // under the matches
-      order.forEach(function (c) {
-        ctx.fillStyle = c === DIM ? look.dim : c;
-        ctx.globalAlpha = c === DIM ? 0.28 : alpha;
-        var list = groups[c];
-        if (square) {
-          for (var j = 0; j < list.length; j++) ctx.fillRect(xs[list[j]] - radius, ys[list[j]] - radius, radius * 2, radius * 2);
-          return;
-        }
-        ctx.beginPath();
-        for (var k = 0; k < list.length; k++) {
-          var p = list[k];
-          ctx.moveTo(xs[p] + radius, ys[p]);
-          ctx.arc(xs[p], ys[p], radius, 0, 2 * Math.PI);
-        }
-        ctx.fill();
-      });
-      ctx.globalAlpha = 1;
+      painted = { groups: groups, order: order };
+      if (fromX) glide(fromX, fromY); else paint(xs, ys);
 
+      parts.push(labels());
       parts.push('<g class="bf-dd__rings"></g>');
       parts.push('<circle class="bf-dd__hover" r="' + (radius + 2.5) + '" cx="-99" cy="-99"/>');
       svg.innerHTML = parts.join('');
@@ -759,6 +825,7 @@
     }
 
     canvas.addEventListener('click', function (e) {
+      if (dragged) { dragged = false; return; }  // the end of a pan, not a click on a dot
       var i = pick(e);
       if (i >= 0) { open(i); onEscape(closeAll); }
     });
@@ -974,10 +1041,112 @@
     }
     Object.keys(selects).forEach(function (name) {
       selects[name].addEventListener('change', function () {
-        if (name === 'color') recolour();
-        draw();
+        if (name === 'color') { recolour(); draw(); return; }
+        view = { x0: 0, x1: 1, y0: 0, y1: 1 };  // new axes: start from the whole range
+        draw(true);  // the dots move to their new places
+        zoomState();
       });
     });
+
+    // ── zoom and pan (the scatter layout): Ctrl or ⌘ + wheel (a trackpad's pinch), drag, double-click
+    function clampView(v) {
+      ['x', 'y'].forEach(function (a) {
+        var w = Math.min(1, v[a + '1'] - v[a + '0']);
+        var lo = Math.max(0, Math.min(1 - w, v[a + '0']));
+        v[a + '0'] = lo; v[a + '1'] = lo + w;
+      });
+      return v;
+    }
+
+    // Zoom by `factor` (2: twice as close) around the point at fx, fy (fractions of a panel, y up).
+    function zoomAt(factor, fx, fy) {
+      var w = (view.x1 - view.x0) / factor, h = (view.y1 - view.y0) / factor;
+      if (w < 0.002 || h < 0.002) return;  // as close as it goes
+      var cx = view.x0 + fx * (view.x1 - view.x0), cy = view.y0 + fy * (view.y1 - view.y0);
+      view = clampView({ x0: cx - fx * w, x1: cx - fx * w + w, y0: cy - fy * h, y1: cy - fy * h + h });
+      draw();
+      zoomState();
+    }
+
+    // Where a pointer is, as fractions of the panel under it (y up), or null outside the panels.
+    function inPanel(e) {
+      if (!geo) return null;
+      var rect = canvas.getBoundingClientRect(), unit = drawnW / rect.width;
+      var x = (e.clientX - rect.left) * unit - geo.left, y = (e.clientY - rect.top) * unit - geo.top;
+      var c = Math.floor(x / (geo.pw + geo.gap)), r = Math.floor(y / (geo.ph + geo.gap));
+      if (c < 0 || r < 0 || c >= geo.nc || r >= geo.nr) return null;
+      return { fx: (x - c * (geo.pw + geo.gap)) / geo.pw, fy: 1 - (y - r * (geo.ph + geo.gap)) / geo.ph, unit: unit };
+    }
+
+    var hint = el('div', 'bf-dd__hint', (/Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘' : 'Ctrl') + ' + scroll to zoom');
+    hint.hidden = true;
+    area.appendChild(hint);
+    var hintTimer = null;
+    canvas.addEventListener('wheel', function (e) {
+      if (layout === 'tile') return;
+      if (!e.ctrlKey && !e.metaKey) {  // a plain wheel scrolls the page, as everywhere else
+        hint.hidden = false;
+        clearTimeout(hintTimer);
+        hintTimer = setTimeout(function () { hint.hidden = true; }, 1200);
+        return;
+      }
+      var at = inPanel(e);
+      if (!at) return;
+      e.preventDefault();
+      zoomAt(Math.exp(-e.deltaY * 0.004), Math.max(0, Math.min(1, at.fx)), Math.max(0, Math.min(1, at.fy)));
+    }, { passive: false });
+
+    var drag = null, dragged = false;
+    canvas.addEventListener('pointerdown', function (e) {
+      dragged = false;
+      if (layout === 'tile' || zoomed() <= 1 || e.button !== 0 || !geo) return;
+      drag = { x: e.clientX, y: e.clientY, view: { x0: view.x0, x1: view.x1, y0: view.y0, y1: view.y1 } };
+      if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
+    });
+    canvas.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var rect = canvas.getBoundingClientRect(), unit = drawnW / rect.width;
+      var dx = (e.clientX - drag.x) * unit, dy = (e.clientY - drag.y) * unit;
+      if (!dragged && Math.abs(dx) + Math.abs(dy) < 4) return;
+      dragged = true;
+      tip.hidden = true;
+      var w = drag.view.x1 - drag.view.x0, h = drag.view.y1 - drag.view.y0;
+      view = clampView({ x0: drag.view.x0 - dx / geo.pw * w, x1: drag.view.x1 - dx / geo.pw * w,
+                         y0: drag.view.y0 + dy / geo.ph * h, y1: drag.view.y1 + dy / geo.ph * h });
+      draw();
+    });
+    canvas.addEventListener('pointerup', function () { drag = null; });
+    canvas.addEventListener('pointercancel', function () { drag = null; });
+    canvas.addEventListener('dblclick', function () { resetZoom(); });
+    canvas.style.touchAction = 'pan-y';
+
+    function resetZoom() {
+      if (zoomed() <= 1) return;
+      view = { x0: 0, x1: 1, y0: 0, y1: 1 };
+      draw();
+      zoomState();
+    }
+
+    var zoomBar = el('div', 'bf-dd__zoom');
+    zoomBar.setAttribute('role', 'group');
+    zoomBar.setAttribute('aria-label', 'Zoom');
+    [['+', 'Zoom in', function () { zoomAt(2, 0.5, 0.5); }], ['−', 'Zoom out', function () { zoomAt(0.5, 0.5, 0.5); }],
+     ['Reset', 'Show all the data again', resetZoom]].forEach(function (z) {
+      var b = el('button', 'bf-dd__zoom-btn', z[0]);
+      b.type = 'button';
+      b.setAttribute('aria-label', z[1]);
+      b.title = z[1];
+      b.addEventListener('click', z[2]);
+      zoomBar.appendChild(b);
+    });
+    zoomBar.hidden = layout === 'tile';
+    area.appendChild(zoomBar);
+    // Zooming out and resetting only mean something once zoomed in.
+    function zoomState() {
+      var close = zoomed() > 1;
+      zoomBar.querySelectorAll('.bf-dd__zoom-btn').forEach(function (b, k) { if (k) b.disabled = !close; });
+    }
+    zoomState();
 
     recolour();
     draw();
@@ -1018,6 +1187,8 @@
       open: open,
       matches: function () { return narrowing ? lastLit : count; },
       searched: function () { return query; },
+      view: function () { return { x0: view.x0, x1: view.x1, y0: view.y0, y1: view.y1 }; },
+      moving: function () { return moving; },
       cards: function () { return cards.map(function (c) { return { row: c.row, pinned: c.pinned }; }); },
       shown: function () { return count; },
       total: n,
