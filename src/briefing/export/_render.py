@@ -35,10 +35,7 @@ ReportSource = t.Any
 _DRAWN_JS = """() =>
   [...document.querySelectorAll('.js-plotly-plot')].every(e => e.querySelector('.main-svg')) &&
   [...document.querySelectorAll('.bf-altair')].every(e => e.querySelector('svg, canvas')) &&
-  [...document.querySelectorAll('.bf-datadive')].every(e => {
-    const data = e.querySelector('.bf-dd__data');
-    return !data || JSON.parse(data.textContent).length === 0 || e.querySelector('.bf-dd__dot');
-  }) &&
+  [...document.querySelectorAll('.bf-datadive')].every(e => !e.querySelector('.bf-dd__data') || e.briefingDive) &&
   document.fonts.status === 'loaded'
 """
 

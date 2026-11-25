@@ -109,7 +109,7 @@ def test_charts_and_lab_blocks_are_drawn_before_capture() -> None:
 
 STATE_JS = """() => ({
           plotly: document.querySelectorAll('.js-plotly-plot .main-svg').length > 0,
-          dots: document.querySelectorAll('.bf-dd__dot').length,
+          dots: [...document.querySelectorAll('.bf-datadive')].reduce((n, d) => n + d.briefingDive.shown(), 0),
           profile: document.querySelectorAll('.bf-profile__card svg').length,
           chartWidth: document.querySelector('.js-plotly-plot .main-svg').getBoundingClientRect().width,
         })"""

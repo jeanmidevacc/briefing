@@ -34,6 +34,8 @@ class Block:
     #: What the copy-embed button calls a block of this type ("Copy embed code for this
     #: chart", #124), or ``None`` when the block gets no button.
     embed_noun: t.ClassVar[str | None] = None
+    #: Whether this block's data travels packed, for ``static/unpack.js`` to open (#38, #16).
+    packs_data: t.ClassVar[bool] = False
 
     def __init__(
         self,

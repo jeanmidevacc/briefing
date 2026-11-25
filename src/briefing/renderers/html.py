@@ -744,6 +744,8 @@ def block_scripts(root: Block) -> list[str]:
     """
     scripts: list[str] = []
     for block in iter_blocks(root):
+        if type(block).packs_data and UNPACK_JS not in scripts:
+            scripts.append(UNPACK_JS)  # e.g. a DataDive's columns (#16)
         js = asset_js_for(block)
         if js is None and isinstance(block, DataTable) and from_json(block):
             js = UNPACK_JS  # a big table's rows are packed (#38)

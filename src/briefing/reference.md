@@ -264,7 +264,8 @@ Interactive dot explorer — similar to Google's Facets Dive.
 - `facet_row`: text. Accepted but not drawn yet (a warning says so); planned for DataDive v2.
 - `facet_col`: text. Accepted but not drawn yet (a warning says so); planned for DataDive v2.
 - `layout`: one of "scatter", "tile", default `"scatter"`. `"scatter"` (two axes) or `"tile"` (packed dots per cell).
-- `max_rows`: a whole number, default `10000`. Larger frames are sampled down to this many rows, with a warning.
+- `colors`: a scale {"colors": ["#...", "#..."], "domain": [0, 100]}. A Scale for the dots' colours, so they match the other blocks of the report. A categorical scale colours the categories it names (others take the theme's palette); a numeric one colours numbers and dates. Without it, categories take the theme's palette and numbers a ramp to its accent.
+- `max_rows`: a whole number, default `100000`. Larger frames are sampled down to this many rows, with a warning.
 
 ### lab.CalendarHeatmap
 

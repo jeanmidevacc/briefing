@@ -35,6 +35,16 @@ Each row becomes a dot. The reader picks which columns drive the X axis, the Y a
 and the colour; `layout="tile"` packs the dots into a grid of cells instead of
 plotting them on axes, like Facets Dive.
 
+- The legend under the controls filters: a click hides or shows a category's dots, and
+  Alt+click shows that category alone. A number or a date column colours along a ramp.
+- `colors=` takes a `bf.Scale`, so the dots match the report's other charts. A categorical
+  scale colours the categories it names; a numeric one colours numbers and dates. Without
+  it, categories take the theme's palette and numbers a ramp to its accent.
+- The dots are drawn on a canvas, so a DataDive stays quick up to `DataDive.MAX_ROWS`
+  (100,000) rows; a larger frame is sampled down to `max_rows=`, with a warning. Printed
+  or saved with `save_pdf`, up to 5,000 dots stay vector; more print as a picture, with
+  their axes and labels still text.
+
 ```{briefing-example}
 :title: A DataDive
 :height: 620
@@ -52,6 +62,20 @@ stores = pd.DataFrame({
     "format": rng.choice(["mall", "street", "outlet"], n),
 })
 bf.save(bf.lab.DataDive(stores, x="revenue", y="margin_pct", color="region"), "dive.html", name="Stores")
+```
+
+An embedding map is a DataDive of precomputed coordinates, coloured by cluster:
+
+```{briefing-example}
+:title: An embedding map, coloured with a bf.Scale
+:height: 620
+
+import briefing as bf
+
+points = bf.datasets.load("embeddings")
+topics = bf.Scale(["#2563eb", "#16a34a", "#9333ea", "#ea580c", "#dc2626", "#0891b2"],
+                  domain=["sports", "finance", "science", "travel", "food", "music"])
+bf.save(bf.lab.DataDive(points, x="x", y="y", color="cluster", colors=topics), "map.html", name="Articles")
 ```
 
 ## `CalendarHeatmap`: one cell per day

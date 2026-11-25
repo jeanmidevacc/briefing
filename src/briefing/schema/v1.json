@@ -2092,6 +2092,21 @@
           ],
           "default": "scatter"
         },
+        "colors": {
+          "description": "A Scale for the dots' colours, so they match the other blocks of the report. A categorical scale colours the categories it names (others take the theme's palette); a numeric one colours numbers and dates. Without it, categories take the theme's palette and numbers a ramp to its accent.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/scale"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
         "max_rows": {
           "description": "Larger frames are sampled down to this many rows, with a warning.",
           "anyOf": [
@@ -2102,7 +2117,7 @@
               "$ref": "#/$defs/ref"
             }
           ],
-          "default": 10000
+          "default": 100000
         },
         "name": {
           "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",

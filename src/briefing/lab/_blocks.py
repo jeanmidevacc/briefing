@@ -74,13 +74,14 @@ class DataDive(Block):
 
     Each row in the DataFrame becomes a dot in a 2-D space. Dropdowns let the
     viewer dynamically reassign which columns drive X position, Y position and
-    colour.
+    colour. The legend under them filters: a click hides or shows a category's
+    dots, and Alt+click shows that category alone.
 
     ``facet_row`` and ``facet_col`` are accepted but not drawn yet: passing one
     emits a ``UserWarning``. Faceting is planned for DataDive v2 (#16).
 
-    Fully self-contained: the plot is drawn with hand-rolled SVG and vanilla JS
-    (no Vega, D3, or CDN). The row data is embedded in the page as JSON.
+    Fully self-contained: the dots are drawn on a canvas with vanilla JS (no Vega,
+    D3, or CDN), from the data embedded in the page, packed by column.
 
     Args:
         df: The data, as any dataframe briefing accepts.
@@ -90,6 +91,10 @@ class DataDive(Block):
         facet_row: Accepted but not drawn yet (a warning says so); planned for DataDive v2.
         facet_col: Accepted but not drawn yet (a warning says so); planned for DataDive v2.
         layout: ``"scatter"`` (two axes) or ``"tile"`` (packed dots per cell).
+        colors: A :class:`~briefing.Scale` for the dots' colours, so they match the other
+            blocks of the report. A categorical scale colours the categories it names
+            (others take the theme's palette); a numeric one colours numbers and dates.
+            Without it, categories take the theme's palette and numbers a ramp to its accent.
         max_rows: Larger frames are sampled down to this many rows, with a warning.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
@@ -98,12 +103,14 @@ class DataDive(Block):
 
         bf.lab.DataDive(df)
         bf.lab.DataDive(df, x="revenue", y="units", color="region", max_rows=5_000)
+        bf.lab.DataDive(df, color="region", colors=bf.Scale(["#d71920", "#1a4782"], domain=["East", "West"]))
     """
 
     embed_noun: t.ClassVar[str | None] = "chart"
+    packs_data: t.ClassVar[bool] = True
 
-    #: DataFrames larger than this are sampled with a warning.
-    MAX_ROWS: t.ClassVar[int] = 10_000
+    #: DataFrames larger than this are sampled with a warning: the canvas stays responsive up to it (#16).
+    MAX_ROWS: t.ClassVar[int] = 100_000
 
     def __init__(
         self,
@@ -114,6 +121,7 @@ class DataDive(Block):
         facet_row: str | None = None,
         facet_col: str | None = None,
         layout: str = "scatter",
+        colors: Scale | Mapping[str, t.Any] | None = None,
         max_rows: int = MAX_ROWS,
         name: BlockId | None = None,
         label: str | None = None,
@@ -160,6 +168,9 @@ class DataDive(Block):
         self.facet_row = facet_row
         self.facet_col = facet_col
         self.layout = layout
+        self.colors = Scale.of(colors) if isinstance(colors, Mapping) else colors
+        if self.colors is not None and not isinstance(self.colors, Scale):
+            raise BriefingError(f"DataDive: colors must be a bf.Scale, not {colors!r}.")
         self.max_rows = max_rows
 
 

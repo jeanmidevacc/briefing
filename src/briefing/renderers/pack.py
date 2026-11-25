@@ -13,10 +13,14 @@ from importlib.resources import files
 UNPACK_JS = (files("briefing") / "static" / "unpack.js").read_text(encoding="utf-8")
 
 
-def pack(text: str) -> tuple[str, int]:
-    """``(base64 of the raw-deflated UTF-8 of text, its length in bytes)``."""
+def pack(text: str, level: int = 9) -> tuple[str, int]:
+    """``(base64 of the raw-deflated UTF-8 of text, its length in bytes)``.
+
+    *level* trades time for size: 9 is the smallest; 6 is about eight times faster on
+    megabytes of data for 2 % more (a DataDive's columns, #16).
+    """
     data = text.encode()
-    compressor = zlib.compressobj(9, zlib.DEFLATED, -15, 9)
+    compressor = zlib.compressobj(level, zlib.DEFLATED, -15, 9)
     packed = compressor.compress(data) + compressor.flush()
     return base64.b64encode(packed).decode("ascii"), len(data)
 
