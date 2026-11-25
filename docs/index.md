@@ -54,6 +54,7 @@ three outputs.
 quickstart
 concepts
 guides/project
+guides/datasets
 ```
 
 ```{toctree}
@@ -137,6 +138,7 @@ api/formatting
 api/output
 api/json
 api/lab
+api/datasets
 ```
 
 ```{toctree}

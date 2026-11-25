@@ -105,6 +105,8 @@ dev = [
     "pandas>=2.0",
     "pandas-stubs>=2.0",
     "pyarrow>=15.0",
+    # bf.datasets.load(engine="polars") and polars intake (#46)
+    "polars>=1.0",
     # exercised by the Plot renderer and contract tests so the adapter branches are covered
     "plotly>=5.0",
     "matplotlib>=3.7",
@@ -147,11 +149,11 @@ strict = true
 warn_return_any = true
 warn_unused_configs = true
 
-# Optional plotting / markdown libraries ship no (or partial) type information.
+# Optional plotting / markdown / dataframe libraries ship no (or partial) type information.
 [[tool.mypy.overrides]]
 module = [
     "plotly.*", "altair.*", "bokeh.*", "matplotlib.*", "seaborn.*", "plotnine.*",
-    "markdown_it.*", "pygments.*",
+    "markdown_it.*", "pygments.*", "pyarrow.*",
 ]
 ignore_missing_imports = true
 

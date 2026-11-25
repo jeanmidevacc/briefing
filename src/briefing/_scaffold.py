@@ -15,7 +15,6 @@ _BUILD = '''"""__TITLE__: build the report.
 """
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 import briefing as bf
@@ -26,33 +25,30 @@ TITLE = __TITLE_REPR__
 
 
 def load() -> pd.DataFrame:
-    """The data. Replace this with your own: a CSV, a Parquet file, a database query."""
-    rng = np.random.default_rng(7)
-    days = pd.date_range(end="2026-11-20", periods=120, freq="D")
-    return pd.DataFrame({
-        "day": days,
-        "rows": rng.normal(1200, 300, len(days)).clip(0).round(),
-        "status": rng.choice(["ok", "ok", "ok", "failed"], len(days)),
-    })
+    """The data. Replace this with your own: a CSV, a Parquet file, a database query.
+
+    This sample is a pipeline's runs over 120 days: run_at, status, rows, duration_s.
+    """
+    return bf.datasets.load("collection_log")
 
 
 def build(df: pd.DataFrame) -> bf.Briefing:
     """The report: the prose lives in report.md; this fills its values and its blocks."""
     failed = int((df["status"] == "failed").sum())
     facts = {
-        "through": bf.fmt.date(df["day"].max()),
+        "through": bf.fmt.date(df["run_at"].max()),
         "runs": len(df),
         "failed": failed,
     }
     kpis = bf.Group(
         bf.BigNumber("Runs", len(df), format="{:,}", name="runs-count"),
         bf.BigNumber("Failure rate", failed / len(df), format="{:.1%}", name="failure-rate"),
-        bf.BigNumber("Rows, last day", df["rows"].iloc[-1], prev_value=df["rows"].iloc[-2], format="{:,.0f}",
-                     sparkline=df["rows"].tail(30), name="last-day"),
+        bf.BigNumber("Rows, last run", df["rows"].iloc[-1], prev_value=df["rows"].iloc[-2], format="{:,.0f}",
+                     sparkline=df["rows"].tail(30), name="last-run"),
         min_width="12rem",
     )
-    calendar = bf.lab.CalendarHeatmap(df, date="day", value="rows", colors=ACTIVITY, name="calendar")
-    newest = df.sort_values("day", ascending=False).reset_index(drop=True)
+    calendar = bf.lab.CalendarHeatmap(df, date="run_at", value="rows", colors=ACTIVITY, name="calendar")
+    newest = df.sort_values("run_at", ascending=False).reset_index(drop=True)
     runs = bf.DataTable(newest, caption="Every run, newest first", name="runs")
     return bf.from_markdown(HERE / "report.md", values=facts,
                             blocks={"kpis": kpis, "calendar": calendar, "runs": runs})
@@ -67,7 +63,7 @@ _REPORT = '''## Summary {#auto}
 Data through **{through}**: {runs:,} runs, {failed} of them failed.
 
 ::: block kpis
-The headline numbers: runs, failure rate, rows on the last day.
+The headline numbers: runs, failure rate, rows in the last run.
 :::
 
 ## Day by day {#auto}
