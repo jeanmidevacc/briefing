@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from playwright.sync_api import Page, Route
+from playwright.sync_api import Locator, Page, Route
 
 import briefing as bf
 
@@ -117,3 +117,12 @@ def counting_server() -> Iterator[tuple[str, list[str]]]:
     threading.Thread(target=server.serve_forever, daemon=True).start()
     yield f"http://127.0.0.1:{server.server_address[1]}", hits
     server.shutdown()
+
+
+def click_tool(button: Locator) -> None:
+    """Click a block's copy-embed or snapshot *button* as a mouse does: over the block first.
+
+    Hidden, the block's toolbar lets clicks through (#215); hovering its block shows it.
+    """
+    button.locator("xpath=../..").hover()
+    button.click()

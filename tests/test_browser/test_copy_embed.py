@@ -10,7 +10,7 @@ from playwright.sync_api import Page, expect
 import briefing as bf
 from briefing.export._render import open_report, outside_event_loop
 from tests.contract import FRAGMENT_RULES, parse_report
-from tests.test_browser.conftest import Viewer
+from tests.test_browser.conftest import Viewer, click_tool
 
 _ROWS = pd.DataFrame({"n": [3, 1, 2], "word": ["three", "one", "two"]})
 
@@ -37,7 +37,7 @@ def _open(viewer: Viewer) -> Page:
 
 
 def _copy(page: Page, label: str) -> str:
-    page.get_by_role("button", name=f"Copy embed code for {label}").click()
+    click_tool(page.get_by_role("button", name=f"Copy embed code for {label}"))
     expect(page.locator(".bf-copy__toast")).to_contain_text("Embed code copied, ")
     copied: str = page.evaluate("navigator.clipboard.readText()")
     return copied
@@ -92,7 +92,7 @@ def test_the_code_shows_in_a_dialog_when_copying_is_refused(viewer: Viewer) -> N
         document.execCommand = () => false;
     }""")
     page.get_by_role("tab", name="Detail").click()
-    page.get_by_role("button", name="Copy embed code for this table").click()
+    click_tool(page.get_by_role("button", name="Copy embed code for this table"))
     dialog = page.get_by_role("dialog", name="Embed code for this table")
     expect(dialog).to_be_visible()
     code = dialog.locator("textarea")

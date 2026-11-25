@@ -1,22 +1,29 @@
 /* briefing copy-embed (#124) and snapshot (#215) buttons: only inlined in reports built with
    export="embed" or export="snapshot". copy-embed.js adds a "</>" button and export.js a camera
    button to each block marked data-bf-embed or data-bf-snap, side by side in one toolbar. It
-   shows on hover and on keyboard focus: inside a block's top-right corner (top-left on a chart,
-   clear of Plotly's toolbar), and just above a page or labelled group, so toolbars never cover
-   each other. Every element they add has the class bf-copy, which prints and exports leave out. */
+   shows on hover and on keyboard focus: inside a block's bottom-right corner, clear of the
+   toolbars charts draw at their top (Plotly's); just below a labelled group, so it never covers
+   the toolbar of the block in that group's corner; and just above a page (a group that fills a
+   tab panel), under its tab, clear of the group it may end with. Hidden, it lets clicks through.
+   Every element they add has the class bf-copy, which prints and exports leave out. */
 
 [data-bf-embed], [data-bf-snap] { position: relative; }
 
 .bf-copy__tools {
   position: absolute;
-  top: 0.35rem;
+  bottom: 0.35rem;
   right: 0.35rem;
   z-index: 5;
   display: flex;
   gap: 0.25rem;
+  pointer-events: none;
 }
-.bf-group > .bf-copy__tools { top: auto; bottom: 100%; right: 0; margin-bottom: 0.2rem; }
-.bf-plot > .bf-copy__tools { right: auto; left: 0.35rem; }
+/* Outside the group, its padding bridging the gap so the pointer keeps the group hovered. */
+.bf-group > .bf-copy__tools { bottom: auto; top: 100%; right: 0; padding-top: 0.2rem; }
+.bf-select__panel > .bf-group > .bf-copy__tools { top: auto; bottom: 100%; padding: 0 0 0.2rem; }
+[data-bf-embed]:hover > .bf-copy__tools,
+[data-bf-snap]:hover > .bf-copy__tools,
+.bf-copy__tools:focus-within { pointer-events: auto; }
 
 .bf-copy__button {
   display: inline-flex;
@@ -37,7 +44,7 @@
 .bf-copy__button:hover,
 .bf-copy__button:focus-visible { color: var(--bf-accent); border-color: var(--bf-accent); }
 .bf-copy__button--image { padding: 0.1rem 0.3rem; }
-@media (hover: none) { .bf-copy__button { opacity: 1; } }
+@media (hover: none) { .bf-copy__tools { pointer-events: auto; } .bf-copy__button { opacity: 1; } }
 
 .bf-copy__toast {
   position: fixed;

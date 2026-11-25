@@ -11,7 +11,7 @@ from playwright.sync_api import Page, expect
 import briefing as bf
 from briefing.export._render import open_report, outside_event_loop
 from tests.image_helpers import png_size
-from tests.test_browser.conftest import Viewer
+from tests.test_browser.conftest import Viewer, click_tool
 
 #: The background kept around a block in its image, in CSS px (export.js BLOCK_MARGIN).
 MARGIN = 16
@@ -65,7 +65,7 @@ def test_the_button_copies_the_block_as_a_png_at_2x(viewer: Viewer) -> None:
     page.context.grant_permissions(["clipboard-read", "clipboard-write"])
     page.evaluate(_RECORD_JS)
     width, height = _box(page, '[data-bf-snap="Numbers"]')
-    page.get_by_role("button", name="Copy Numbers as an image").click()
+    click_tool(page.get_by_role("button", name="Copy Numbers as an image"))
     expect(page.locator(".bf-copy__toast")).to_have_text("Image copied to the clipboard")
     image = page.evaluate(_CLIPBOARD_IMAGE_JS)
     assert image["types"] == ["image/png"]
@@ -83,7 +83,7 @@ def test_the_image_downloads_when_the_clipboard_is_refused(viewer: Viewer, tmp_p
     page.get_by_role("tab", name="Detail").click()
     width, height = _box(page, '[data-bf-snap="this table"]')
     with page.expect_download() as download:
-        page.get_by_role("button", name="Copy this table as an image").click()
+        click_tool(page.get_by_role("button", name="Copy this table as an image"))
     saved = tmp_path / download.value.suggested_filename
     download.value.save_as(saved)
     assert saved.name == "q1_report_table.png"
@@ -96,7 +96,7 @@ def test_a_page_downloads_under_its_title(viewer: Viewer, tmp_path: Path) -> Non
     page = viewer.open(_report(), name="Q1 Report")
     page.evaluate("() => { navigator.clipboard.write = () => Promise.reject(new Error('denied')); }")
     with page.expect_download() as download:
-        page.get_by_role("button", name="Copy the Summary page as an image").click()
+        click_tool(page.get_by_role("button", name="Copy the Summary page as an image"))
     assert download.value.suggested_filename == "q1_report_summary.png"
 
 
@@ -105,7 +105,7 @@ def test_a_chart_is_drawn_without_plotlys_toolbar(viewer: Viewer) -> None:
     page.context.grant_permissions(["clipboard-read", "clipboard-write"])
     page.evaluate(_RECORD_JS)
     page.locator(".bf-plot").hover()
-    page.get_by_role("button", name="Copy Trend as an image").click()
+    click_tool(page.get_by_role("button", name="Copy Trend as an image"))
     expect(page.locator(".bf-copy__toast")).to_have_text("Image copied to the clipboard")
     drawn = page.evaluate("window.drawn")
     assert "main-svg" in drawn[0] and "modebar" not in drawn[0]
@@ -130,7 +130,7 @@ def test_with_embed_both_buttons_sit_side_by_side(viewer: Viewer) -> None:
 def test_a_copied_fragment_carries_no_snapshot_marks(viewer: Viewer) -> None:
     page = viewer.open(_report("embed", "snapshot"))
     page.context.grant_permissions(["clipboard-read", "clipboard-write"])
-    page.get_by_role("button", name="Copy embed code for the Summary page").click()
+    click_tool(page.get_by_role("button", name="Copy embed code for the Summary page"))
     expect(page.locator(".bf-copy__toast")).to_contain_text("Embed code copied")
     fragment: str = page.evaluate("navigator.clipboard.readText()")
     assert "data-bf-snap" not in fragment and "data-bf-embed" not in fragment
@@ -164,3 +164,52 @@ def test_the_buttons_are_left_out_of_images_and_pdfs() -> None:
             assert all(not b.is_visible() for b in buttons.all())
 
     outside_event_loop(check)
+
+
+def _bounds(page: Page, locator: t.Any) -> dict[str, float]:
+    box = locator.bounding_box()
+    assert box is not None
+    return {"left": box["x"], "top": box["y"], "right": box["x"] + box["width"], "bottom": box["y"] + box["height"]}
+
+
+def test_the_toolbar_sits_in_the_bottom_right_corner_clear_of_plotlys(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(bf.Plot(_plotly(), caption="Trend"), export=("embed", "snapshot")))
+    plot = page.locator('[data-bf-snap="Trend"]')
+    plot.hover()
+    modebar = page.locator(".modebar")
+    expect(modebar).to_be_visible()
+    block, tools = _bounds(page, plot), _bounds(page, plot.locator(":scope > .bf-copy__tools"))
+    assert block["right"] - 12 <= tools["right"] <= block["right"]
+    assert block["bottom"] - 12 <= tools["bottom"] <= block["bottom"]
+    bar = _bounds(page, modebar)
+    assert tools["top"] >= bar["bottom"], "the buttons must not cover Plotly's toolbar"
+
+
+def test_a_groups_toolbar_sits_just_below_it(viewer: Viewer) -> None:
+    page = viewer.open(_report("embed", "snapshot"))
+    group = page.locator('[data-bf-snap="Numbers"]')
+    group.hover()
+    box, tools = _bounds(page, group), _bounds(page, group.locator(":scope > .bf-copy__tools"))
+    assert abs(tools["right"] - box["right"]) <= 1
+    assert box["bottom"] <= tools["top"] <= box["bottom"] + 2
+    # The number in the group's corner keeps its own toolbar, which the group's doesn't cover.
+    corner = _bounds(page, page.locator('[data-bf-snap="Orders"] > .bf-copy__tools'))
+    assert corner["bottom"] <= tools["top"]
+
+
+def test_a_pages_toolbar_sits_just_above_it(viewer: Viewer) -> None:
+    page = viewer.open(_report("embed", "snapshot"))
+    panel = page.locator('[data-bf-snap="the Summary page"]')
+    panel.hover()
+    box, tools = _bounds(page, panel), _bounds(page, panel.locator(":scope > .bf-copy__tools"))
+    assert abs(tools["right"] - box["right"]) <= 1
+    assert box["top"] - 2 <= tools["bottom"] <= box["top"]
+
+
+def test_hidden_buttons_let_clicks_through(viewer: Viewer) -> None:
+    page = viewer.open(_report("snapshot"))
+    tools = page.locator('[data-bf-snap="Summary"] > .bf-copy__tools')
+    page.mouse.move(0, 0)
+    expect(tools).to_have_css("pointer-events", "none")
+    page.locator('[data-bf-snap="Summary"]').hover()
+    expect(tools).to_have_css("pointer-events", "auto")

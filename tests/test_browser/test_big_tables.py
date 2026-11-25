@@ -16,7 +16,7 @@ import briefing as bf
 from briefing.renderers.pack import pack
 from tests.golden import static_files
 from tests.scenarios import big_frame
-from tests.test_browser.conftest import Viewer
+from tests.test_browser.conftest import Viewer, click_tool
 
 
 def _cells(page: Page) -> list[list[t.Any]]:
@@ -85,7 +85,7 @@ def test_with_javascript_the_note_doesnt_show(viewer: Viewer) -> None:
 def test_a_copied_big_table_works_on_another_page(viewer: Viewer) -> None:
     page = viewer.open(bf.Briefing(bf.DataTable(big_frame(1_500), name="rows"), export="embed"))
     page.context.grant_permissions(["clipboard-read", "clipboard-write"])
-    page.get_by_role("button", name="Copy embed code for this table").click()
+    click_tool(page.get_by_role("button", name="Copy embed code for this table"))
     expect(page.locator(".bf-copy__toast")).to_contain_text("Embed code copied")
     fragment = page.evaluate("navigator.clipboard.readText()")
     host = viewer.open(f'<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Host</title></head>'
