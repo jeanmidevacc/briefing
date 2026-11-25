@@ -26,6 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sits just below the group, and a page's just above it, under its tab (#215). While hidden,
   the buttons no longer catch clicks meant for what is under them.
 
+### Removed
+
+- `CalendarHeatmap(center=)` and `TimeHeatmap(center=)`, deprecated since 0.6.0 (#196).
+  Passing it raises a `BriefingError` that says what to use instead:
+  `colors=bf.Scale([below, at, above], center=...)`, the same diverging scale, which every
+  block can share. It is gone from the JSON schema too.
+
 ### Fixed
 
 - Documentation: the live examples with a calendar no longer make the whole page shake in

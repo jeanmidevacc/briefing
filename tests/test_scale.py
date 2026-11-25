@@ -130,9 +130,9 @@ def test_a_time_heatmap_takes_a_scale() -> None:
     assert fills <= set(bf.color.ramp(["#000000", "#ffffff"], 4)) and len(fills) > 1
 
 
-def test_a_scale_and_center_dont_mix() -> None:
-    with pytest.raises(bf.BriefingError, match="put the centre in it"):
-        bf.lab.CalendarHeatmap(pd.DataFrame({"d": ["2026-01-01"]}), date="d", center=0,
+def test_the_centre_goes_in_the_scale() -> None:
+    with pytest.raises(bf.BriefingError, match=r"center= was removed .* Pass colors=bf\.Scale"):
+        bf.lab.CalendarHeatmap(pd.DataFrame({"d": ["2026-01-01"]}), date="d", center=0,  # type: ignore[call-arg]
                                colors=bf.Scale(["#000", "#888", "#fff"]))
 
 

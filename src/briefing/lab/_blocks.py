@@ -10,7 +10,7 @@ lives in ``briefing/lab/_render_profile.py`` and ``briefing/lab/_render_datadive
 from __future__ import annotations
 
 import datetime as dt
-import re
+import functools
 import typing as t
 import warnings
 from collections.abc import Mapping
@@ -171,6 +171,28 @@ HOURS_VIEW_REMOVED = (
 )
 
 
+#: The heatmaps' center= gave way to bf.Scale(center=) (#175), and was removed in 0.8.0 (#196).
+CENTER_REMOVED = (
+    "{block}: center= was removed in briefing 0.8.0 (deprecated since 0.6.0). Pass "
+    "colors=bf.Scale([below, at, above], center=...) instead: the same diverging scale, mixed in OKLab, "
+    "and one you can share between blocks."
+)
+
+_P = t.ParamSpec("_P")
+
+
+def _without_center(init: t.Callable[_P, None]) -> t.Callable[_P, None]:
+    """Reject the removed center= with what to pass instead, rather than a bare TypeError (#196)."""
+
+    @functools.wraps(init)
+    def checked(*args: _P.args, **kwargs: _P.kwargs) -> None:
+        if "center" in kwargs:
+            raise BriefingError(CENTER_REMOVED.format(block=type(args[0]).__name__))
+        init(*args, **kwargs)
+
+    return checked
+
+
 class CalendarHeatmap(Block):
     """GitHub-style calendar heatmap: one cell per day, weeks as columns.
 
@@ -193,7 +215,6 @@ class CalendarHeatmap(Block):
             timestamps only; naive timestamps and plain dates are taken as already local.
         colors: ``"github"``, a list of CSS colours (low to high, spread over the data), or a
             :class:`~briefing.Scale` (the same colours for the same values everywhere).
-        center: *Deprecated since 0.6.0:* use ``colors=bf.Scale([...], center=...)``.
         week_start: ``"monday"`` or ``"sunday"``: the first row of the grid.
         expected: A target per day, flagged when a day is below it (days with no
             data count as below): a number, a Series indexed by date, or a
@@ -232,6 +253,7 @@ class CalendarHeatmap(Block):
     #: Rows embedded per day or hour for on_click="rows"; the panel says when there are more.
     ROWS_PER_CELL: t.ClassVar[int] = 50
 
+    @_without_center
     def __init__(
         self,
         df: pd.DataFrame | t.Any,
@@ -242,7 +264,6 @@ class CalendarHeatmap(Block):
         views: tuple[str, ...] | list[str] = ("days",),
         tz: str | None = None,
         colors: str | list[str] | Scale | Mapping[str, t.Any] = "github",
-        center: float | None = None,
         week_start: str = "monday",
         expected: float | pd.Series | pd.DataFrame | None = None,
         events: t.Any = None,
@@ -275,10 +296,10 @@ class CalendarHeatmap(Block):
             _check_tz(tz)
         if week_start not in ("monday", "sunday"):
             raise BriefingError(f"CalendarHeatmap: week_start must be 'monday' or 'sunday', not {week_start!r}.")
-        self.colors = _check_colors(colors, center)
+        self.colors = _check_colors(colors)
         self.df = frame
         self.date, self.value, self.agg, self.group = date, value, agg, group
-        self.center, self.week_start = center, week_start
+        self.week_start = week_start
         self.views, self.tz = views, tz
         self.on_click = on_click
         self.expected = _check_expected(expected, date, group)
@@ -319,7 +340,6 @@ class TimeHeatmap(Block):
             timestamps only; naive timestamps and plain dates are taken as already local.
         colors: ``"github"``, a list of CSS colours (low to high, spread over the data), or a
             :class:`~briefing.Scale` (the same colours for the same values everywhere).
-        center: *Deprecated since 0.6.0:* use ``colors=bf.Scale([...], center=...)``.
         week_start: ``"monday"`` or ``"sunday"``: the first weekday of a ``weekday`` axis.
         on_click: ``"rows"`` lists the rows behind a cell in a panel when it is clicked
             (up to ``ROWS_PER_CELL`` per cell); ``None`` for none.
@@ -343,6 +363,7 @@ class TimeHeatmap(Block):
     #: Rows embedded per cell for on_click="rows"; the panel says when there are more.
     ROWS_PER_CELL: t.ClassVar[int] = 50
 
+    @_without_center
     def __init__(
         self,
         df: pd.DataFrame | t.Any,
@@ -354,7 +375,6 @@ class TimeHeatmap(Block):
         group: str | None = None,
         tz: str | None = None,
         colors: str | list[str] | Scale | Mapping[str, t.Any] = "github",
-        center: float | None = None,
         week_start: str = "monday",
         on_click: str | None = None,
         group_order: list[str] | None = None,
@@ -387,16 +407,15 @@ class TimeHeatmap(Block):
                 f"TimeHeatmap: an hour axis needs a time of day, but {date!r} holds dates only. "
                 "Pass timestamps, or other units."
             )
-        self.colors = _check_colors(colors, center, "TimeHeatmap")
+        self.colors = _check_colors(colors, "TimeHeatmap")
         self.df = frame
         self.date, self.rows, self.columns = date, rows, columns
         self.value, self.agg, self.group = value, agg, group
-        self.tz, self.center, self.week_start, self.on_click = tz, center, week_start, on_click
+        self.tz, self.week_start, self.on_click = tz, week_start, on_click
         self.group_order = _check_group_order(frame, group, group_order, "TimeHeatmap")
         self.legend = _check_flag(legend, "TimeHeatmap: legend")
 
 
-_HEX = re.compile(r"^#(?:[0-9a-fA-F]{3}){1,2}$")
 
 
 def _check_tz(tz: str, block: str = "CalendarHeatmap") -> None:
@@ -420,42 +439,20 @@ def _has_times(column: t.Any) -> bool:
     return bool(len(stamps)) and bool((stamps.dt.normalize() != stamps).any())
 
 
-#: The heatmaps' center= gave way to bf.Scale(center=) (#175).
-CENTER_DEPRECATION = (
-    "{block}: center= is deprecated since briefing 0.6.0 and will be removed in 0.8.0. Pass "
-    "colors=bf.Scale([below, at, above], center=...) instead: the same diverging scale, mixed in OKLab, "
-    "and one you can share between blocks."
-)
-
-
-def _check_colors(colors: t.Any, center: float | None, block: str = "CalendarHeatmap") -> str | list[str] | Scale:
+def _check_colors(colors: t.Any, block: str = "CalendarHeatmap") -> str | list[str] | Scale:
     if isinstance(colors, Mapping):
         colors = Scale.of(colors)
     if isinstance(colors, Scale):
         if colors.categorical:
             raise BriefingError(f"{block}: a categorical Scale colours categories; a heatmap needs one over numbers, "
                                 "with domain=(low, high) or none.")
-        if center is not None:
-            raise BriefingError(f"{block}: with a bf.Scale, put the centre in it: bf.Scale(..., center=...).")
         return colors
-    if center is not None:
-        # stacklevel 3: _check_colors <- __init__ <- the caller's line
-        warnings.warn(CENTER_DEPRECATION.format(block=block), DeprecationWarning, stacklevel=3)
     if colors == "github":
-        if center is not None:
-            raise BriefingError(f"{block}: center= needs colors= as three hex colours: below, at and above it.")
         return "github"
     if isinstance(colors, str) or not isinstance(colors, list | tuple) or len(colors) < 2:
         raise BriefingError(
             f"{block}: colors must be 'github', a list of at least two colours or a bf.Scale, not {colors!r}."
         )
-    if center is not None:
-        if len(colors) != 3:
-            raise BriefingError(
-                f"{block}: with center=, colors must be exactly three colours: below, at, above."
-            )
-        if not all(isinstance(c, str) and _HEX.match(c) for c in colors):
-            raise BriefingError(f"{block}: with center=, colors must be hex colours such as '#d73027'.")
     return [str(c) for c in colors]
 
 

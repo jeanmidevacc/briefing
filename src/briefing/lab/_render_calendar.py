@@ -149,18 +149,6 @@ def _events(block: CalendarHeatmap | Legend) -> list[_Event]:
 # ── colour ────────────────────────────────────────────────────────────────────
 
 
-def _hex(c: str) -> tuple[int, int, int]:
-    c = c.lstrip("#")
-    if len(c) == 3:
-        c = "".join(ch * 2 for ch in c)
-    return int(c[0:2], 16), int(c[2:4], 16), int(c[4:6], 16)
-
-
-def _mix(a: str, b: str, f: float) -> str:
-    (r1, g1, b1), (r2, g2, b2) = _hex(a), _hex(b)
-    return "#{:02x}{:02x}{:02x}".format(*(round(x + (y - x) * f) for x, y in ((r1, r2), (g1, g2), (b1, b2))))
-
-
 def _scale(block: Heatmap, values: list[float]) -> Callable[[float], tuple[str, str]]:
     """Map a value to (fill, extra class). ``"github"`` keeps zero (and below) as its own grey level."""
     if not values:
@@ -179,14 +167,6 @@ def _scale(block: Heatmap, values: list[float]) -> Callable[[float], tuple[str, 
             return GITHUB[min(len(GITHUB) - 1, max(0, math.ceil(v / top * len(GITHUB)) - 1))], ""
         return github
     colors = t.cast("list[str]", block.colors)
-    if block.center is not None:
-        mid = float(block.center)
-        reach = max(abs(lo - mid), abs(hi - mid)) or 1.0
-
-        def diverging(v: float) -> tuple[str, str]:
-            f = min(1.0, abs(v - mid) / reach)
-            return _mix(colors[1], colors[0] if v < mid else colors[2], f), ("bf-cal__day--zero" if v == 0 else "")
-        return diverging
     span = hi - lo
 
     def stepped(v: float) -> tuple[str, str]:
