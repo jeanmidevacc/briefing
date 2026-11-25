@@ -59,6 +59,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   or the **+ / − / Reset** buttons, zoom from the keyboard too. A plain scroll still scrolls
   the page, with a hint on how to zoom. Zoom is shared by every panel, ticks follow it, and
   close up the dots carry their `title=`.
+- `bf.lab.DataDive(thumbnails=)` names a column of pictures: data URIs, paths to PNG, JPEG,
+  GIF, WebP or SVG files, or their bytes (#16). In the `"tile"` layout, dots become their
+  pictures when the cells have room, framed in their colour; the tooltip and the card show
+  them too. Each distinct picture is embedded once. Web addresses are refused, so the report
+  still works offline. Tiles now size their dots so the fullest cell fits whole.
 - The copy-embed `</>` button (and the new camera button) moved to the bottom-right corner
   of its block, clear of the toolbar Plotly draws at a chart's top right; a labelled group's
   sits just below the group, and a page's just above it, under its tab (#215). While hidden,

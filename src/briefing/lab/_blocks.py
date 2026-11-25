@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import datetime as dt
 import functools
+import re
 import typing as t
 import warnings
 from collections.abc import Mapping
+from pathlib import Path
 
 from briefing._colors import CSS_COLOR
 from briefing._error import BriefingError
@@ -102,6 +104,11 @@ class DataDive(Block):
             Without it, categories take the theme's palette and numbers a ramp to its accent.
         title: Column that names each dot: the heading of its tooltip and of the card that
             opens when the dot is clicked. Without it, a card is headed by its row number.
+        thumbnails: Column of pictures, one per row: data URIs (``data:image/png;base64,…``),
+            paths to PNG, JPEG, GIF, WebP or SVG files, or their bytes. In the ``"tile"``
+            layout, dots become their pictures when the cells have room; the tooltip and
+            the card show them too. Each distinct picture is embedded once. Web addresses
+            are refused: the report must work offline.
         max_rows: Larger frames are sampled down to this many rows, with a warning.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
@@ -131,6 +138,7 @@ class DataDive(Block):
         layout: str = "scatter",
         colors: Scale | Mapping[str, t.Any] | None = None,
         title: str | None = None,
+        thumbnails: str | None = None,
         max_rows: int = MAX_ROWS,
         name: BlockId | None = None,
         label: str | None = None,
@@ -152,7 +160,7 @@ class DataDive(Block):
         # Validate that explicitly requested columns exist.
         for col_name, col_val in [
             ("x", x), ("y", y), ("color", color),
-            ("facet_row", facet_row), ("facet_col", facet_col), ("title", title),
+            ("facet_row", facet_row), ("facet_col", facet_col), ("title", title), ("thumbnails", thumbnails),
         ]:
             if col_val is not None and col_val not in df.columns:
                 raise BriefingError(
@@ -173,7 +181,61 @@ class DataDive(Block):
         if self.colors is not None and not isinstance(self.colors, Scale):
             raise BriefingError(f"DataDive: colors must be a bf.Scale, not {colors!r}.")
         self.title = title
+        self.thumbnails = thumbnails
+        #: The distinct pictures, as data URIs, and each row's index into them (-1: none).
+        self.pictures: tuple[list[str], list[int]] | None = (
+            _pictures(df[thumbnails]) if thumbnails is not None else None)
         self.max_rows = max_rows
+
+
+_DATA_URI = re.compile(r"^data:image/(?:png|jpeg|gif|webp|svg\+xml)(?:;[\w=.+-]+)*,", re.IGNORECASE)
+
+
+def _picture(value: t.Any) -> str | None:
+    """One thumbnail as a data URI: a data URI as it is, a file or bytes read and encoded, missing as None."""
+    import base64
+
+    import pandas as pd
+
+    from briefing.blocks.banner import _image_type
+
+    if value is None or (not isinstance(value, str | bytes | Path) and pd.isna(value)):
+        return None
+    if isinstance(value, str) and _DATA_URI.match(value):
+        return value
+    if isinstance(value, str) and re.match(r"^[a-z][a-z0-9+.-]*://", value, re.IGNORECASE):
+        raise BriefingError(f"DataDive: thumbnails must be in the report, not at an address such as {value[:60]!r}: "
+                            "pass the files' paths, their bytes, or data URIs.")
+    if isinstance(value, bytes):
+        data = value
+    elif isinstance(value, str | Path):
+        path = Path(value).expanduser()
+        if not path.is_file():
+            raise BriefingError(f"DataDive: thumbnail file not found: {path}")
+        data = path.read_bytes()
+    else:
+        raise BriefingError(f"DataDive: a thumbnail is a file path, bytes or a data URI, not {value!r}.")
+    mime = _image_type(data)
+    if mime is None:
+        raise BriefingError("DataDive: thumbnails must be PNG, JPEG, GIF, WebP or SVG pictures.")
+    return f"data:{mime};base64,{base64.b64encode(data).decode('ascii')}"
+
+
+def _pictures(column: t.Any) -> tuple[list[str], list[int]]:
+    """The distinct pictures of a thumbnails column, each once, and every row's index into them (-1: none)."""
+    pictures: list[str] = []
+    index: dict[str, int] = {}
+    codes: list[int] = []
+    for value in column.tolist():
+        uri = _picture(value)
+        if uri is None:
+            codes.append(-1)
+            continue
+        if uri not in index:
+            index[uri] = len(pictures)
+            pictures.append(uri)
+        codes.append(index[uri])
+    return pictures, codes
 
 
 def _check_buckets(buckets: t.Any, columns: t.Any) -> int | dict[str, int]:

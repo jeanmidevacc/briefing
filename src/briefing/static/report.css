@@ -975,6 +975,8 @@ html.bf-printing .bf-heading-actions { display: none; }
 .bf-dd__card-body dd { margin: 0; overflow-wrap: anywhere; }
 .bf-dd__missing { color: var(--bf-muted); }
 .bf-dd__tip-title { font-weight: 700; margin-bottom: 0.15rem; }
+.bf-dd__tip-thumb { display: block; max-width: 72px; max-height: 72px; margin-bottom: 0.3rem; border-radius: 0.2rem; }
+.bf-dd__card-thumb { display: block; max-width: 100%; max-height: 120px; margin-bottom: 0.5rem; border-radius: 0.25rem; }
 
 .bf-dd__tooltip {
   position: absolute;

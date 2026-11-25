@@ -102,10 +102,19 @@ def _encode(name: str, series: t.Any) -> dict[str, t.Any]:
             "codes": codes.tolist()}
 
 
-def _serialise(df: t.Any) -> str:
-    """The columns of *df* as compact JSON: NaN becomes null, a date its epoch milliseconds."""
-    return json.dumps({"rows": len(df), "columns": [_encode(str(name), df[name]) for name in df.columns]},
-                      ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+def _serialise(df: t.Any, pictures: tuple[list[str], list[int]] | None = None, skip: str | None = None) -> str:
+    """The columns of *df* as compact JSON: NaN becomes null, a date its epoch milliseconds.
+
+    *pictures* (the distinct thumbnails and each row's index) travel beside them; their
+    column, *skip*, doesn't travel as text.
+    """
+    payload: dict[str, t.Any] = {
+        "rows": len(df),
+        "columns": [_encode(str(name), df[name]) for name in df.columns if skip is None or name != skip],
+    }
+    if pictures is not None:
+        payload["thumbs"] = {"images": pictures[0], "codes": pictures[1]}
+    return json.dumps(payload, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
 
 
 def _scale(colors: Scale | None) -> dict[str, t.Any] | None:
@@ -132,6 +141,9 @@ def render_datadive(block: DataDive) -> str:
     if not cols:
         return '<div class="bf-block bf-placeholder">⚠ DataDive: no columns to display.</div>'
 
+    if block.thumbnails is not None:  # pictures aren't something to plot or colour by
+        df = df.drop(columns=[block.thumbnails])
+        cols = [str(c) for c in df.columns]
     x_def, y_def, color_def = _pick_defaults(df, block.x, block.y, block.color)
 
     def _options(selected: str, none: bool) -> str:
@@ -164,7 +176,8 @@ def render_datadive(block: DataDive) -> str:
     )
     buckets = block.buckets if isinstance(block.buckets, dict) else {"": block.buckets}
 
-    packed, size = pack(_serialise(df), level=6)  # megabytes at 100,000 rows: 9 would take seconds
+    # Level 6: megabytes at 100,000 rows, which level 9 would take seconds to pack.
+    packed, size = pack(_serialise(df, block.pictures, block.thumbnails), level=6)
     scale = _scale(block.colors)
     scale_html = (
         "" if scale is None else

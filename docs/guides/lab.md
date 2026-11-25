@@ -51,6 +51,9 @@ plotting them on axes, like Facets Dive.
   pinch) zooms in around the pointer, dragging pans, and a double-click or **Reset** shows
   everything again; a plain scroll still scrolls the page. Zoom is shared by every panel,
   and close up the dots carry their `title=`.
+- `thumbnails=` names a column of pictures (data URIs, file paths or bytes): in the
+  `"tile"` layout, dots become their pictures when the cells have room, framed in their
+  colour, and the tooltip and the card show them too. Each distinct picture is embedded once.
 - `facet_row=` and `facet_col=` split the dots into small multiples, one panel per value,
   on scales shared by every panel; the reader can change or remove them in the controls.
   A number splits into `buckets=` bins with round edges (5 by default), and a category
@@ -96,6 +99,23 @@ bf.save(
     bf.lab.DataDive(customers, x="age", y="income_k", color="churned", facet_row="plan", facet_col="region"),
     "facets.html",
     name="Customers",
+)
+```
+
+With pictures, tiles show what each row is:
+
+```{briefing-example}
+:title: Films as thumbnails
+:height: 720
+
+import briefing as bf
+
+films = bf.datasets.load("recsys").catalog
+bf.save(
+    bf.lab.DataDive(films, x="genre", y="year", color="genre", layout="tile", title="title",
+                    thumbnails="thumbnail", buckets={"genre": 6, "year": 3}),
+    "films.html",
+    name="Films",
 )
 ```
 
