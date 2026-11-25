@@ -42,6 +42,10 @@ plotting them on axes, like Facets Dive.
   compare side by side. × or Esc closes them. `title=` names the column that heads each
   card and tooltip, such as a product's or an article's name; without it, a card is
   headed by its row number.
+- The search box finds rows by any text in them, `title=` included: the first matches are
+  listed under it, and Enter or a click opens a match's card. **+ Filter** adds a filter on
+  a column: tick a category's values, or give a number or a date a range. **Highlight**
+  dims the rows that don't match; **Filter** hides them. All of it happens in the page.
 - `facet_row=` and `facet_col=` split the dots into small multiples, one panel per value,
   on scales shared by every panel; the reader can change or remove them in the controls.
   A number splits into `buckets=` bins with round edges (5 by default), and a category

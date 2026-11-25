@@ -12,6 +12,7 @@
   var DARK = ['#00c3fc', '#ee5e23', '#4ca77b', '#a670f3', '#fcdf00', '#ff89bf', '#ffa10e'];
   var MISSING = '#9ca3af';
   var BLANK = '(blank)';
+  var DIM = '\u0000dim';  // the group of dots that don't match, in Highlight mode
   var LEGEND_MAX = 24;  // categories listed before "+N more"
   var PRINT_VECTOR = 5000;  // up to this many dots print as SVG circles (vector PDFs); more print as the canvas
 
@@ -54,7 +55,7 @@
       var t = i / 63 * 2, k = Math.min(1, Math.floor(t));
       ramp.push(hex(mix(stops[k], stops[k + 1], t - k)));
     }
-    return { palette: palette, ramp: ramp };
+    return { palette: palette, ramp: ramp, dim: hex(mix(bg, text, 0.45)) };
   }
 
   // ── text ────────────────────────────────────────────────────────────────────
@@ -299,12 +300,16 @@
     var titleName = container.getAttribute('data-title') || '';
     var cardsEl = container.querySelector('.bf-dd__cards');
     var cards = [];  // the open cards, in order: {row, pinned}
+    var filters = [], query = '', mode = 'highlight', narrowing = false, match = new Uint8Array(n), lastLit = n;
     var colour = null, hidden = {}, drawnWidth = 0, drawnW = 620;
     var xs = new Float32Array(n), ys = new Float32Array(n), shown = new Uint8Array(n), count = 0;
     var grid = null, cell = 12, radius = 3, hover = null;
 
+    // Shown: not hidden by the legend and, in Filter mode, matching the search and filters.
+    // In Highlight mode a dot that doesn't match stays, dimmed.
     function visible(i) {
-      return colour.kind !== 'categorical' || !hidden[colour.code(i)];
+      if (colour.kind === 'categorical' && hidden[colour.code(i)]) return false;
+      return mode === 'highlight' || !narrowing || match[i] === 1;
     }
 
     // ── legend
@@ -569,20 +574,25 @@
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);
       ctx.globalAlpha = layout === 'tile' ? 0.85 : count > 20000 ? 0.55 : 0.72;
-      var groups = {}, order = [];
+      var groups = {}, order = [], dimmed = [], lit = 0, dim = narrowing && mode === 'highlight';
       grid = {};
       cell = Math.max(8, radius * 3);
       for (i = 0; i < n; i++) {
         if (!shown[i] || xs[i] !== xs[i] || ys[i] !== ys[i]) continue;
-        var c = colour.of(i);
-        if (!groups[c]) { groups[c] = []; order.push(c); }
-        groups[c].push(i);
+        if (dim && !match[i]) { dimmed.push(i); } else {
+          var c = colour.of(i);
+          if (!groups[c]) { groups[c] = []; order.push(c); }
+          groups[c].push(i);
+          lit++;
+        }
         var key = Math.floor(xs[i] / cell) + ',' + Math.floor(ys[i] / cell);
         (grid[key] || (grid[key] = [])).push(i);
       }
-      var square = radius < 1.8;
+      var square = radius < 1.8, alpha = ctx.globalAlpha;
+      if (dimmed.length) { groups[DIM] = dimmed; order.unshift(DIM); }  // under the matches
       order.forEach(function (c) {
-        ctx.fillStyle = c;
+        ctx.fillStyle = c === DIM ? look.dim : c;
+        ctx.globalAlpha = c === DIM ? 0.28 : alpha;
         var list = groups[c];
         if (square) {
           for (var j = 0; j < list.length; j++) ctx.fillRect(xs[list[j]] - radius, ys[list[j]] - radius, radius * 2, radius * 2);
@@ -603,7 +613,9 @@
       svg.innerHTML = parts.join('');
       hover = svg.querySelector('.bf-dd__hover');
       drawRings();
-      footer.textContent = count === n ? fmtNum(n) + ' rows' : fmtNum(count) + ' of ' + fmtNum(n) + ' shown';
+      footer.textContent = dim ? fmtNum(lit) + ' of ' + fmtNum(n) + ' match'
+        : count === n ? fmtNum(n) + ' rows' : fmtNum(count) + ' of ' + fmtNum(n) + ' shown';
+      lastLit = dim ? lit : count;
       var described = layout === 'tile' ? 'DataDive tiles by ' + chosen('x') + (chosen('y') ? ' and ' + chosen('y') : '')
         : 'DataDive scatter plot of ' + chosen('y') + ' against ' + chosen('x');
       canvas.setAttribute('aria-label', described + (chosen('color') ? ', coloured by ' + chosen('color') : '') +
@@ -762,6 +774,198 @@
     });
     canvas.addEventListener('mouseleave', function () { tip.hidden = true; hover.setAttribute('cx', '-99'); });
 
+    // ── filters and search (#16): narrow or highlight the dots, without going back to Python
+    function el(tag, cls, text) {
+      var e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    }
+
+    // For each text column, which of its values contain q; then whether row i has one.
+    function textTest(q) {
+      var hits = [];
+      data.names.forEach(function (name) {
+        var c = data.cols[name];
+        if (c.kind !== 'categorical') return;
+        var found = new Uint8Array(c.levels.length), any = false;
+        for (var k = 0; k < c.levels.length; k++) if (c.levels[k].toLowerCase().indexOf(q) >= 0) { found[k] = 1; any = true; }
+        if (any) hits.push({ codes: c.codes, found: found });
+      });
+      return function (i) {
+        for (var j = 0; j < hits.length; j++) { var k = hits[j].codes[i]; if (k >= 0 && hits[j].found[k]) return true; }
+        return false;
+      };
+    }
+
+    function active(f) {
+      return data.cols[f.name].kind === 'categorical' ? Object.keys(f.off).length > 0 : f.lo !== null || f.hi !== null;
+    }
+
+    function passes(f, i) {
+      var c = data.cols[f.name];
+      if (c.kind === 'categorical') return !f.off[c.codes[i] < 0 ? 'blank' : c.codes[i]];
+      var v = c.values[i];
+      return v !== null && (f.lo === null || v >= f.lo) && (f.hi === null || v <= f.hi);
+    }
+
+    function refilter() {
+      var q = query.trim().toLowerCase(), test = q ? textTest(q) : null, on = filters.filter(active);
+      narrowing = !!q || on.length > 0;
+      for (var i = 0; i < n; i++) {
+        var ok = !test || test(i);
+        for (var f = 0; ok && f < on.length; f++) ok = passes(on[f], i);
+        match[i] = ok ? 1 : 0;
+      }
+      draw();
+      showResults();
+    }
+
+    var bar = el('div', 'bf-dd__filters');
+    var searchBox = el('div', 'bf-dd__search-box');
+    var search = el('input', 'bf-dd__search');
+    search.type = 'search';
+    search.placeholder = 'Search';
+    search.setAttribute('aria-label', 'Search the rows');
+    var results = el('ul', 'bf-dd__results');
+    results.hidden = true;
+    results.setAttribute('aria-label', 'Rows that match');
+    searchBox.appendChild(search);
+    searchBox.appendChild(results);
+    var add = el('select', 'bf-dd__sel bf-dd__add');
+    add.setAttribute('aria-label', 'Add a filter on a column');
+    add.appendChild(el('option', '', '+ Filter'));
+    add.firstChild.value = '';
+    data.names.forEach(function (name) { var o = el('option', '', name); o.value = name; add.appendChild(o); });
+    var chips = el('div', 'bf-dd__chips');
+    var modes = el('div', 'bf-dd__modes');
+    modes.setAttribute('role', 'group');
+    modes.setAttribute('aria-label', 'Rows that do not match');
+    [['highlight', 'Highlight', 'Dim the rows that do not match'], ['filter', 'Filter', 'Hide the rows that do not match']].forEach(function (m) {
+      var b = el('button', 'bf-dd__mode', m[1]);
+      b.type = 'button';
+      b.title = m[2];
+      b.setAttribute('data-mode', m[0]);
+      b.setAttribute('aria-pressed', m[0] === mode ? 'true' : 'false');
+      b.addEventListener('click', function () {
+        mode = m[0];
+        modes.querySelectorAll('.bf-dd__mode').forEach(function (o) {
+          o.setAttribute('aria-pressed', o.getAttribute('data-mode') === mode ? 'true' : 'false');
+        });
+        draw();
+      });
+      modes.appendChild(b);
+    });
+    bar.appendChild(searchBox); bar.appendChild(add); bar.appendChild(chips); bar.appendChild(modes);
+    container.insertBefore(bar, area);
+
+    // The rows that match the search, as buttons that open their cards.
+    function showResults() {
+      results.innerHTML = '';
+      if (!query.trim()) { results.hidden = true; return; }
+      var listed = 0;
+      for (var i = 0; i < n && listed < 8; i++) {
+        if (!match[i] || !shown[i]) continue;
+        var item = el('li'), b = el('button', 'bf-dd__result', label(i));
+        b.type = 'button';
+        b.addEventListener('click', (function (row) { return function () { open(row); onEscape(closeAll); }; })(i));
+        item.appendChild(b);
+        results.appendChild(item);
+        listed++;
+      }
+      if (!listed) results.appendChild(el('li', 'bf-dd__result-none', 'No row matches'));
+      else if (lastLit > listed) results.appendChild(el('li', 'bf-dd__result-more', fmtNum(lastLit) + ' rows match'));
+      results.hidden = false;
+    }
+
+    var typing = null;
+    search.addEventListener('input', function () {
+      clearTimeout(typing);
+      typing = setTimeout(function () { query = search.value; refilter(); }, 120);
+    });
+    search.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      clearTimeout(typing);
+      query = search.value;
+      refilter();
+      var first = results.querySelector('.bf-dd__result');
+      if (first) first.click();
+    });
+
+    function chipFor(f) {
+      var c = data.cols[f.name], wrap = el('span', 'bf-dd__chip');
+      var remove = el('button', 'bf-dd__chip-remove', '×');
+      remove.type = 'button';
+      remove.setAttribute('aria-label', 'Remove the filter on ' + f.name);
+      remove.addEventListener('click', function () { filters.splice(filters.indexOf(f), 1); wrap.parentNode.removeChild(wrap); refilter(); });
+      if (c.kind === 'categorical') {
+        var box = el('details', 'bf-dd__chip-pick'), summary = el('summary', '', f.name), body = el('div', 'bf-dd__chip-body');
+        var tally = el('span', 'bf-dd__chip-count');
+        summary.appendChild(tally);
+        var order = c.levels.map(function (_, k) { return k; });
+        order.sort(function (a, b) { return c.counts[b] - c.counts[a] || natural(c.levels[a], c.levels[b]); });
+        var listed = order.slice(0, 100).map(function (k) { return { key: k, label: c.levels[k], count: c.counts[k] }; });
+        if (c.blanks) listed.push({ key: 'blank', label: BLANK, count: c.blanks });
+        var update = function () { tally.textContent = (listed.length - Object.keys(f.off).length) + ' of ' + listed.length; };
+        listed.forEach(function (o) {
+          var row = el('label', 'bf-dd__chip-option'), tick = el('input');
+          tick.type = 'checkbox';
+          tick.checked = true;
+          tick.addEventListener('change', function () {
+            if (tick.checked) delete f.off[o.key]; else f.off[o.key] = true;
+            update();
+            refilter();
+          });
+          row.appendChild(tick);
+          row.appendChild(el('span', '', cut(o.label, 32)));
+          row.appendChild(el('span', 'bf-dd__key-count', fmtNum(o.count)));
+          body.appendChild(row);
+        });
+        if (order.length > 100) body.appendChild(el('span', 'bf-dd__key-more', '+' + fmtNum(order.length - 100) + ' more, always kept'));
+        update();
+        box.appendChild(summary);
+        box.appendChild(body);
+        wrap.appendChild(box);
+      } else {
+        var date = c.kind === 'datetime';
+        wrap.appendChild(el('span', 'bf-dd__chip-name', f.name));
+        ['lo', 'hi'].forEach(function (end, j) {
+          var input = el('input', 'bf-dd__chip-range');
+          input.type = date ? 'date' : 'number';
+          if (!date) input.step = 'any';
+          input.placeholder = date ? '' : fmtTick(j ? c.hi : c.lo);
+          input.setAttribute('aria-label', f.name + (j ? ' at most' : ' at least'));
+          input.addEventListener('change', function () {
+            var v = input.value === '' ? null : date ? Date.parse(input.value + 'T00:00:00Z') + (j ? 864e5 - 1 : 0) : Number(input.value);
+            f[end] = v === null || v !== v ? null : v;
+            refilter();
+          });
+          if (j) wrap.appendChild(el('span', 'bf-dd__chip-dash', '–'));
+          wrap.appendChild(input);
+        });
+      }
+      wrap.appendChild(remove);
+      return wrap;
+    }
+
+    container.addEventListener('click', function (e) {
+      chips.querySelectorAll('details[open]').forEach(function (d) { if (!d.contains(e.target)) d.open = false; });
+    });
+
+    add.addEventListener('change', function () {
+      var name = add.value;
+      add.value = '';
+      if (!name || filters.some(function (f) { return f.name === name; })) return;
+      var f = { name: name, off: {}, lo: null, hi: null };
+      filters.push(f);
+      var chip = chipFor(f);
+      chips.appendChild(chip);
+      var picker = chip.querySelector('details');
+      if (picker) picker.open = true;  // a category's values, listed at once to untick
+      var first = chip.querySelector('summary, input');
+      if (first) first.focus();
+    });
+
     // ── controls
     function recolour() {
       colour = colouring(data, chosen('color'), look);
@@ -812,6 +1016,8 @@
     container.briefingDive = {
       vector: vector,
       open: open,
+      matches: function () { return narrowing ? lastLit : count; },
+      searched: function () { return query; },
       cards: function () { return cards.map(function (c) { return { row: c.row, pinned: c.pinned }; }); },
       shown: function () { return count; },
       total: n,
