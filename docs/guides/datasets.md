@@ -161,6 +161,7 @@ split = bf.datasets.load("train_test")
 bf.save(
     bf.Briefing(
         bf.Select(
+            bf.lab.DataCompare({"train": split.train, "test": split.test}, label="Compared"),
             bf.lab.DataProfile(split.train, label="Train"),
             bf.lab.DataProfile(split.test, label="Test"),
         ),

@@ -62,7 +62,24 @@ FRAME_BLOCKS: dict[str, Callable[[pd.DataFrame], Block]] = {
     "datatable": lambda frame: bf.DataTable(frame, caption="DataTable"),
     "dataprofile": lambda frame: bf.lab.DataProfile(frame),
     "datadive": lambda frame: bf.lab.DataDive(frame),
+    "datacompare": lambda frame: bf.lab.DataCompare({"a": frame, "b": frame.iloc[::-1]}),
 }
+
+
+def _compare_frame(shift: int) -> pd.DataFrame:
+    """A dataset for DataCompare: numbers, zeros, dates, few and many categories, a column only some
+    have, one whose type differs; each *shift* drifts it a little more. Dtypes named alike by pandas 2 and 3."""
+    rows = 120 + 40 * shift
+    return pd.DataFrame({
+        "score": [(i * 7 + shift * 13) % 50 + shift * 5 for i in range(rows)],
+        "spend": [0.0 if i % (5 - shift) == 0 else round(i * 1.5 + shift * 20, 1) for i in range(rows)],
+        "day": pd.to_datetime("2026-01-01") + pd.to_timedelta([(i + shift * 30) % 90 for i in range(rows)], unit="D"),
+        "plan": pd.Categorical([("basic", "pro", "team", "trial")[(i + shift) % (3 + (shift > 0))]
+                                for i in range(rows)]),
+        "city": pd.Categorical([f"city {(i * (shift + 1)) % 40}" for i in range(rows)]),
+        "flag": [i % 3 == 0 for i in range(rows)] if shift != 1 else [i % 3 for i in range(rows)],
+        **({"extra": [float(i) if i % 4 else None for i in range(rows)]} if shift else {}),
+    })
 
 
 def _over_frame(make: Callable[[pd.DataFrame], Block], fixture: str) -> Build:
@@ -254,6 +271,10 @@ SCENARIOS: dict[str, Build] = {
         bf.Page(bf.DataTable(df("df_mixed"), name="rows"), title="Detail"),
         export="snapshot",
     ),
+    "datacompare": lambda df: bf.Briefing(bf.lab.DataCompare(
+        {"train": _compare_frame(0), "test": _compare_frame(1), "live": _compare_frame(2).drop(columns="score")},
+        sort="distance",
+    )),
     "export-menu": lambda _: bf.Briefing(
         bf.Page(bf.Text("# One"), title="One"), bf.Page(bf.Text("# Two"), title="Two"), export="png"
     ),
@@ -302,6 +323,9 @@ ESCAPE_SCENARIOS: dict[str, Callable[[], tuple[bf.Briefing, str]]] = {
     "datatable": lambda: (bf.Briefing(bf.DataTable(_payload_frame(), caption=PAYLOAD)), "R"),
     "dataprofile": lambda: (bf.Briefing(bf.lab.DataProfile(_payload_frame())), "R"),
     "datadive": lambda: (bf.Briefing(bf.lab.DataDive(_payload_frame(), color=PAYLOAD)), "R"),
+    "datacompare": lambda: (bf.Briefing(bf.lab.DataCompare(
+        {PAYLOAD: _payload_frame(), "b": _payload_frame().iloc[::-1]}, distance=lambda p, q: 0.5, distance_name=PAYLOAD,
+        distance_threshold=0.1)), "R"),
     "image-caption-alt": lambda: (bf.Briefing(bf.Image(RED_SVG, caption=PAYLOAD, alt=PAYLOAD)), "R"),
     "attachment-label": lambda: (bf.Briefing(bf.Attachment(b"x", filename="x.txt", label=PAYLOAD)), "R"),
     "banner-alt": lambda: (bf.Briefing(tabs(bf.Banner("x", image=RED_SVG, alt=PAYLOAD, label=PAYLOAD),

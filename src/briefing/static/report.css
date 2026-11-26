@@ -721,6 +721,101 @@ html.bf-printing .bf-heading-actions { display: none; }
 .bf-profile__chart { margin-top: 0.25rem; }
 .bf-profile__chart svg { width: 100%; height: auto; display: block; }
 
+/* ── DataCompare (#17) ────────────────────────────────────────────────────── */
+/* Dataset k is drawn in --bf-cmp-k: the theme's accent, then hues that stay apart from it
+   (the light categorical palette's; orange reads on dark pages too). */
+.bf-compare {
+  --bf-cmp-0: var(--bf-accent);
+  --bf-cmp-1: #ee5e23;
+  --bf-cmp-2: #00a16e;
+  --bf-cmp-3: #b56ae7;
+  --bf-cmp-4: #9f0051;
+  --bf-cmp-5: #a44d00;
+  --bf-cmp-6: #6c4bcc;
+  --bf-cmp-7: #005b8b;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.bf-cmp__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 1rem;
+  font-size: 0.85rem;
+}
+.bf-cmp__dataset { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; }
+.bf-cmp__dataset small { font-weight: 400; color: var(--bf-muted); }
+.bf-cmp__measure { margin-left: auto; font-size: 0.78rem; color: var(--bf-muted); }
+.bf-cmp__swatch {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 0.15rem;
+  flex-shrink: 0;
+  vertical-align: -0.05rem;
+  margin-right: 0.35rem;
+}
+.bf-cmp__dataset .bf-cmp__swatch { margin-right: 0; }
+.bf-cmp__rows { display: flex; flex-direction: column; gap: 0.6rem; }
+.bf-cmp__row {
+  background: var(--bf-surface);
+  border: 1px solid var(--bf-border);
+  border-radius: var(--bf-radius);
+  padding: 0.65rem 0.75rem;
+  min-width: 0;
+}
+.bf-cmp__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem; margin-bottom: 0.45rem; }
+.bf-cmp__name { font-weight: 600; font-size: 0.9rem; overflow-wrap: anywhere; }
+.bf-cmp__kind {
+  font-size: 0.68rem;
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  background: var(--bf-border);
+  color: var(--bf-muted);
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.25rem;
+}
+.bf-cmp__badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+.bf-cmp__badge--only { color: var(--bf-muted); }
+.bf-cmp__badge--type { color: #a44d00; }
+.bf-cmp__badge--drift { color: #dc2626; }
+.bf-cmp__body {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(12rem, 2fr);
+  gap: 0.5rem 1rem;
+  align-items: start;
+}
+@media (max-width: 760px) { .bf-cmp__body { grid-template-columns: minmax(0, 1fr); } }
+.bf-cmp__table { overflow-x: auto; }
+.bf-cmp__table table { border-collapse: collapse; font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.bf-cmp__table th, .bf-cmp__table td { padding: 0.15rem 0.5rem 0.15rem 0; text-align: right; white-space: nowrap; }
+.bf-cmp__table thead th { color: var(--bf-muted); font-weight: 400; }
+.bf-cmp__table th:first-child { text-align: left; font-weight: 600; }
+.bf-cmp__table thead th:first-child { font-weight: 400; }
+.bf-cmp__absent td { color: var(--bf-muted); font-style: italic; text-align: left; }
+.bf-cmp__high { color: #dc2626; font-weight: 600; }
+.bf-cmp__chart { min-width: 0; }
+.bf-cmp__svg { display: block; width: 100%; height: 5.5rem; overflow: visible; }
+.bf-cmp__svg--bars { height: auto; }
+.bf-cmp__axis { stroke: var(--bf-border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.bf-cmp__label { font-size: 9px; fill: var(--bf-muted); }
+.bf-cmp__label--other { font-style: italic; }
+.bf-cmp__ticks {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  color: var(--bf-muted);
+  font-variant-numeric: tabular-nums;
+}
+.bf-cmp__empty { color: var(--bf-muted); font-size: 0.85rem; }
+
 /* ── DataDive ─────────────────────────────────────────────────────────────── */
 .bf-datadive { }
 
@@ -1190,7 +1285,7 @@ html.bf-printing .bf-print-label {
   a { text-decoration: underline; }
   /* Top-level pages (one Select at the root) each start a new sheet. */
   .bf-blocks > .bf-select:only-child > .bf-select__panel + .bf-print-label { break-before: page; }
-  .bf-plot, .bf-alert, .bf-bignumber, .bf-formula, .bf-code, .bf-profile__card,
+  .bf-plot, .bf-alert, .bf-bignumber, .bf-formula, .bf-code, .bf-profile__card, .bf-cmp__row,
   .bf-group:has(> .bf-bignumber) { break-inside: avoid; }
   /* A calendar may shrink to fit the sheet instead of being clipped (#106). */
   .bf-cal__days, .bf-cal__grid { min-width: 0; --bf-cal-text: 1; }

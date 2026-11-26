@@ -1,4 +1,4 @@
-# The lab: DataProfile, DataDive, CalendarHeatmap, TimeHeatmap
+# The lab: DataProfile, DataCompare, DataDive, CalendarHeatmap, TimeHeatmap
 
 `briefing.lab` holds richer, more specialised blocks. They plug into the same
 report and follow the theme, and their JavaScript is inlined only in reports that
@@ -28,6 +28,77 @@ customers = pd.DataFrame({
 })
 bf.save(bf.lab.DataProfile(customers, missing_threshold=0.2), "profile.html", name="Customers")
 ```
+
+## `DataCompare`: datasets column by column
+
+`DataCompare` puts two or more datasets side by side, such as train and test, or this
+week's run and last week's. Each column gets a row: a line of statistics per dataset, in
+that dataset's colour, and their distributions overlaid on one chart.
+
+- **Numbers and dates** are histograms on bins every dataset shares, so the bars line up.
+- **Categories** are bars of their most frequent values. Above 20 distinct values, they're
+  cumulative curves instead: how much of the data the top 1, 2, … values cover.
+- **Badges** flag a column only some datasets have, one whose type differs, and one that
+  has *drifted*: its distance from the first dataset, the reference, is above
+  `distance_threshold`.
+- **Missing values and zeros** above `missing_threshold` and `zero_threshold` are highlighted.
+
+Pass the datasets as a dict: its keys name them, and the first one is the reference.
+`sort=` puts the columns that need a look first: `"distance"`, `"missing"`, `"zeros"` or
+`"non_uniformity"` (how far a column is from spreading its values evenly).
+
+```{briefing-example}
+:title: Train and test compared
+:height: 720
+
+import briefing as bf
+
+split = bf.datasets.load("train_test")
+bf.save(
+    bf.lab.DataCompare({"train": split.train, "test": split.test}, sort="distance"),
+    "compare.html",
+    name="Train and test",
+)
+```
+
+Every statistic is computed in Python. The report carries them, not the rows, so comparing
+ten million rows makes as small a file as comparing a thousand.
+
+### The distance
+
+By default, the distance between a dataset and the reference is the **Jensen–Shannon
+distance**. It compares the two distributions on the same bins (the shared histogram bins
+for numbers and dates, the most frequent values for categories) as proportions, so
+datasets of different sizes compare fairly. It's symmetric, it runs from 0 (the same
+distribution) to 1 (nothing in common), and it means the same for every type of column,
+so one threshold works for all of them.
+
+`distance=` picks another measure:
+
+| `distance=` | Range | Drifted above (default) |
+|---|---|---|
+| `"jensen_shannon"` (default) | 0 to 1 | 0.10 |
+| `"hellinger"` | 0 to 1 | 0.10 |
+| `"total_variation"` | 0 to 1 | 0.10 |
+| `"psi"`, the population stability index | 0 and up | 0.20 |
+
+Or pass a function of your own. It gets two NumPy arrays of proportions over the same
+bins, the reference's first, with missing values left out, and returns a number. Without
+`distance_threshold=`, no column is marked as drifted, but the distance is still shown and
+sortable.
+
+```python
+import numpy as np
+
+def largest_gap(p, q):
+    """The largest difference in share in any one bin."""
+    return float(np.max(np.abs(p - q)))
+
+bf.lab.DataCompare({"train": train, "test": test}, distance=largest_gap, distance_threshold=0.05)
+```
+
+In the JSON form, `distance` is one of the names; a function travels by reference
+(`{"ref": "..."}`), like any other Python object.
 
 ## `DataDive`: every row a dot
 

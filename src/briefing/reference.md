@@ -253,6 +253,20 @@ Per-column statistical profiling block.
 - `missing_threshold`: a number, default `0.2`. Share of missing values (0–1) above which a column's missing count is highlighted in red.
 - `max_categories`: a whole number, default `20`. Most frequent values shown for categorical columns.
 
+### lab.DataCompare
+
+Datasets compared column by column, such as train and test, or this run and the last.
+
+- `datasets` (required): an object {"<dataset>": a table {"columns": [...], "rows": [[...]]}}. Two or more datasets, as `{"train": df_a, "test": df_b}` (any dataframe briefing accepts), or a list, named `"1"`, `"2"`…. The first is the reference the others are measured against.
+- `columns`: a list of texts. The columns to compare, in this order. By default every column, in the order the datasets first have them.
+- `sort`: one of "name", "missing", "zeros", "non_uniformity", "distance", default `"name"`. The order of the rows: `"name"`, or the largest `"missing"` share, `"zeros"` share, `"non_uniformity"` or `"distance"` first.
+- `missing_threshold`: a number, default `0.05`. A share of missing values (0–1) above this is highlighted.
+- `zero_threshold`: a number, default `0.2`. A share of zeros (0–1) above this is highlighted.
+- `distance`: one of "jensen_shannon", "hellinger", "total_variation", "psi", default `"jensen_shannon"`. The measure of how far a dataset is from the reference: a name, or a function `fn(p, q) -> float` that gets the two distributions as NumPy arrays of proportions over the same bins (the reference's first, missing values left out).
+- `distance_threshold`: a number. A distance above this marks the column as drifted. By default 0.10 for the named measures, 0.20 for `"psi"`, and no badge for a function.
+- `distance_name`: text. What the report calls the measure; by default its name, or the function's name.
+- `bins`: a whole number, default `20`. Bins of the histograms of numbers and dates, shared by every dataset.
+
 ### lab.DataDive
 
 Interactive dot explorer — similar to Google's Facets Dive.

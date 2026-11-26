@@ -134,15 +134,21 @@ class _Writer:
             value = getattr(block, field.attr)
             if _is_default(value, field):
                 continue
+            if _holds_tables(field) and isinstance(value, Mapping):  # DataCompare's datasets: one table each
+                out[field.key] = {str(k): self._data(v, field, block, kind, refs, str(k)) for k, v in value.items()}
+                continue
             try:
                 out[field.key] = _plain(value)
             except _NoJSON:
                 out[field.key] = self._data(value, field, block, kind, refs)
         return out
 
-    def _data(self, value: object, field: Field, block: Block | Deck, kind: BlockType, refs: list[str]) -> t.Any:
+    def _data(
+        self, value: object, field: Field, block: Block | Deck, kind: BlockType, refs: list[str],
+        item: str | None = None,
+    ) -> t.Any:
         if self.inline:
-            accepts = refs_in(field.schema)
+            accepts = refs_in(field.schema["additionalProperties"] if item is not None else field.schema)
             for target, encode in (("table", encode_table), ("figure", encode_figure), ("image", encode_image),
                                    ("file", encode_image)):
                 if target in accepts and (encoded := encode(value)) is not None:
@@ -151,7 +157,7 @@ class _Writer:
             if not refs:
                 self._counts[kind.name] += 1
             base = getattr(block, "name", None) or f"{kind.name.removeprefix('lab.').lower()}-{self._counts[kind.name]}"
-            key = base if not refs else f"{base}-{field.name}"
+            key = f"{base}-{item}" if item is not None else base if not refs else f"{base}-{field.name}"
             unique, n = key, 1
             while unique in self.data:
                 n += 1
@@ -160,6 +166,12 @@ class _Writer:
             self._seen[id(value)] = unique
         refs.append(self._seen[id(value)])
         return {"ref": self._seen[id(value)]}
+
+
+def _holds_tables(field: Field) -> bool:
+    """Whether *field* is a mapping of tables, such as DataCompare's datasets."""
+    others = field.schema.get("additionalProperties")
+    return isinstance(others, dict) and "table" in refs_in(others)
 
 
 def to_spec(report: object, *, inline: bool = False) -> tuple[dict[str, t.Any], dict[str, t.Any]]:
@@ -508,6 +520,8 @@ class Reader:
                       f'{what} "{field.key}" must be {describe(field.schema)}, not {show(value)}.',
                       field.description or None)
             return None, False
+        if _holds_tables(field) and isinstance(value, Mapping):
+            return self._tables(value, field, path, what)
         accepts = refs_in(field.schema)
         try:
             if isinstance(value, Mapping) and "table" in accepts and "rows" in value:
@@ -520,6 +534,24 @@ class Reader:
             self._add("error", "invalid-data", path, f'{what} "{field.key}": {exc}')
             return None, False
         return value, True
+
+    def _tables(self, value: Mapping[str, t.Any], field: Field, path: str, what: str) -> tuple[t.Any, bool]:
+        """A mapping of tables (DataCompare's datasets): each one written in or a reference."""
+        out: dict[str, t.Any] = {}
+        ok = True
+        for key, item in value.items():
+            here = _join(path, key)
+            if isinstance(item, Mapping) and set(item) == {"ref"}:
+                table, item_ok = self._resolve(item["ref"], here)
+            else:
+                try:
+                    table, item_ok = decode_table(dict(item)), True
+                except BriefingError as exc:
+                    self._add("error", "invalid-data", here, f'{what} "{field.key}": {exc}')
+                    table, item_ok = None, False
+            ok = ok and item_ok
+            out[key] = table
+        return out, ok
 
     def _resolve(self, name: object, path: str) -> tuple[t.Any, bool]:
         if not isinstance(name, str) or not name:

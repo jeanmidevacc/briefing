@@ -10,4 +10,5 @@ JavaScript is inlined only in reports that use them. They come with briefing;
 .. autoclass:: CalendarHeatmap
 .. autoclass:: TimeHeatmap
 .. autoclass:: DataProfile
+.. autoclass:: DataCompare
 .. autoclass:: DataDive
