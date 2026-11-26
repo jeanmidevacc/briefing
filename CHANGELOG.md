@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Linked selection (#21): `selects="dive"` on a `DataProfile` or a `DataCompare` names a
+  `DataDive` in the same page, and a click on a bar highlights its rows there, joined on the
+  column's name. Shift+click adds a bar of the same column; clicking it again, × on the
+  chip in the DataDive, or Esc clears. A number's bar selects exactly the rows the chart
+  counted in it. A target that isn't a DataDive in the page is an error (`unknown-target`
+  in `bf.validate`). The script ships only with a block that sets `selects=`.
+
 - `bf.lab.DataCompare` (#17): two or more datasets compared column by column, such as train
   and test. Each column gets a line of statistics per dataset and their distributions
   overlaid (histograms on shared bins, top values, or a cumulative curve above 20 values),

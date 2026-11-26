@@ -217,6 +217,45 @@ bf.save(bf.lab.DataDive(points, x="x", y="y", color="cluster", colors=topics, ti
         name="Articles")
 ```
 
+## Linked selection: a bar selects rows in a `DataDive`
+
+`selects=` on a `DataProfile` or a `DataCompare` names a `DataDive` in the same page. A
+click on a bar then highlights that bar's rows there:
+
+- a number's or a date's bar selects the rows that fall in it, exactly as the chart counted
+  them;
+- a category's bar selects its value;
+- **Shift**+click adds another bar of the same column;
+- click the bar again, click × on the chip that names the selection in the DataDive, or
+  press **Esc** to clear it.
+
+The DataDive matches the bar on the column of the same name. A column it doesn't have
+(or holds as another type) isn't clickable, and the chart's tooltip says why. Its
+Highlight and Filter buttons apply to the selection as to its own filters, and two
+senders add two chips. Bars and chips also work from the keyboard (Tab, then Enter).
+
+```{briefing-example}
+:title: A profile that selects rows in a DataDive
+:height: 900
+
+import briefing as bf
+
+sales = bf.datasets.load("sales")
+bf.save(
+    bf.Briefing(
+        "Click a bar in the profile: its orders light up in the DataDive below.",
+        bf.lab.DataProfile(sales[["region", "channel", "units", "revenue"]], selects="orders"),
+        bf.lab.DataDive(sales, x="units", y="revenue", color="region", name="orders"),
+    ),
+    "linked.html",
+    name="Sales",
+)
+```
+
+The target must be a `DataDive` named in the sender's page: rendering raises an error that
+lists the DataDives there otherwise, and `bf.validate` reports it as `unknown-target`. A
+selection stays in its report: two embeds on one page don't select rows in each other.
+
 ## `CalendarHeatmap`: one cell per day
 
 A GitHub-style calendar: weeks as columns, one cell per day, coloured by the rows

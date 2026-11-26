@@ -293,7 +293,7 @@
   var escape = null;
   function onEscape(fn) { escape = fn; }
 
-  function setupDive(container, runtime) {
+  function setupDive(container, runtime, root) {
     if (container.briefingDive) return;
     var data = load(container), n = data.n;
     var area = container.querySelector('.bf-dd__plot-area');
@@ -312,6 +312,7 @@
     var cardsEl = container.querySelector('.bf-dd__cards');
     var cards = [];  // the open cards, in order: {row, pinned}
     var filters = [], query = '', mode = 'highlight', narrowing = false, match = new Uint8Array(n), lastLit = n;
+    var selections = {};  // what other blocks selected here (#21), by the id of the block that sent it
     var view = { x0: 0, x1: 1, y0: 0, y1: 1 }, geo = null, dpr = 1, drawnH = 400, painted = { groups: {}, order: [] };
     function zoomed() { return 1 / Math.max(view.x1 - view.x0, view.y1 - view.y0); }
     var colour = null, hidden = {}, drawnWidth = 0, drawnW = 620;
@@ -933,10 +934,12 @@
 
     function refilter() {
       var q = query.trim().toLowerCase(), test = q ? textTest(q) : null, on = filters.filter(active);
-      narrowing = !!q || on.length > 0;
+      var picked = Object.keys(selections).map(function (k) { return selections[k].test; });
+      narrowing = !!q || on.length > 0 || picked.length > 0;
       for (var i = 0; i < n; i++) {
         var ok = !test || test(i);
         for (var f = 0; ok && f < on.length; f++) ok = passes(on[f], i);
+        for (var p = 0; ok && p < picked.length; p++) ok = picked[p](i);
         match[i] = ok ? 1 : 0;
       }
       draw();
@@ -980,6 +983,62 @@
     });
     bar.appendChild(searchBox); bar.appendChild(add); bar.appendChild(chips); bar.appendChild(modes);
     container.insertBefore(bar, area);
+
+    // ── linked selection (#21): a bar of a DataProfile or a DataCompare selects rows here.
+    // Numbers and dates are found in the bar's bin exactly as Python binned them; a category by its text.
+    function selectionTest(d) {
+      var c = data.cols[d.column], t = d.test;
+      if (!c || !t) return null;
+      if (t.kind === 'values') {
+        if (c.kind !== 'categorical') return null;
+        var want = {}, ok = new Uint8Array(c.levels.length);
+        d.picks.forEach(function (p) { want[p] = true; });
+        for (var k = 0; k < c.levels.length; k++) ok[k] = want.hasOwnProperty(c.levels[k]) ? 1 : 0;
+        return function (i) { var code = c.codes[i]; return code >= 0 && ok[code] === 1; };
+      }
+      if (c.kind === 'categorical') return null;
+      var bins = {}, unit = t.unit || 1, s = t.scale, low = t.min * s, span = t.max * s - t.min * s;
+      d.picks.forEach(function (p) { bins[+p] = true; });
+      return function (i) {
+        var v = c.values[i];
+        if (v === null) return false;
+        v = v * unit;
+        if (v < t.min || v > t.max) return false;
+        if (t.min === t.max) return bins[0] === true;
+        return bins[Math.min(Math.floor((v * s - low) / span * t.bins), t.bins - 1)] === true;
+      };
+    }
+
+    function unselect(source, tell) {
+      var sel = selections[source];
+      if (!sel) return;
+      delete selections[source];
+      if (sel.chip.parentNode) sel.chip.parentNode.removeChild(sel.chip);
+      if (tell) root.dispatchEvent(new CustomEvent('bf:unselect', { detail: { source: source } }));
+      refilter();
+    }
+
+    root.addEventListener('bf:select', function (e) {
+      var d = e.detail;
+      if (!d || !d.targets || d.targets.indexOf(container.id) < 0) return;
+      var old = selections[d.source], test = d.picks.length ? selectionTest(d) : null;
+      if (old && old.chip.parentNode) old.chip.parentNode.removeChild(old.chip);
+      delete selections[d.source];
+      if (test) {
+        var chip = el('span', 'bf-dd__chip bf-dd__chip--select');
+        chip.appendChild(el('span', 'bf-dd__chip-name', d.column));
+        chip.appendChild(el('span', 'bf-dd__chip-picks', ' ' + d.labels.join(', ')));
+        chip.appendChild(el('span', 'bf-dd__chip-from', ' \u00b7 from ' + d.from));
+        var remove = el('button', 'bf-dd__chip-remove', '\u00d7');
+        remove.type = 'button';
+        remove.setAttribute('aria-label', 'Clear the selection from ' + d.from);
+        remove.addEventListener('click', function () { unselect(d.source, true); });
+        chip.appendChild(remove);
+        chips.appendChild(chip);
+        selections[d.source] = { test: test, chip: chip, column: d.column, labels: d.labels.slice() };
+      }
+      refilter();
+    });
 
     // The rows that match the search, as buttons that open their cards.
     function showResults() {
@@ -1241,6 +1300,12 @@
       vector: vector,
       open: open,
       matches: function () { return narrowing ? lastLit : count; },
+      selections: function () {
+        return Object.keys(selections).map(function (k) {
+          return { source: k, column: selections[k].column, labels: selections[k].labels };
+        });
+      },
+      matched: function (i) { return !narrowing || match[i] === 1; },
       searched: function () { return query; },
       view: function () { return { x0: view.x0, x1: view.x1, y0: view.y0, y1: view.y1 }; },
       moving: function () { return moving; },
@@ -1263,7 +1328,7 @@
                     function () { dives.forEach(function (d) { d.briefingDive.vector(false); }); });
     return function (root) {
       root.querySelectorAll('.bf-datadive').forEach(function (el) {
-        setupDive(el, runtime);
+        setupDive(el, runtime, root);
         if (el.briefingDive && dives.indexOf(el) < 0) dives.push(el);
       });
     };

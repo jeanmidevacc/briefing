@@ -63,6 +63,7 @@ from briefing.renderers.registry import (
     asset_js_for,
     iter_blocks,
     lookup_renderer,
+    optional_assets_for,
     renderer_for,
 )
 from briefing.renderers.size import RUNTIME_NAMES, Part, block_parts, format_size
@@ -765,6 +766,9 @@ def block_scripts(root: Block) -> list[str]:
             js = UNPACK_JS  # so is a text attachment (#36)
         if js is not None and js not in scripts:
             scripts.append(js)
+        for extra, _ in optional_assets_for(block):  # e.g. a DataProfile that selects rows (#21)
+            if extra is not None and extra not in scripts:
+                scripts.append(extra)
     return scripts
 
 
@@ -775,9 +779,9 @@ def block_styles(root: Block) -> list[str]:
     """
     styles: list[str] = []
     for block in iter_blocks(root):
-        css = asset_css_for(block)
-        if css is not None and css not in styles:
-            styles.append(css)
+        for css in [asset_css_for(block), *(extra for _, extra in optional_assets_for(block))]:
+            if css is not None and css not in styles:
+                styles.append(css)
     return styles
 
 

@@ -1,0 +1,15 @@
+/* briefing lab: linked selection (#21). Inlined only with a DataProfile or DataCompare that
+   sets selects=: the invisible targets over its bars, and the selection's chip in the DataDive. */
+.bf-sel__hit { fill: transparent; cursor: pointer; outline: none; }
+.bf-sel__hit:hover, .bf-sel__hit:focus-visible { fill: var(--bf-accent); fill-opacity: 0.1; }
+.bf-sel__hit[aria-pressed="true"] {
+  fill: var(--bf-accent);
+  fill-opacity: 0.14;
+  stroke: var(--bf-accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+[data-bf-unselectable] { cursor: help; }
+.bf-dd__chip--select { border-color: var(--bf-accent); }
+.bf-dd__chip--select .bf-dd__chip-from { color: var(--bf-muted); font-weight: 400; }
+@media print { .bf-sel__hit:not([aria-pressed="true"]) { fill: none; } }

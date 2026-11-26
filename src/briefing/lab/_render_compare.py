@@ -27,6 +27,8 @@ from briefing.renderers.script_json import script_json
 
 if t.TYPE_CHECKING:
     from briefing.lab._blocks import DataCompare
+    from briefing.lab._select import Targets
+    from briefing.renderers.registry import IdGen
 
 #: How many dataset colours report.css defines; more datasets reuse them.
 COLORS = 8
@@ -81,7 +83,7 @@ def _svg(inner: str, label: str) -> str:
     )
 
 
-def _histogram(column: Column) -> str:
+def _histogram(column: Column, extra: str = "") -> str:
     """Each dataset's share of its values in each shared bin, as a filled step line."""
     shares = [
         [c / side.values for c in side.counts] if side is not None and side.values else None for side in column.sides
@@ -106,10 +108,17 @@ def _histogram(column: Column) -> str:
             f'stroke-width="1.5" vector-effect="non-scaling-stroke"/>'
         )
     axis = f'<line x1="0" y1="{_PLOT_BOTTOM}" x2="{_W}" y2="{_PLOT_BOTTOM}" class="bf-cmp__axis"/>'
-    return _svg(paths + axis, f"{column.name}: distributions overlaid")
+    return _svg(paths + axis + extra, f"{column.name}: distributions overlaid")
 
 
-def _bars(column: Column, names: list[str]) -> str:
+def _bar_rows(column: Column) -> tuple[list[str], float]:
+    """The values drawn as bars (the "other" bar aside), and the height of a row."""
+    values = column.labels[:-1] if column.other else column.labels
+    bar = 6.0 if len(column.sides) <= 3 else 4.0
+    return values[:BARS], bar * len(column.sides) + 6
+
+
+def _bars(column: Column, names: list[str], extra: str = "") -> str:
     """Grouped bars of the top values: each dataset's share of its values; the rest in one "other" bar."""
     values = column.labels[:-1] if column.other else column.labels
     drawn = values[:BARS]
@@ -145,7 +154,7 @@ def _bars(column: Column, names: list[str]) -> str:
             )
     return (
         f'<svg class="bf-cmp__svg bf-cmp__svg--bars" viewBox="0 0 {_W} {height:.0f}" role="img" '
-        f'aria-label="{_e(column.name)}: top values per dataset">{out}</svg>'
+        f'aria-label="{_e(column.name)}: top values per dataset">{out}{extra}</svg>'
     )
 
 
@@ -185,18 +194,54 @@ def _curves(column: Column) -> str:
     return _svg(lines + axis, f"{column.name}: share of the values the most frequent ones cover")
 
 
-def _chart(column: Column, names: list[str]) -> tuple[str, str]:
-    """The chart of *column*, and the line under it that reads its axis."""
+def _selection(column: Column, targets: Targets | None) -> tuple[str, str]:
+    """The chart's attributes and its bar targets, when its bars select rows in a DataDive (#21).
+
+    A cumulative curve and the "other" bar select nothing: they stand for many values.
+    """
+    from briefing.lab._render_datadive import _text
+    from briefing.lab._select import bins_test, chart_attrs, hits
+
+    if targets is None:
+        return "", ""
+    dive = " or ".join(targets.names)
+    if column.kind == "categorical":
+        if any(side is not None and side.curve for side in column.sides) or not column.labels:
+            return "", ""
+        attrs, on = chart_attrs(targets, column.name, "categorical", {"kind": "values"})
+        drawn, row_h = _bar_rows(column)
+        boxes = [(0.0, r * row_h, float(_W), row_h, _text(label), _text(label)) for r, label in enumerate(drawn)]
+        return attrs, hits(column.name, boxes, dive) if on else ""
+    if column.binning is None:
+        return "", ""
+    low, high, scale = column.binning
+    bins = len(column.edges) - 1
+    unit = 1_000_000 if column.kind == "datetime" else 1  # the DataDive holds dates in milliseconds
+    attrs, on = chart_attrs(targets, column.name, column.kind, bins_test(low, high, scale, bins, unit))
+    if not on:
+        return attrs, ""
+    show = _date if column.kind == "datetime" else _fmt_num
+    step = _W / bins
+    boxes = [(i * step, 0.0, step, float(_H), str(i),
+              f"{show(column.edges[i])}–{show(column.edges[i + 1])}" if bins > 1 else str(show(column.edges[0])))
+             for i in range(bins)]
+    return attrs, hits(column.name, boxes, dive)
+
+
+def _chart(column: Column, names: list[str], targets: Targets | None = None) -> tuple[str, str, str]:
+    """The chart of *column*, the line under it that reads its axis, and the chart's attributes."""
+    attrs, extra = _selection(column, targets)
     if column.kind == "categorical":
         if any(side is not None and side.curve for side in column.sides):
             distinct = max(side.stats.get("distinct", 0) for side in column.sides if side is not None)
-            return _curves(column), f"<span>1</span><span>top values, cumulative</span><span>{distinct:,}</span>"
-        return _bars(column, names), ""
+            curve = f"<span>1</span><span>top values, cumulative</span><span>{distinct:,}</span>"
+            return _curves(column), curve, attrs
+        return _bars(column, names, extra), "", attrs
     if not column.edges:
-        return "", ""
+        return "", "", ""
     low, high = column.edges[0], column.edges[-1]
     show = _date if column.kind == "datetime" else _fmt_num
-    return _histogram(column), f"<span>{_e(show(low))}</span><span>{_e(show(high))}</span>"
+    return _histogram(column, extra), f"<span>{_e(show(low))}</span><span>{_e(show(high))}</span>", attrs
 
 
 # ── the statistics ────────────────────────────────────────────────────────────
@@ -330,15 +375,15 @@ def _controls(block: DataCompare) -> str:
     )
 
 
-def _row(column: Column, names: list[str], block: DataCompare, index: int) -> str:
-    chart, axis = _chart(column, names)
+def _row(column: Column, names: list[str], block: DataCompare, index: int, targets: Targets | None) -> str:
+    chart, axis, attrs = _chart(column, names, targets)
     keys = " ".join(
         f'data-{attr}="{_key(column.largest(what))}"'
         for attr, what in (("missing", "missing"), ("zeros", "zeros"), ("non-uniformity", "nonuniformity"),
                            ("distance", "distance"))
     )
     chart_html = (
-        f'<div class="bf-cmp__chart">{chart}<div class="bf-cmp__ticks">{axis}</div></div>' if chart else ""
+        f'<div class="bf-cmp__chart"{attrs}>{chart}<div class="bf-cmp__ticks">{axis}</div></div>' if chart else ""
     )
     return (
         f'<section class="bf-cmp__row" data-i="{index}" data-name="{_e(column.name)}" data-kind="{column.kind}" {keys}>'
@@ -364,8 +409,12 @@ def _sorted(columns: list[Column], sort: str) -> list[Column]:
 # ── public entry ──────────────────────────────────────────────────────────────
 
 
-def render_compare(block: DataCompare) -> str:
+def render_compare(block: DataCompare, idgen: IdGen | None = None) -> str:
     """Render a :class:`~briefing.lab.DataCompare` block: a legend, then one row per column."""
+    from briefing.lab._select import Targets, check_selects, sender_attrs
+
+    selects = check_selects(block.selects, "DataCompare")
+    targets = Targets(block, selects, idgen) if selects and idgen is not None else None
     names = list(block.datasets)
     legend = "".join(
         f'<span class="bf-cmp__dataset"><span class="bf-cmp__swatch" style="background:{_color(k)}"></span>'
@@ -375,12 +424,13 @@ def render_compare(block: DataCompare) -> str:
     threshold = f", drifted above {block.threshold:g}" if block.threshold is not None else ""
     note = f'<span class="bf-cmp__measure">Distance from {_e(names[0])}: {_e(block.measure_title)}{threshold}</span>'
     order = {id(column): i for i, column in enumerate(block.compared)}
-    rows = "".join(_row(column, names, block, order[id(column)]) for column in _sorted(block.compared, block.sort))
+    rows = "".join(_row(column, names, block, order[id(column)], targets)
+                   for column in _sorted(block.compared, block.sort))
     data = script_json({"names": names, "columns": [_payload(c) for c in block.compared]})
     if not rows:
         rows = '<p class="bf-cmp__empty">No columns to compare.</p>'
     return (
-        f'<div class="bf-block bf-compare" data-sort="{block.sort}">'
+        f'<div class="bf-block bf-compare" data-sort="{block.sort}"{sender_attrs(targets, "comparison", block)}>'
         f'<div class="bf-cmp__legend">{legend}{note}</div>'
         f"{_controls(block) if block.compared else ''}"
         f'<div class="bf-cmp__rows">{rows}</div>'

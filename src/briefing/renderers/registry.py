@@ -71,6 +71,8 @@ class IdGen:
         self._pages: dict[int, str | None] = {}  # id(block) -> the name of its page
         self._page_blocks: set[int] = set()  # id() of the blocks that are pages
         self._owners: dict[str, str] = {}  # link id -> what claimed it, for error messages
+        self._named: dict[str, Block] = {}  # link id -> the named block that has it
+        self._targets: list[tuple[Block, str, str, type]] = []  # (sender, name, link id, kind) to check (#21)
 
     @property
     def prefix(self) -> str:
@@ -113,7 +115,23 @@ class IdGen:
     def name(self, block: Block, what: str) -> None:
         """Claim the link id of a named *block* (see :meth:`claim`)."""
         if block.name:
-            self._links[id(block)] = self.claim(block, block.name, what)
+            self._links[id(block)] = link = self.claim(block, block.name, what)
+            self._named[link] = block
+
+    def target(self, sender: Block, name: str, kind: type) -> str:
+        """The link id of the block named *name* in *sender*'s page, which must be a *kind* (#21).
+
+        It's checked once every name is claimed, by :meth:`check_links`; until then,
+        :meth:`named` may not know it yet (a block drawn alone).
+        """
+        page = self._pages.get(id(sender))
+        link = f"{self._link_prefix}{page}/{name}" if page else f"{self._link_prefix}{name}"
+        self._targets.append((sender, name, link, kind))
+        return link
+
+    def named(self, link: str) -> Block | None:
+        """The named block whose link id is *link*, if one has claimed it."""
+        return self._named.get(link)
 
     @property
     def claimed(self) -> list[str]:
@@ -133,10 +151,37 @@ class IdGen:
                 found.append((link, clash))
         return found
 
+    def missing_targets(self) -> list[tuple[Block, str]]:
+        """Each block whose target (:meth:`target`) isn't a block of the kind it needs, and why."""
+        found = []
+        for sender, name, link, kind in self._targets:
+            block = self._named.get(link)
+            if isinstance(block, kind):
+                continue
+            page = self._pages.get(id(sender))
+            where = f"in page {page!r}" if page else "in this report"
+            others = sorted(str(b.name) for b in self._named.values()
+                            if isinstance(b, kind) and self._pages.get(id(b)) == page)
+            if others:
+                there = f"The {kind.__name__} blocks there: {', '.join(map(repr, others))}."
+            elif block is None:
+                there = f"Give the {kind.__name__} name={name!r}."
+            else:
+                there = f"There is no named {kind.__name__} there."
+            if block is None:
+                problem = f"there is no block named {name!r} {where}"
+            else:
+                problem = f"the block named {name!r} {where} is a {type(block).__name__}, not a {kind.__name__}"
+            found.append((sender, f"{type(sender).__name__} selects={name!r}, but {problem}. {there}"))
+        return found
+
     def check_links(self) -> None:
-        """Raise if a name matches an id briefing made up, so every id in the page stays unique."""
+        """Raise if a name matches an id briefing made up, so every id in the page stays unique,
+        or if a block selects rows in a block that isn't there (#21)."""
         for link, clash in self.clashes():
             raise BriefingError(clash_message(link, clash))
+        for _, message in self.missing_targets():
+            raise BriefingError(message)
 
 
 def clash_message(link: str, made: str) -> str:
@@ -150,6 +195,20 @@ def clash_message(link: str, made: str) -> str:
 _RENDERERS: dict[type, Renderer] = {}
 _ASSET_JS: dict[type, str] = {}
 _ASSET_CSS: dict[type, str] = {}
+#: Scripts and stylesheets a block needs only with some options: (block class, test, js, css).
+_OPTIONAL_ASSETS: list[tuple[type, Callable[[Block], bool], str | None, str | None]] = []
+
+
+def register_assets(
+    block_cls: type, when: Callable[[t.Any], bool], *, js: str | None = None, css: str | None = None
+) -> None:
+    """Inline *js* and *css* once when a *block_cls* block for which ``when(block)`` holds is present."""
+    _OPTIONAL_ASSETS.append((block_cls, when, js, css))
+
+
+def optional_assets_for(block: Block) -> list[tuple[str | None, str | None]]:
+    """The ``(js, css)`` of each :func:`register_assets` entry that *block* needs."""
+    return [(js, css) for cls, when, js, css in _OPTIONAL_ASSETS if isinstance(block, cls) and when(block)]
 
 
 def register_renderer(
