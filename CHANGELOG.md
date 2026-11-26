@@ -10,14 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+## [0.9.0] - 2026-11-26
 
-- Linked selection (#21): `selects="dive"` on a `DataProfile` or a `DataCompare` names a
-  `DataDive` in the same page, and a click on a bar highlights its rows there, joined on the
-  column's name. Shift+click adds a bar of the same column; clicking it again, × on the
-  chip in the DataDive, or Esc clears. A number's bar selects exactly the rows the chart
-  counted in it. A target that isn't a DataDive in the page is an error (`unknown-target`
-  in `bf.validate`). The script ships only with a block that sets `selects=`.
+### Added
 
 - `bf.lab.DataCompare` (#17): two or more datasets compared column by column, such as train
   and test. Each column gets a line of statistics per dataset and their distributions
@@ -29,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the report's size doesn't grow with the data. Controls above the rows sort them, search
   and filter them by type, and redraw the charts as percentages or counts, on a log scale,
   with each dataset's deciles.
+- Linked selection (#21): `selects="dive"` on a `DataProfile` or a `DataCompare` names a
+  `DataDive` in the same page, and a click on a bar highlights its rows there, joined on the
+  column's name. Shift+click adds a bar of the same column; clicking it again, × on the
+  chip in the DataDive, or Esc clears. A number's bar selects exactly the rows the chart
+  counted in it. A target that isn't a DataDive in the page is an error (`unknown-target`
+  in `bf.validate`). The script ships only with a block that sets `selects=`.
 
 ## [0.8.1] - 2026-11-26
 
@@ -727,7 +728,8 @@ First public release.
   inherits its base's renderer.
 - Ships inline type hints (`py.typed`). Python 3.11+.
 
-[Unreleased]: https://github.com/jeanmidevacc/briefing/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/jeanmidevacc/briefing/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/jeanmidevacc/briefing/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/jeanmidevacc/briefing/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/jeanmidevacc/briefing/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/jeanmidevacc/briefing/compare/v0.7.0...v0.7.1
