@@ -65,10 +65,12 @@ guide's table. `python -m briefing reference|validate|render|skill` (`_cli.py`) 
 `validate` reads the JSON (`spec/_convert.py`), draws each block alone, then renders the
 report with an `IdGen` that records name clashes (`spec/_validate.py`); it never raises.
 
-`briefing.lab` (`DataProfile`, `DataDive`) plugs in the same way: `lab/__init__.py` calls
-`register_renderer(..., js_asset=...)`, so `lab.js` is inlined only when a lab block is
-present. New lab blocks follow that pattern: class in `lab/_blocks.py`, renderer in
-`lab/_render_<name>.py`, JavaScript in `lab/static/`.
+`briefing.lab` (`DataProfile`, `DataDive`, `DataCompare`…) plugs in the same way: `lab/__init__.py`
+calls `register_renderer(..., js_asset=..., css_asset=...)`, so `lab.js` (or `compare.js`,
+`compare.css`) is inlined only when its block is present, in reports, fragments, copy-embed
+copies and decks alike (`block_scripts`, `block_styles`). New lab blocks follow that pattern:
+class in `lab/_blocks.py`, renderer in `lab/_render_<name>.py`, JavaScript and CSS in
+`lab/static/`, not in report.css, which every report carries.
 
 ## Rules that must hold
 

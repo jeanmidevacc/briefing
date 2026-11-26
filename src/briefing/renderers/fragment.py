@@ -31,6 +31,7 @@ from briefing.renderers.html import (
     _load_static,
     _resolve_now,
     block_scripts,
+    block_styles,
     footer_text,
     render_content,
 )
@@ -44,9 +45,13 @@ _TOKEN = "bfembedidtoken"
 
 
 @functools.cache
-def embed_css() -> str:
-    """briefing's stylesheet, scoped to ``.bf-embed``, between the two embed files."""
-    return scope_css(_load_static("embed-reset.css") + _CSS + _load_static("embed.css"))
+def embed_css(styles: tuple[str, ...] = ()) -> str:
+    """briefing's stylesheet and *styles* (optional blocks' own), scoped to ``.bf-embed``, between the embed files."""
+    return scope_css(_load_static("embed-reset.css") + "\n".join([_CSS, *styles]) + _load_static("embed.css"))
+
+
+def _embed_css_for(roots: Iterable[Block]) -> str:
+    return embed_css(tuple(dict.fromkeys(css for root in roots for css in block_styles(root))))
 
 
 def _runtime(defined: str, source: str) -> str:
@@ -60,7 +65,7 @@ def asset_tags(roots: Iterable[Block]) -> str:
     libraries = set().union(*(scan_for_plots(root) for root in roots))
     scripts = list(dict.fromkeys(js for root in roots for js in block_scripts(root)))
     runtimes = "".join(_runtime(defined, source) for defined, source in runtime_sources(libraries))
-    return f"<style>\n{embed_css()}</style>\n{runtimes}<script>{chr(10).join([_JS, *scripts])}</script>\n"
+    return f"<style>\n{_embed_css_for(roots)}</style>\n{runtimes}<script>{chr(10).join([_JS, *scripts])}</script>\n"
 
 
 def check_embed_id(embed_id: str) -> str:
@@ -151,7 +156,7 @@ def copy_data(
         "version": __version__,
         "prefix": prefix,
         "token": _TOKEN,
-        "css": embed_css(),
+        "css": _embed_css_for([root]),
         "theme": rem_to_var(fmt.to_css_vars(f"#{_TOKEN}")),
         "footer": footer_text(root.footer),
         "blocks": [

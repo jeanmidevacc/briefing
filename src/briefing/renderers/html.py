@@ -59,6 +59,7 @@ from briefing.renderers.registry import (
     IdGen as _IdGen,
 )
 from briefing.renderers.registry import (
+    asset_css_for,
     asset_js_for,
     iter_blocks,
     lookup_renderer,
@@ -736,7 +737,7 @@ def render_report(
         report_name=_html.escape(name),
         header_html=render_header(name, normalised.header, now, _export_menu(export)),
         css_vars=fmt.to_css_vars(),
-        report_css=_CSS,
+        report_css=with_block_styles(_CSS, normalised),
         report_scripts=report_scripts,
         head_scripts=head_scripts,
         content_html=content_html,
@@ -765,6 +766,24 @@ def block_scripts(root: Block) -> list[str]:
         if js is not None and js not in scripts:
             scripts.append(js)
     return scripts
+
+
+def block_styles(root: Block) -> list[str]:
+    """The stylesheets that optional blocks under *root* need (e.g. DataCompare's), each once.
+
+    Like :func:`block_scripts`: report.css stays lean when they're unused.
+    """
+    styles: list[str] = []
+    for block in iter_blocks(root):
+        css = asset_css_for(block)
+        if css is not None and css not in styles:
+            styles.append(css)
+    return styles
+
+
+def with_block_styles(css: str, root: Block) -> str:
+    """*css* (report.css), then the stylesheets of the optional blocks under *root*."""
+    return "\n".join([css, *block_styles(root)])
 
 
 def render_content(normalised: Briefing, idgen: _IdGen) -> str:

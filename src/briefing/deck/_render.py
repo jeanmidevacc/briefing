@@ -18,7 +18,16 @@ from briefing.blocks.layout import Briefing
 from briefing.blocks.text import Text
 from briefing.deck._blocks import Deck, Slide
 from briefing.renderers.formatting import Formatting
-from briefing.renderers.html import _CSS, _JS, _jinja_env, _load_static, block_scripts, footer_text, render_block
+from briefing.renderers.html import (
+    _CSS,
+    _JS,
+    _jinja_env,
+    _load_static,
+    block_scripts,
+    footer_text,
+    render_block,
+    with_block_styles,
+)
 from briefing.renderers.inline import inline_markdown, inline_plain
 from briefing.renderers.links import claim_slide_links
 from briefing.renderers.plot import get_runtime_scripts, runtime_script, runtime_sources, scan_for_plots
@@ -146,7 +155,7 @@ def render_deck(
                   for defined, source in runtime_sources(libraries)]
     return _jinja_env.get_template("deck.html.j2").render(
         deck_name=_html.escape(name),
-        css=f"{_CSS}\n{_DECK_CSS}\n{fmt.to_css_vars()}",
+        css=f"{with_block_styles(_CSS, tree)}\n{_DECK_CSS}\n{fmt.to_css_vars()}",
         head_scripts=get_runtime_scripts(libraries),
         slides_html=slides,
         version=__version__,
