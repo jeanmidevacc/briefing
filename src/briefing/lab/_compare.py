@@ -38,6 +38,10 @@ CUMULATIVE_ABOVE = 20
 #: Points kept on a cumulative curve.
 CURVE_POINTS = 100
 
+#: Measures are rounded to this many decimals: float sums differ in their last bits between Python 3.11
+#: and 3.12 (which compensates them) and between NumPy versions, and the report must not.
+DECIMALS = 9
+
 #: PSI smooths empty bins to this proportion, as is usual, so its logarithm stays finite.
 _PSI_FLOOR = 1e-4
 
@@ -173,7 +177,7 @@ def _nonuniformity(counts: Sequence[int]) -> float | None:
     if len(counts) < 2 or len(used) < 2:
         return 1.0
     entropy = -sum(c / total * math.log(c / total) for c in used)
-    return max(0.0, min(1.0, 1 - entropy / math.log(len(counts))))
+    return max(0.0, min(1.0, round(1 - entropy / math.log(len(counts)), DECIMALS)))
 
 
 def _finite(series: pd.Series) -> np.ndarray:
@@ -354,7 +358,7 @@ def measure_distances(column: Column, measure: Measure, title: str) -> None:
                 f"DataCompare: the distance {title!r} gave {value} on column {column.name!r}; "
                 "it must return a finite number."
             )
-        side.distance = value
+        side.distance = round(value, DECIMALS) + 0.0  # + 0.0: no -0.0
 
 
 __all__ = [

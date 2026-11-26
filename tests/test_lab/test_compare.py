@@ -135,6 +135,14 @@ def test_nonuniformity_runs_from_spread_evenly_to_all_in_one() -> None:
     assert [s.nonuniformity for s in column.sides if s is not None] == [pytest.approx(0.0), 1.0]
 
 
+def test_measures_are_rounded_so_every_python_prints_the_same() -> None:
+    # Regression: 1 - entropy / log(n) was 2.9e-15 on Python 3.11 and 0 on 3.12, whose sum() compensates.
+    texts = pd.DataFrame({"v": [f"item_{i}" for i in range(200)]})
+    column = bf.lab.DataCompare([texts, texts.iloc[::-1]]).compared[0]
+    assert [s.nonuniformity for s in column.sides if s is not None] == [0.0, 0.0]
+    assert _compare._nonuniformity([1, 1, 1]) == 0.0
+
+
 def test_a_range_too_narrow_for_its_bins_still_counts() -> None:
     # Regression: np.histogram refuses 20 bins between 0 and the smallest float (found by Hypothesis).
     tiny = pd.DataFrame({"v": [0.0, 5e-324]})
