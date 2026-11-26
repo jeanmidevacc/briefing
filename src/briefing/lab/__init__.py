@@ -56,7 +56,8 @@ def _render_compare_block(block: DataCompare, _: IdGen) -> str:
     return render_compare(block)
 
 
-register_renderer(DataCompare, _render_compare_block)  # static for now: compare.js comes with its controls
+_COMPARE_CSS = (files("briefing.lab") / "static" / "compare.css").read_text(encoding="utf-8")
+register_renderer(DataCompare, _render_compare_block, css_asset=_COMPARE_CSS)  # compare.js comes with its controls
 register_renderer(DataDive, _render_datadive_block, js_asset=_LAB_JS)
 
 

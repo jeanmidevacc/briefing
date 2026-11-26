@@ -149,17 +149,22 @@ def clash_message(link: str, made: str) -> str:
 
 _RENDERERS: dict[type, Renderer] = {}
 _ASSET_JS: dict[type, str] = {}
+_ASSET_CSS: dict[type, str] = {}
 
 
-def register_renderer(block_cls: type, fn: Renderer, *, js_asset: str | None = None) -> None:
+def register_renderer(
+    block_cls: type, fn: Renderer, *, js_asset: str | None = None, css_asset: str | None = None
+) -> None:
     """Register *fn* as the renderer for *block_cls*.
 
-    *js_asset* is JavaScript to inline in the report exactly once whenever a
-    block of this type (or a subclass) appears in the tree.
+    *js_asset* is JavaScript, and *css_asset* a stylesheet, to inline in the report
+    exactly once whenever a block of this type (or a subclass) appears in the tree.
     """
     _RENDERERS[block_cls] = fn
     if js_asset is not None:
         _ASSET_JS[block_cls] = js_asset
+    if css_asset is not None:
+        _ASSET_CSS[block_cls] = css_asset
 
 
 def renderer_for(
@@ -189,6 +194,15 @@ def asset_js_for(block: Block) -> str | None:
         js = _ASSET_JS.get(klass)
         if js is not None:
             return js
+    return None
+
+
+def asset_css_for(block: Block) -> str | None:
+    """Return the stylesheet that must be inlined when *block* is present, if any."""
+    for klass in type(block).__mro__:
+        css = _ASSET_CSS.get(klass)
+        if css is not None:
+            return css
     return None
 
 
