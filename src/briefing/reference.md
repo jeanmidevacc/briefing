@@ -252,6 +252,7 @@ Per-column statistical profiling block.
 - `df` (required): a table {"columns": [...], "rows": [[...]]}. The data, as any dataframe briefing accepts.
 - `missing_threshold`: a number, default `0.2`. Share of missing values (0–1) above which a column's missing count is highlighted in red.
 - `max_categories`: a whole number, default `20`. Most frequent values shown for categorical columns.
+- `selects`: text or a list of texts. The `name` of a DataDive in the same page (or a list of names): clicking a bar then highlights its rows there (Shift+click adds a bar of the same column; click it again, or press Esc, to clear). The DataDive matches the bar on the column of the same name.
 
 ### lab.DataCompare
 
@@ -266,6 +267,7 @@ Datasets compared column by column, such as train and test, or this run and the 
 - `distance_threshold`: a number. A distance above this marks the column as drifted. By default 0.10 for the named measures, 0.20 for `"psi"`, and no badge for a function.
 - `distance_name`: text. What the report calls the measure; by default its name, or the function's name.
 - `bins`: a whole number, default `20`. Bins of the histograms of numbers and dates, shared by every dataset.
+- `selects`: text or a list of texts. The `name` of a DataDive in the same page (or a list of names): clicking a bar then highlights its rows there, as for DataProfile. The DataDive holds one frame, so a bar selects its range or value in it, whichever dataset the bar came from.
 
 ### lab.DataDive
 
@@ -387,6 +389,7 @@ or rendered; a warning means it renders but is worth a look.
 - `empty-container` (error): A report, Page or Toggle without blocks.
 - `duplicate-name` (error): A name (or a heading's {#name}) used twice in one page.
 - `name-clash` (error): A name that matches an id briefing makes up, such as sel-1.
+- `unknown-target` (error): selects= names no DataDive in the block's page.
 - `render-error` (error): A block fails to render, or a Plot can't draw its figure.
 - `too-deep` (error): Blocks nested too deeply to check.
 - `internal-error` (error): A bug in briefing itself; please report it.

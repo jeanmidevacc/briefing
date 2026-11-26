@@ -29,6 +29,7 @@ CODES: dict[str, tuple[Severity, str]] = {
     "empty-container": ("error", "A report, Page or Toggle without blocks."),
     "duplicate-name": ("error", "A name (or a heading's {#name}) used twice in one page."),
     "name-clash": ("error", "A name that matches an id briefing makes up, such as sel-1."),
+    "unknown-target": ("error", "selects= names no DataDive in the block's page."),
     "render-error": ("error", "A block fails to render, or a Plot can't draw its figure."),
     "too-deep": ("error", "Blocks nested too deeply to check."),
     "internal-error": ("error", "A bug in briefing itself; please report it."),

@@ -45,6 +45,10 @@ class DataProfile(Block):
         missing_threshold: Share of missing values (0–1) above which a column's
             missing count is highlighted in red.
         max_categories: Most frequent values shown for categorical columns.
+        selects: The ``name`` of a :class:`DataDive` in the same page (or a list of names):
+            clicking a bar then highlights its rows there (Shift+click adds a bar of the
+            same column; click it again, or press Esc, to clear). The DataDive matches the
+            bar on the column of the same name.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
@@ -52,6 +56,7 @@ class DataProfile(Block):
 
         bf.lab.DataProfile(df)
         bf.lab.DataProfile(df, missing_threshold=0.10)  # red at >10% missing
+        bf.lab.DataProfile(df, selects="dive")  # its bars select rows in bf.lab.DataDive(df, name="dive")
     """
 
     embed_noun: t.ClassVar[str | None] = "profile"
@@ -61,12 +66,17 @@ class DataProfile(Block):
         df: pd.DataFrame | t.Any,
         missing_threshold: float = 0.20,
         max_categories: int = 20,
+        selects: str | list[str] | None = None,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
+        from briefing.lab._select import check_selects
+
         if not 0.0 <= missing_threshold <= 1.0:
             raise BriefingError("'missing_threshold' must be between 0.0 and 1.0.")
+        check_selects(selects, "DataProfile")
         super().__init__(name=name, label=label)
+        self.selects = selects
         self.df = to_pandas(df, block="DataProfile")
         self.missing_threshold = missing_threshold
         self.max_categories = max_categories
@@ -109,6 +119,10 @@ class DataCompare(Block):
         distance_name: What the report calls the measure; by default its name, or the
             function's name.
         bins: Bins of the histograms of numbers and dates, shared by every dataset.
+        selects: The ``name`` of a :class:`DataDive` in the same page (or a list of names):
+            clicking a bar then highlights its rows there, as for :class:`DataProfile`. The
+            DataDive holds one frame, so a bar selects its range or value in it, whichever
+            dataset the bar came from.
         name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
         label: Tab or dropdown label when the block is inside a ``Select``.
 
@@ -136,10 +150,14 @@ class DataCompare(Block):
         distance_threshold: float | None = None,
         distance_name: str | None = None,
         bins: int = 20,
+        selects: str | list[str] | None = None,
         name: BlockId | None = None,
         label: str | None = None,
     ) -> None:
         from briefing.lab import _compare
+        from briefing.lab._select import check_selects
+
+        check_selects(selects, "DataCompare")
 
         if isinstance(datasets, Mapping):
             named = {str(k): v for k, v in datasets.items()}
@@ -203,6 +221,7 @@ class DataCompare(Block):
         self.distance_threshold = distance_threshold
         self.distance_name = distance_name
         self.bins = bins
+        self.selects = selects
         #: The measure's name on the page, and the threshold in force (None: no "drifted" badge).
         self.measure_title = distance_name or title
         self.threshold = distance_threshold if distance_threshold is not None else default_threshold

@@ -136,6 +136,9 @@ class Column:
     edges: list[float] = field(default_factory=list)  # numbers and dates (epoch ms): bins + 1 edges
     labels: list[str] = field(default_factory=list)  # categories: the values counted, then "other" if any
     other: bool = False  # whether the last label is the rest of the values
+    #: How numbers and dates were binned: (minimum, maximum, scale), dates in epoch nanoseconds,
+    #: so the browser can find a value's bin exactly as Python did (#21).
+    binning: tuple[float, float, float] | None = None
 
     @property
     def present(self) -> list[bool]:
@@ -195,18 +198,20 @@ def _epoch_ns(series: pd.Series) -> np.ndarray:
     return stamps.astype("datetime64[ns]").astype("int64").to_numpy()
 
 
-def _histograms(arrays: list[np.ndarray | None], bins: int) -> tuple[list[float], list[list[int]]]:
-    """Counts of each array on *bins* equal bins over all their values, and the bins' edges."""
+def _histograms(
+    arrays: list[np.ndarray | None], bins: int
+) -> tuple[list[float], list[list[int]], tuple[float, float, float] | None]:
+    """Counts of each array on *bins* equal bins over all their values, the bins' edges, and the binning."""
     import numpy as np
 
     present = [a for a in arrays if a is not None and a.size]
     if not present:
-        return [], [[] for _ in arrays]
+        return [], [[] for _ in arrays], None
     low = min(float(a.min()) for a in present)
     high = max(float(a.max()) for a in present)
     if low == high:
         edges = [low, high]
-        return edges, [[int(a.size)] if a is not None else [] for a in arrays]
+        return edges, [[int(a.size)] if a is not None else [] for a in arrays], (low, high, 1.0)
     # Halve everything when the span overflows a float (-1e308 … 1e308), as DataProfile does.
     scale = 1.0 if math.isfinite(high - low) else 0.5
     out: list[list[int]] = []
@@ -220,7 +225,7 @@ def _histograms(arrays: list[np.ndarray | None], bins: int) -> tuple[list[float]
         out.append([int(c) for c in np.bincount(index, minlength=bins)])
     edges = [low + (high * scale - low * scale) / scale * k / bins for k in range(bins + 1)]
     edges[-1] = high
-    return edges, out
+    return edges, out, (low, high, scale)
 
 
 def _number_side(series: pd.Series, values: np.ndarray) -> Side:
@@ -283,18 +288,18 @@ def compare_column(name: str, frames: Sequence[pd.DataFrame], bins: int) -> Colu
 
     if kind == "numeric":
         arrays = [_finite(s) if s is not None else None for s in series]
-        edges, counts = _histograms(arrays, bins)
+        edges, counts, binning = _histograms(arrays, bins)
         sides: list[Side | None] = [
             _number_side(s, a) if s is not None and a is not None else None for s, a in zip(series, arrays, strict=True)
         ]
-        column = Column(name, kind, sides, edges=edges)
+        column = Column(name, kind, sides, edges=edges, binning=binning)
     elif kind == "datetime":
         stamps = [_epoch_ns(s) if s is not None else None for s in series]
-        edges_ns, counts = _histograms([a.astype("float64") if a is not None else None for a in stamps], bins)
+        edges_ns, counts, binning = _histograms([a.astype("float64") if a is not None else None for a in stamps], bins)
         sides = [
             _date_side(s, a) if s is not None and a is not None else None for s, a in zip(series, stamps, strict=True)
         ]
-        column = Column(name, kind, sides, edges=[e / 1_000_000 for e in edges_ns])
+        column = Column(name, kind, sides, edges=[e / 1_000_000 for e in edges_ns], binning=binning)
     else:
         tallies = [_category_counts(s) if s is not None else None for s in series]
         shares: dict[str, float] = {}

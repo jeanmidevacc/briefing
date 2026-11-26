@@ -1950,6 +1950,27 @@
           ],
           "default": 20
         },
+        "selects": {
+          "description": "The `name` of a DataDive in the same page (or a list of names): clicking a bar then highlights its rows there (Shift+click adds a bar of the same column; click it again, or press Esc, to clear). The DataDive matches the bar on the column of the same name.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
         "name": {
           "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
           "anyOf": [
@@ -2136,6 +2157,27 @@
             }
           ],
           "default": 20
+        },
+        "selects": {
+          "description": "The `name` of a DataDive in the same page (or a list of names): clicking a bar then highlights its rows there, as for DataProfile. The DataDive holds one frame, so a bar selects its range or value in it, whichever dataset the bar came from.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
         },
         "name": {
           "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",

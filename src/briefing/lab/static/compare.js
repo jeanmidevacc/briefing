@@ -154,9 +154,12 @@
       var column = data.columns[+row.getAttribute('data-i')];
       var svg = row.querySelector('svg.bf-cmp__svg');
       if (!column || !svg) return;
+      var hits = svg.querySelector('.bf-sel__hits');  // a linked selection's bar targets (#21) stay on top
+      if (hits) svg.removeChild(hits);
       if (column.kind !== 'categorical') histogram(svg, column, view);
       else if (column.sides.some(function (side) { return side && side.curve; })) curves(svg, column, view);
       else bars(svg, column, view, data.names);
+      if (hits) svg.appendChild(hits);
     });
   }
 

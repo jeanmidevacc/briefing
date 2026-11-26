@@ -275,6 +275,16 @@ SCENARIOS: dict[str, Build] = {
         {"train": _compare_frame(0), "test": _compare_frame(1), "live": _compare_frame(2).drop(columns="score")},
         sort="distance",
     )),
+    "linked-selection": lambda _: bf.Briefing(
+        bf.Page(
+            # Columns whose dtypes pandas 2 and 3 name alike (DataProfile prints them).
+            bf.lab.DataProfile(_compare_frame(0)[["score", "spend", "plan", "flag"]], selects="dive"),
+            bf.lab.DataCompare({"train": _compare_frame(0), "test": _compare_frame(1)}, selects="dive"),
+            bf.lab.DataDive(_compare_frame(0), x="score", y="spend", name="dive"),
+            title="Linked", name="linked",
+        ),
+        bf.Page(bf.Text("Another page."), title="Other"),
+    ),
     "export-menu": lambda _: bf.Briefing(
         bf.Page(bf.Text("# One"), title="One"), bf.Page(bf.Text("# Two"), title="Two"), export="png"
     ),
@@ -323,6 +333,8 @@ ESCAPE_SCENARIOS: dict[str, Callable[[], tuple[bf.Briefing, str]]] = {
     "datatable": lambda: (bf.Briefing(bf.DataTable(_payload_frame(), caption=PAYLOAD)), "R"),
     "dataprofile": lambda: (bf.Briefing(bf.lab.DataProfile(_payload_frame())), "R"),
     "datadive": lambda: (bf.Briefing(bf.lab.DataDive(_payload_frame(), color=PAYLOAD)), "R"),
+    "linked-selection": lambda: (bf.Briefing(
+        bf.lab.DataProfile(_payload_frame(), selects="dive"), bf.lab.DataDive(_payload_frame(), name="dive")), "R"),
     "datacompare": lambda: (bf.Briefing(bf.lab.DataCompare(
         {PAYLOAD: _payload_frame(), "b": _payload_frame().iloc[::-1]}, distance=lambda p, q: 0.5, distance_name=PAYLOAD,
         distance_threshold=0.1)), "R"),

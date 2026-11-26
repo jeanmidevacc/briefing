@@ -194,6 +194,8 @@ class _Tracer(IdGen):
             block = self._owners_of.get(link)
             path = self.paths.get(id(block), "") if block is not None else ""
             self.found.append(Diagnostic("error", "name-clash", path, clash_message(link, made)))
+        for sender, message in self.missing_targets():
+            self.found.append(Diagnostic("error", "unknown-target", self.paths.get(id(sender), ""), message))
 
 
 def _render_deck(deck: Deck, paths: dict[int, str]) -> list[Diagnostic]:

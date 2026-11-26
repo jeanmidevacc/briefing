@@ -16,6 +16,11 @@ import typing as t
 
 if t.TYPE_CHECKING:
     from briefing.lab._blocks import DataProfile
+    from briefing.lab._select import Targets
+    from briefing.renderers.registry import IdGen
+
+#: What draws the invisible bar targets of a linked selection (#21) into a chart, from its bins.
+_Extra = t.Callable[[float, float, float, int], str]
 
 
 # ── column type detection ─────────────────────────────────────────────────────
@@ -75,8 +80,12 @@ def _infinite(series: t.Any) -> t.Any:
     return series.isin([math.inf, -math.inf])
 
 
-def _histogram_svg(series: t.Any) -> str:
-    """Return an SVG histogram for a numeric pandas Series (its finite values)."""
+def _histogram_svg(series: t.Any, extra: _Extra | None = None) -> str:
+    """Return an SVG histogram for a numeric pandas Series (its finite values).
+
+    *extra*, given the minimum, maximum, scale and number of bins, draws more on top: the
+    targets of a linked selection (#21).
+    """
     valid = series.dropna()
     valid = valid[~_infinite(valid)]  # an infinite range would put every value in bin 0
     n = len(valid)
@@ -87,6 +96,7 @@ def _histogram_svg(series: t.Any) -> str:
     if mn == mx:
         # Degenerate: single value — draw one full-height bar
         bar = f'<rect x="0" y="0" width="{_SVG_W}" height="{_SVG_H}" fill="var(--bf-accent)" fill-opacity="0.65"/>'
+        bar += extra(mn, mx, 1.0, 1) if extra else ""
         return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {_SVG_W} {_SVG_H}">{bar}</svg>'
 
     # Bucket counts without numpy. A range wider than the largest float (-1e308 … 1e308)
@@ -109,10 +119,26 @@ def _histogram_svg(series: t.Any) -> str:
         w = bar_w - gap
         bars += f'<rect x="{x:.2f}" y="{y:.2f}" width="{w:.2f}" height="{h:.2f}" {_BAR_FILL}/>'
 
+    bars += extra(mn, mx, scale, _HIST_BINS) if extra else ""
     return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {_SVG_W} {_SVG_H}">{bars}</svg>'
 
 
-def _bar_chart_svg(top_values: list[tuple[str, int]]) -> str:
+def _bin_hits(column: str, dive: str) -> _Extra:
+    """The targets over each bin of a histogram, labelled with its range (#21)."""
+    from briefing.lab._select import hits
+
+    def draw(low: float, high: float, scale: float, bins: int) -> str:
+        width = _SVG_W / bins
+        step = (high * scale - low * scale) / scale / bins
+        boxes = [(i * width, 0.0, width, float(_SVG_H), str(i),
+                  f"{_fmt_num(low + step * i)}–{_fmt_num(high if i == bins - 1 else low + step * (i + 1))}"
+                  if bins > 1 else _fmt_num(low)) for i in range(bins)]
+        return hits(column, boxes, dive)
+
+    return draw
+
+
+def _bar_chart_svg(top_values: list[tuple[str, int]], extra: str = "") -> str:
     """Return an SVG horizontal bar chart for top categorical values."""
     if not top_values:
         return f'<svg width="{_SVG_W}" height="{_SVG_H}"></svg>'
@@ -130,7 +156,7 @@ def _bar_chart_svg(top_values: list[tuple[str, int]]) -> str:
         h = row_h - gap
         bars += f'<rect x="1" y="{y:.2f}" width="{bw:.2f}" height="{h:.2f}" {_BAR_FILL}/>'
 
-    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {_SVG_W} {_SVG_H}">{bars}</svg>'
+    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {_SVG_W} {_SVG_H}">{bars}{extra}</svg>'
 
 
 def _datetime_range_svg(series: t.Any) -> str:
@@ -165,6 +191,7 @@ def _column_card(
     series: t.Any,
     missing_threshold: float,
     max_categories: int,
+    targets: Targets | None = None,
 ) -> str:
     total = len(series)
     missing = int(series.isna().sum())
@@ -197,7 +224,8 @@ def _column_card(
         infinite = int(_infinite(series).sum())
         if infinite:
             stat_rows.append(("infinite", f"{infinite:,}"))
-        chart_svg = _histogram_svg(series)
+        chart_attrs, extra = _selectable_bins(targets, col, series)
+        chart_svg = _histogram_svg(series, extra)
 
     elif kind == "categorical":
         unique = int(series.nunique(dropna=True))
@@ -208,9 +236,11 @@ def _column_card(
         top_str = ", ".join(f"{_html.escape(label)} ({cnt:,})" for label, cnt in top[:5])
         if top_str:
             stat_rows.append(("top", top_str))
-        chart_svg = _bar_chart_svg(top)
+        chart_attrs, hits_svg = _selectable_values(targets, col, top)
+        chart_svg = _bar_chart_svg(top, hits_svg)
 
     else:  # datetime
+        chart_attrs = ""
         valid = series.dropna()
         stat_rows += [
             ("min", _html.escape(str(valid.min()) if len(valid) else "—")),
@@ -228,7 +258,7 @@ def _column_card(
             f"</div>"
         )
 
-    chart_html = f'<div class="bf-profile__chart">{chart_svg}</div>' if chart_svg else ""
+    chart_html = f'<div class="bf-profile__chart"{chart_attrs}>{chart_svg}</div>' if chart_svg else ""
 
     return (
         f'<div class="bf-profile__card">'
@@ -240,17 +270,54 @@ def _column_card(
     )
 
 
+# ── linked selection (#21) ────────────────────────────────────────────────────
+
+
+def _selectable_bins(targets: Targets | None, col: str, series: t.Any) -> tuple[str, _Extra | None]:
+    """A histogram's attributes and its bar targets, when its bars select rows."""
+    from briefing.lab._select import bins_test, chart_attrs
+
+    valid = series.dropna()
+    valid = valid[~_infinite(valid)]
+    if targets is None or not len(valid):
+        return "", None
+    low, high = float(valid.min()), float(valid.max())
+    scale = 1.0 if math.isfinite(high - low) else 0.5
+    attrs, on = chart_attrs(targets, str(col), "numeric",
+                            bins_test(low, high, scale if low != high else 1.0, _HIST_BINS if low != high else 1))
+    return attrs, _bin_hits(str(col), " or ".join(targets.names)) if on else None
+
+
+def _selectable_values(targets: Targets | None, col: str, top: list[tuple[str, int]]) -> tuple[str, str]:
+    """A bar chart's attributes and its bar targets, when its bars select rows."""
+    from briefing.lab._render_datadive import _text
+    from briefing.lab._select import chart_attrs, hits
+
+    if targets is None or not top:
+        return "", ""
+    attrs, on = chart_attrs(targets, str(col), "categorical", {"kind": "values"})
+    if not on:
+        return attrs, ""
+    row = _SVG_H / len(top)
+    boxes = [(0.0, i * row, float(_SVG_W), row, _text(label), _text(label)) for i, (label, _) in enumerate(top)]
+    return attrs, hits(str(col), boxes, " or ".join(targets.names))
+
+
 # ── public entry ──────────────────────────────────────────────────────────────
 
 
-def render_profile(block: DataProfile) -> str:
+def render_profile(block: DataProfile, idgen: IdGen | None = None) -> str:
     """Render a :class:`~briefing.DataProfile` block to an HTML grid of column cards."""
+    from briefing.lab._select import Targets, check_selects, sender_attrs
+
+    names = check_selects(block.selects, "DataProfile")
+    targets = Targets(block, names, idgen) if names and idgen is not None else None
     df = block.df
     cards = "".join(
-        _column_card(col, df[col], block.missing_threshold, block.max_categories)
+        _column_card(col, df[col], block.missing_threshold, block.max_categories, targets)
         for col in df.columns
     )
-    return f'<div class="bf-block bf-profile">{cards}</div>'
+    return f'<div class="bf-block bf-profile"{sender_attrs(targets, "profile", block)}>{cards}</div>'
 
 
 __all__ = ["render_profile"]

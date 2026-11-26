@@ -107,6 +107,7 @@ renders its blocks to be sure.
 | `mixed-pages`, `misplaced-page` | error | `Page` blocks mixed with others at the top, or nested |
 | `empty-container` | error | A report, `Page` or `Toggle` without blocks |
 | `duplicate-name`, `name-clash` | error | A name used twice in a page, or that matches an id briefing makes up |
+| `unknown-target` | error | `selects=` names no `DataDive` in the block's page |
 | `render-error` | error | A block that fails to render, or a `Plot` that can't draw its figure |
 | `too-deep`, `internal-error` | error | Blocks nested too deeply to check, or a bug in briefing itself (please report it) |
 | `too-few-panels`, `missing-label` | warning | A `Select` with fewer than two panels, or a panel or page without a label |

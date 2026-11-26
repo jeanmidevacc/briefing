@@ -36,13 +36,13 @@ from briefing.lab._render_compare import render_compare
 from briefing.lab._render_datadive import render_datadive
 from briefing.lab._render_profile import render_profile
 from briefing.lab._render_timeheatmap import render_timeheatmap
-from briefing.renderers.registry import IdGen, register_renderer
+from briefing.renderers.registry import IdGen, register_assets, register_renderer
 
 _LAB_JS = (files("briefing.lab") / "static" / "lab.js").read_text(encoding="utf-8")
 
 
-def _render_profile_block(block: DataProfile, _: IdGen) -> str:
-    return render_profile(block)
+def _render_profile_block(block: DataProfile, idgen: IdGen) -> str:
+    return render_profile(block, idgen)
 
 
 def _render_datadive_block(block: DataDive, _: IdGen) -> str:
@@ -52,14 +52,22 @@ def _render_datadive_block(block: DataDive, _: IdGen) -> str:
 register_renderer(DataProfile, _render_profile_block)
 
 
-def _render_compare_block(block: DataCompare, _: IdGen) -> str:
-    return render_compare(block)
+def _render_compare_block(block: DataCompare, idgen: IdGen) -> str:
+    return render_compare(block, idgen)
 
 
 _COMPARE_CSS = (files("briefing.lab") / "static" / "compare.css").read_text(encoding="utf-8")
 _COMPARE_JS = (files("briefing.lab") / "static" / "compare.js").read_text(encoding="utf-8")
 register_renderer(DataCompare, _render_compare_block, js_asset=_COMPARE_JS, css_asset=_COMPARE_CSS)
 register_renderer(DataDive, _render_datadive_block, js_asset=_LAB_JS)
+
+
+# Linked selection (#21): a profile's or a comparison's bars select rows in a DataDive. Their
+# script and styles ship only with a block that sets selects=.
+_SELECT_JS = (files("briefing.lab") / "static" / "select.js").read_text(encoding="utf-8")
+_SELECT_CSS = (files("briefing.lab") / "static" / "select.css").read_text(encoding="utf-8")
+for _sender in (DataProfile, DataCompare):
+    register_assets(_sender, lambda block: bool(block.selects), js=_SELECT_JS, css=_SELECT_CSS)
 
 
 def _render_calendar_block(block: CalendarHeatmap, idgen: IdGen) -> str:
