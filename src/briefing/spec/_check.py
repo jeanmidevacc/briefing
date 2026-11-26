@@ -135,7 +135,8 @@ def describe(schema: dict[str, t.Any]) -> str:
     if kinds == ["array"] and "items" in schema:
         return f"a list of {_plural(describe(schema['items']))}"
     if kinds == ["object"] and isinstance(schema.get("additionalProperties"), dict):
-        return f'an object {{"<column>": {describe(schema["additionalProperties"])}}}'
+        key = schema.get("propertyNames", {}).get("title", "column")
+        return f'an object {{"<{key}>": {describe(schema["additionalProperties"])}}}'
     return " or ".join(_WORDS[k] for k in kinds) or "a value"
 
 

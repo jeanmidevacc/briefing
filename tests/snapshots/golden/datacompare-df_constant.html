@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="generator" content="briefing {version}" />
+  <title>Contract report</title>
+  <style>
+/* golden: static/report.css sha256 30b4aa7a3cbb */
+:root {
+  --bf-bg:         #ffffff;
+  --bf-bg-rgb:     255, 255, 255;
+  --bf-accent:     #4F46E5;
+  --bf-font:       system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Liberation Sans', Arial, sans-serif;
+  --bf-max-width:  75rem;
+  --bf-text-align: left;
+  --bf-text:       #111827;
+  --bf-muted:      #6b7280;
+  --bf-border:     #e5e7eb;
+  --bf-surface:    #f9fafb;
+  --bf-up:         #16a34a;
+  --bf-down:       #dc2626;
+  --bf-radius:     0.5rem;
+}
+
+  </style>
+  
+</head>
+<body>
+  <div class="bf-report">
+    
+    <header class="bf-report__header">
+      <span class="bf-report__title">Contract report</span>
+      <time class="bf-report__date" datetime="2024-01-02T03:04:00+00:00">2024-01-02 03:04 UTC</time>
+    </header>
+    
+    <main class="bf-report__body">
+      <div class="bf-blocks"><div class="bf-block bf-compare" data-sort="name"><div class="bf-cmp__legend"><span class="bf-cmp__dataset"><span class="bf-cmp__swatch" style="background:var(--bf-cmp-0)"></span>a <small>50 rows</small></span><span class="bf-cmp__dataset"><span class="bf-cmp__swatch" style="background:var(--bf-cmp-1)"></span>b <small>50 rows</small></span><span class="bf-cmp__measure">Distance from a: Jensen–Shannon, drifted above 0.1</span></div><div class="bf-cmp__rows"><section class="bf-cmp__row" data-name="x" data-kind="numeric" data-missing="0" data-zeros="0" data-non-uniformity="1" data-distance="0"><div class="bf-cmp__head"><span class="bf-cmp__name">x</span><span class="bf-cmp__kind">number</span></div><div class="bf-cmp__body"><div class="bf-cmp__table"><table><thead><tr><th>dataset</th><th>count</th><th>missing</th><th>zeros</th><th>mean</th><th>std</th><th>min</th><th>median</th><th>max</th><th>distance</th></tr></thead><tbody><tr><th scope="row"><span class="bf-cmp__swatch" style="background:var(--bf-cmp-0)"></span>a</th><td>50</td><td>0.0% (0)</td><td>0.0% (0)</td><td>42</td><td>0</td><td>42</td><td>42</td><td>42</td><td>reference</td></tr><tr><th scope="row"><span class="bf-cmp__swatch" style="background:var(--bf-cmp-1)"></span>b</th><td>50</td><td>0.0% (0)</td><td>0.0% (0)</td><td>42</td><td>0</td><td>42</td><td>42</td><td>42</td><td>0.000</td></tr></tbody></table></div><div class="bf-cmp__chart"><svg class="bf-cmp__svg" viewBox="0 0 320 96" preserveAspectRatio="none" role="img" aria-label="x: distributions overlaid"><path d="M0 92L0.0 4.0L320.0 4.0L320 92Z" fill="var(--bf-cmp-0)" fill-opacity="0.16" stroke="var(--bf-cmp-0)" stroke-width="1.5" vector-effect="non-scaling-stroke"/><path d="M0 92L0.0 4.0L320.0 4.0L320 92Z" fill="var(--bf-cmp-1)" fill-opacity="0.16" stroke="var(--bf-cmp-1)" stroke-width="1.5" vector-effect="non-scaling-stroke"/><line x1="0" y1="92" x2="320" y2="92" class="bf-cmp__axis"/></svg><div class="bf-cmp__ticks"><span>42</span><span>42</span></div></div></div></section><section class="bf-cmp__row" data-name="y" data-kind="categorical" data-missing="0" data-zeros="" data-non-uniformity="1" data-distance="0"><div class="bf-cmp__head"><span class="bf-cmp__name">y</span><span class="bf-cmp__kind">category</span></div><div class="bf-cmp__body"><div class="bf-cmp__table"><table><thead><tr><th>dataset</th><th>count</th><th>missing</th><th>distinct</th><th>top</th><th>top share</th><th>distance</th></tr></thead><tbody><tr><th scope="row"><span class="bf-cmp__swatch" style="background:var(--bf-cmp-0)"></span>a</th><td>50</td><td>0.0% (0)</td><td>1</td><td><span title="same">same</span></td><td>100.0%</td><td>reference</td></tr><tr><th scope="row"><span class="bf-cmp__swatch" style="background:var(--bf-cmp-1)"></span>b</th><td>50</td><td>0.0% (0)</td><td>1</td><td><span title="same">same</span></td><td>100.0%</td><td>0.000</td></tr></tbody></table></div><div class="bf-cmp__chart"><svg class="bf-cmp__svg bf-cmp__svg--bars" viewBox="0 0 320 18" role="img" aria-label="y: top values per dataset"><text x="98" y="12.0" text-anchor="end" class="bf-cmp__label">same</text><rect x="104" y="3.0" width="212.0" height="5.0" fill="var(--bf-cmp-0)"><title>a · same: 100.0% (50)</title></rect><rect x="104" y="9.0" width="212.0" height="5.0" fill="var(--bf-cmp-1)"><title>b · same: 100.0% (50)</title></rect></svg><div class="bf-cmp__ticks"></div></div></div></section></div></div></div>
+    </main>
+    <footer class="bf-report__footer">Made with briefing {version}</footer>
+  </div>
+  <script>/* golden: static/report.js sha256 345bab2c067f */
+briefing.init(document);</script>
+</body>
+</html>

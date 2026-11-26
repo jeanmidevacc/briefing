@@ -11,10 +11,11 @@ from __future__ import annotations
 
 import datetime as dt
 import functools
+import math
 import re
 import typing as t
 import warnings
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
 from briefing._colors import CSS_COLOR
@@ -69,6 +70,147 @@ class DataProfile(Block):
         self.df = to_pandas(df, block="DataProfile")
         self.missing_threshold = missing_threshold
         self.max_categories = max_categories
+
+
+class DataCompare(Block):
+    """Datasets compared column by column, such as train and test, or this run and the last.
+
+    One row per column, as in Facets Overview: a line of statistics for each dataset, in
+    that dataset's colour, and their distributions overlaid on one chart. Badges flag a
+    column that only some datasets have, one whose type differs, and one that has
+    **drifted**: its distance from the reference (the first dataset) is above
+    ``distance_threshold``. Missing values and zeros above their thresholds are highlighted.
+
+    Numbers and dates are drawn as histograms on bins every dataset shares; categories as
+    bars of their most frequent values, or, above 20 distinct values, as a cumulative curve
+    (how much of the data the top values cover). Every statistic is computed in Python:
+    the report carries them, not the rows, so its size doesn't grow with the data.
+
+    The distance is the **Jensen–Shannon distance** by default: symmetric, from 0 (the same
+    distribution) to 1 (nothing in common), and the same for numbers, dates and categories.
+    ``distance=`` names another measure, ``"hellinger"``, ``"total_variation"`` or
+    ``"psi"`` (the population stability index), or takes a function of your own.
+
+    Args:
+        datasets: Two or more datasets, as ``{"train": df_a, "test": df_b}`` (any dataframe
+            briefing accepts), or a list, named ``"1"``, ``"2"``…. The first is the reference
+            the others are measured against.
+        columns: The columns to compare, in this order. By default every column, in the
+            order the datasets first have them.
+        sort: The order of the rows: ``"name"``, or the largest ``"missing"`` share,
+            ``"zeros"`` share, ``"non_uniformity"`` or ``"distance"`` first.
+        missing_threshold: A share of missing values (0–1) above this is highlighted.
+        zero_threshold: A share of zeros (0–1) above this is highlighted.
+        distance: The measure of how far a dataset is from the reference: a name, or a
+            function ``fn(p, q) -> float`` that gets the two distributions as NumPy arrays of
+            proportions over the same bins (the reference's first, missing values left out).
+        distance_threshold: A distance above this marks the column as drifted. By default
+            0.10 for the named measures, 0.20 for ``"psi"``, and no badge for a function.
+        distance_name: What the report calls the measure; by default its name, or the
+            function's name.
+        bins: Bins of the histograms of numbers and dates, shared by every dataset.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
+        label: Tab or dropdown label when the block is inside a ``Select``.
+
+    Example::
+
+        data = bf.datasets.load("train_test")
+        bf.lab.DataCompare({"train": data.train, "test": data.test})
+        bf.lab.DataCompare({"last week": before, "this week": after}, sort="distance", distance="psi")
+    """
+
+    embed_noun: t.ClassVar[str | None] = "comparison"
+
+    SORTS: t.ClassVar[tuple[str, ...]] = ("name", "missing", "zeros", "non_uniformity", "distance")
+    MEASURES: t.ClassVar[tuple[str, ...]] = ("jensen_shannon", "hellinger", "total_variation", "psi")
+    MAX_BINS: t.ClassVar[int] = 200
+
+    def __init__(
+        self,
+        datasets: Mapping[str, pd.DataFrame | t.Any] | Sequence[pd.DataFrame | t.Any],
+        columns: list[str] | None = None,
+        sort: str = "name",
+        missing_threshold: float = 0.05,
+        zero_threshold: float = 0.20,
+        distance: str | Callable[[t.Any, t.Any], float] = "jensen_shannon",
+        distance_threshold: float | None = None,
+        distance_name: str | None = None,
+        bins: int = 20,
+        name: BlockId | None = None,
+        label: str | None = None,
+    ) -> None:
+        from briefing.lab import _compare
+
+        if isinstance(datasets, Mapping):
+            named = {str(k): v for k, v in datasets.items()}
+            if len(named) != len(datasets):
+                raise BriefingError("DataCompare 'datasets' names must stay distinct as text.")
+        elif isinstance(datasets, Sequence) and not isinstance(datasets, str):
+            named = {str(k + 1): v for k, v in enumerate(datasets)}
+        else:
+            raise BriefingError(
+                "DataCompare takes its datasets as a dict such as {'train': train, 'test': test}, "
+                f"or a list; not {type(datasets).__name__}."
+            )
+        if len(named) < 2:
+            raise BriefingError("DataCompare needs two or more datasets; for one, use bf.lab.DataProfile(df).")
+        if any(not k.strip() for k in named):
+            raise BriefingError("DataCompare 'datasets' names must not be empty.")
+        for key, threshold in (("missing_threshold", missing_threshold), ("zero_threshold", zero_threshold)):
+            if not isinstance(threshold, int | float) or isinstance(threshold, bool) or not 0 <= threshold <= 1:
+                raise BriefingError(f"DataCompare '{key}' must be a share between 0 and 1, not {threshold!r}.")
+        if sort not in self.SORTS:
+            raise BriefingError(f"DataCompare 'sort' is one of {', '.join(map(repr, self.SORTS))}, not {sort!r}.")
+        if isinstance(bins, bool) or not isinstance(bins, int) or not 2 <= bins <= self.MAX_BINS:
+            raise BriefingError(f"DataCompare 'bins' must be a whole number from 2 to {self.MAX_BINS}, not {bins!r}.")
+        if isinstance(distance, str):
+            if distance not in _compare.MEASURES:
+                raise BriefingError(
+                    f"DataCompare 'distance' is one of {', '.join(map(repr, self.MEASURES))}, "
+                    f"or a function fn(p, q) -> float; not {distance!r}."
+                )
+            measure, default_threshold = _compare.MEASURES[distance]
+            title = _compare.MEASURE_TITLES[distance]
+        elif callable(distance):
+            measure, default_threshold = distance, None
+            title = getattr(distance, "__name__", "custom distance")
+        else:
+            raise BriefingError(f"DataCompare 'distance' is a measure's name or a function, not {distance!r}.")
+        if distance_threshold is not None and (
+            isinstance(distance_threshold, bool) or not isinstance(distance_threshold, int | float)
+            or not math.isfinite(distance_threshold) or distance_threshold < 0
+        ):
+            raise BriefingError(
+                f"DataCompare 'distance_threshold' must be a number of 0 or more, not {distance_threshold!r}."
+            )
+
+        super().__init__(name=name, label=label)
+        self.datasets = {k: to_pandas(v, block="DataCompare") for k, v in named.items()}
+        frames = list(self.datasets.values())
+        seen = list(dict.fromkeys(str(c) for frame in frames for c in frame.columns))
+        if columns is not None:
+            if isinstance(columns, str) or not isinstance(columns, Sequence):
+                raise BriefingError(f"DataCompare 'columns' is a list of column names, not {columns!r}.")
+            unknown = [c for c in columns if c not in seen]
+            if unknown:
+                raise BriefingError(f"DataCompare 'columns': no dataset has {', '.join(map(repr, unknown))}.")
+            columns = list(dict.fromkeys(columns))
+        self.columns = columns
+        self.sort = sort
+        self.missing_threshold = missing_threshold
+        self.zero_threshold = zero_threshold
+        self.distance = distance
+        self.distance_threshold = distance_threshold
+        self.distance_name = distance_name
+        self.bins = bins
+        #: The measure's name on the page, and the threshold in force (None: no "drifted" badge).
+        self.measure_title = distance_name or title
+        self.threshold = distance_threshold if distance_threshold is not None else default_threshold
+        # Column names as text: a frame's own labels may be numbers.
+        texts = [frame.rename(columns=str) for frame in frames]
+        self.compared = [_compare.compare_column(c, texts, bins) for c in (columns or seen)]
+        for column in self.compared:
+            _compare.measure_distances(column, measure, self.measure_title)
 
 
 class DataDive(Block):
@@ -693,4 +835,4 @@ class Legend(Block):
 
 # ── public re-exports ─────────────────────────────────────────────────────────
 
-__all__: list[str] = ["CalendarHeatmap", "DataDive", "DataProfile", "Legend", "TimeHeatmap"]
+__all__: list[str] = ["CalendarHeatmap", "DataCompare", "DataDive", "DataProfile", "Legend", "TimeHeatmap"]

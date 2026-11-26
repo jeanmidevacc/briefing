@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `bf.lab.DataCompare` (#17): two or more datasets compared column by column, such as train
+  and test. Each column gets a line of statistics per dataset and their distributions
+  overlaid (histograms on shared bins, top values, or a cumulative curve above 20 values),
+  with badges for a column only some datasets have, a type that differs, and drift. Drift
+  is the Jensen–Shannon distance from the first dataset by default; `distance=` takes
+  `"hellinger"`, `"total_variation"`, `"psi"` or a function of your own. Rows sort by name,
+  missing values, zeros, non-uniformity or distance. Statistics are computed in Python, so
+  the report's size doesn't grow with the data.
+
 ## [0.8.1] - 2026-11-26
 
 ### Added

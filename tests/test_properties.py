@@ -94,3 +94,8 @@ def test_dataprofile_renders_any_frame(df: pd.DataFrame) -> None:
 @given(df=dataframes())
 def test_datadive_renders_any_frame(df: pd.DataFrame) -> None:
     _check(lambda: bf.lab.DataDive(df))
+
+
+@given(a=dataframes(), b=dataframes(), name=texts.filter(lambda s: s.strip() and s != "b"))
+def test_datacompare_renders_any_two_frames(a: pd.DataFrame, b: pd.DataFrame, name: str) -> None:
+    _check(lambda: bf.lab.DataCompare({name: a, "b": b}))

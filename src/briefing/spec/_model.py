@@ -29,7 +29,7 @@ from briefing.blocks.files import Attachment, Image
 from briefing.blocks.layout import Briefing, Card, Group, Page, Select, TabStyle, Toggle
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
 from briefing.deck._blocks import Deck, Slide
-from briefing.lab._blocks import CalendarHeatmap, DataDive, DataProfile, Legend, TimeHeatmap
+from briefing.lab._blocks import CalendarHeatmap, DataCompare, DataDive, DataProfile, Legend, TimeHeatmap
 
 #: The format version this briefing reads and writes (``"briefing": 1``). It changes only
 #: when JSON written for an older version would stop working.
@@ -57,6 +57,7 @@ _TYPES: tuple[tuple[str, type[Block]], ...] = (
     ("Formula", Formula),
     ("HTML", HTML),
     ("lab.DataProfile", DataProfile),
+    ("lab.DataCompare", DataCompare),
     ("lab.DataDive", DataDive),
     ("lab.CalendarHeatmap", CalendarHeatmap),
     ("lab.TimeHeatmap", TimeHeatmap),
@@ -91,6 +92,8 @@ _CHOICES: dict[tuple[str, str], tuple[str, ...]] = {
     ("Image", "format"): ("webp", "jpeg", "png"),
     ("Banner", "format"): ("webp", "jpeg", "png"),
     ("lab.DataDive", "layout"): ("scatter", "tile"),
+    ("lab.DataCompare", "sort"): DataCompare.SORTS,
+    ("lab.DataCompare", "distance"): DataCompare.MEASURES,  # a function of your own goes by reference
     ("lab.CalendarHeatmap", "agg"): CalendarHeatmap.AGGS,
     ("lab.CalendarHeatmap", "views"): ("days",),
     ("lab.CalendarHeatmap", "week_start"): ("monday", "sunday"),
@@ -131,6 +134,9 @@ _OVERRIDES: dict[tuple[str, str], dict[str, t.Any]] = {
     ("lab.CalendarHeatmap", "colors"): _HEATMAP_COLORS,
     ("lab.TimeHeatmap", "colors"): _HEATMAP_COLORS,
     ("lab.DataDive", "colors"): {"anyOf": [_ref("scale"), {"type": "null"}]},
+    # Each dataset is a table written into the JSON or a reference of its own (#17).
+    ("lab.DataCompare", "datasets"): {"type": "object", "propertyNames": {"title": "dataset"},
+                                      "additionalProperties": {"anyOf": [_ref("table"), _ref("ref")]}},
     ("lab.DataDive", "buckets"): {"anyOf": [{"type": "integer", "minimum": 1}, {
         "type": "object", "additionalProperties": {"type": "integer", "minimum": 1}}]},
     ("lab.CalendarHeatmap", "events"): {
