@@ -208,8 +208,101 @@ def test_a_pages_toolbar_sits_just_above_it(viewer: Viewer) -> None:
 
 def test_hidden_buttons_let_clicks_through(viewer: Viewer) -> None:
     page = viewer.open(_report("snapshot"))
-    tools = page.locator('[data-bf-snap="Summary"] > .bf-copy__tools')
+    tools = page.locator('[data-bf-snap="the Summary section"] > .bf-copy__tools')
     page.mouse.move(0, 0)
     expect(tools).to_have_css("pointer-events", "none")
-    page.locator('[data-bf-snap="Summary"]').hover()
+    page.locator('[data-bf-snap="the Summary section"]').hover()
     expect(tools).to_have_css("pointer-events", "auto")
+
+
+# ── a row and a heading's section (#226) ──
+
+
+def _sections_report() -> bf.Briefing:
+    return bf.Briefing(
+        bf.Text("## Activity"),
+        bf.Group(bf.BigNumber("Revenue", "$4.2M"), bf.BigNumber("Orders", "1,204"), columns=2),
+        bf.Text("Runs per day, last year."),
+        bf.Text("## Next"),
+        bf.Text("Not in the Activity section."),
+        export="snapshot",
+    )
+
+
+# Lay out the SVG export.js drew in the page, and give the top of its heading, row and second
+# text, from the top of the image.
+_LAYOUT_JS = """(svg) => {
+  const host = document.createElement('div');
+  host.style.cssText = 'position:absolute;left:0;top:0';
+  host.innerHTML = svg;
+  document.body.appendChild(host);
+  const top = host.firstElementChild.getBoundingClientRect().top;
+  const at = (el) => el.getBoundingClientRect().top - top;
+  const texts = host.querySelectorAll('.bf-text');
+  const out = [at(host.querySelector('.bf-text h2')), at(host.querySelector('.bf-group')), at(texts[1])];
+  host.remove();
+  return out;
+}"""
+
+
+def _copy(page: Page, button: str) -> tuple[dict[str, t.Any], str]:
+    """Click *button*: the clipboard image's size, and the one SVG export.js drew for it."""
+    page.context.grant_permissions(["clipboard-read", "clipboard-write"])
+    page.evaluate(_RECORD_JS)
+    click_tool(page.get_by_role("button", name=button))
+    expect(page.locator(".bf-copy__toast")).to_have_text("Image copied to the clipboard")
+    drawn: list[str] = page.evaluate("window.drawn")
+    assert len(drawn) == 1
+    return page.evaluate(_CLIPBOARD_IMAGE_JS), drawn[0]
+
+
+def test_a_headings_camera_takes_its_whole_section(viewer: Viewer) -> None:
+    page = viewer.open(_sections_report())
+    heading = _bounds(page, page.locator('[data-bf-snap="the Activity section"]'))
+    last = _bounds(page, page.locator(".bf-text", has_text="Runs per day"))
+    image, drawn = _copy(page, "Copy the Activity section as an image")
+    assert "Activity" in drawn and "$4.2M" in drawn and "1,204" in drawn and "Runs per day" in drawn
+    assert "Next" not in drawn and "Not in the Activity section" not in drawn
+    assert "bf-copy" not in drawn
+    assert abs(image["width"] - 2 * (heading["right"] - heading["left"] + 2 * MARGIN)) <= 2
+    assert abs(image["height"] - 2 * (last["bottom"] - heading["top"] + 2 * MARGIN)) <= 2
+    # In the image, each block is where it is on the page: one under another, not piled up at the top.
+    placed = page.evaluate(_LAYOUT_JS, drawn)
+    parts = (".bf-text h2 >> nth=0", '[data-bf-snap="this row"]', ".bf-text >> nth=1")
+    on_page = [_bounds(page, page.locator(part)) for part in parts]
+    for got, want in zip(placed, on_page, strict=True):
+        assert abs(got - (want["top"] - heading["top"])) <= 1
+
+
+def test_a_section_downloads_under_its_heading(viewer: Viewer) -> None:
+    page = viewer.open(_sections_report(), name="Q1 Report")
+    page.evaluate("() => { navigator.clipboard.write = () => Promise.reject(new Error('denied')); }")
+    with page.expect_download() as download:
+        click_tool(page.get_by_role("button", name="Copy the Activity section as an image"))
+    assert download.value.suggested_filename == "q1_report_activity_section.png"
+
+
+def test_a_rows_camera_takes_both_blocks(viewer: Viewer) -> None:
+    page = viewer.open(_sections_report())
+    row = page.locator('[data-bf-snap="this row"]')
+    width, height = _box(page, '[data-bf-snap="this row"]')
+    image, drawn = _copy(page, "Copy this row as an image")
+    assert "$4.2M" in drawn and "1,204" in drawn and "Activity" not in drawn
+    assert abs(image["width"] - 2 * (width + 2 * MARGIN)) <= 2
+    assert abs(image["height"] - 2 * (height + 2 * MARGIN)) <= 2
+    # Its toolbar sits just below it, clear of the toolbar in the corner of the number on its right.
+    row.hover()
+    box, tools = _bounds(page, row), _bounds(page, row.locator(":scope > .bf-copy__tools"))
+    assert box["bottom"] <= tools["top"] <= box["bottom"] + 2
+    corner = _bounds(page, page.locator('[data-bf-snap="Orders"] > .bf-copy__tools'))
+    assert corner["bottom"] <= tools["top"]
+
+
+def test_a_section_counts_blocks_not_the_scripts_between_them(viewer: Viewer) -> None:
+    page = viewer.open(bf.Briefing(
+        bf.Text("## Trend"), bf.Plot(_plotly()), bf.Text("After the chart."), bf.Text("## Next"),
+        export="snapshot",
+    ))
+    page.locator(".bf-plot").hover()
+    _, drawn = _copy(page, "Copy the Trend section as an image")
+    assert "main-svg" in drawn and "After the chart." in drawn and "Next" not in drawn

@@ -399,14 +399,16 @@ class Briefing(ContainerBlock):
             has. For exact, reproducible files use :func:`~briefing.save_image` /
             :func:`~briefing.save_pdf`. To print, use the browser's own print
             (Ctrl+P or ⌘P): it gets the same print layout. ``"embed"`` puts a
-            ``</>`` button on each page, labelled group, chart, table, text,
-            number, alert and banner: it copies that part as an embed fragment, as
-            :func:`~briefing.stringify` makes with ``full_html=False``, to paste
-            into another page. ``"snapshot"`` puts a camera button on the same
-            blocks: it copies that block, as it is on screen, as a PNG image at 2×
-            to the clipboard, ready to paste into a slide or a message, and
-            downloads it when the clipboard is refused. It has the same limits as
-            "Save as PNG". ``"pdf"`` (the "Print" button) was removed in 0.4.0:
+            ``</>`` button on each page, labelled group, row of blocks side by side,
+            chart, table, text, number, alert and banner: it copies that part as an
+            embed fragment, as :func:`~briefing.stringify` makes with
+            ``full_html=False``, to paste into another page. ``"snapshot"`` puts a
+            camera button on the same blocks: it copies that block, as it is on
+            screen, as a PNG image at 2× to the clipboard, ready to paste into a
+            slide or a message, and downloads it when the clipboard is refused. On a
+            text that starts with a heading, the camera takes the whole section: the
+            blocks after it up to the next heading of its level. It has the same
+            limits as "Save as PNG". ``"pdf"`` (the "Print" button) was removed in 0.4.0:
             print with Ctrl+P, or save a file with :func:`~briefing.save_pdf`.
         footer: Text to put before the report's footer line, such as a team name. Every
             report ends with "Made with briefing" and its version; that line can't be

@@ -22,7 +22,7 @@ import os
 import re
 import typing as t
 import warnings
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from importlib.resources import files
 from pathlib import Path
@@ -39,7 +39,7 @@ from briefing.blocks.chips import Chip, Chips
 from briefing.blocks.files import Attachment, Image
 from briefing.blocks.layout import Briefing, Card, Group, Select, SelectType, Toggle, VAlign
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
-from briefing.renderers.copy_embed import RUNTIME_GLOBALS, embed_label
+from briefing.renderers.copy_embed import RUNTIME_GLOBALS, embed_label, sections
 from briefing.renderers.formatting import Formatting
 from briefing.renderers.formula import latex_to_mathml
 from briefing.renderers.header import render_header
@@ -442,7 +442,8 @@ def _render_alert(block: Alert, _: _IdGen) -> str:
 
 @renderer_for(Group)
 def _render_group(block: Group, idgen: _IdGen) -> str:
-    inner = "\n".join(_render_block(b, idgen) for b in block.blocks)
+    stacked = block.columns == 1 and block.min_width is None
+    inner = _render_flow(block.blocks, idgen) if stacked else "\n".join(_render_block(b, idgen) for b in block.blocks)
 
     extra = ""
     if block.min_width:  # as many per row as fit, up to columns when above 1 (#27)
@@ -475,7 +476,7 @@ def _render_card(block: Card, idgen: _IdGen) -> str:
         if block.link:
             title = f'<a class="bf-card__link" href="#{_html.escape(block.link)}">{inline_plain(block.title or "")}</a>'
         head = f'<div class="bf-card__head">{icon}<div class="bf-card__title">{title}</div></div>'
-    body = "\n".join(_render_block(b, idgen) for b in block.blocks)
+    body = _render_flow(block.blocks, idgen)
     body = f'<div class="bf-card__body">{body}</div>' if body else ""
     tags = chips_html(block.tags, " bf-card__tags") if block.tags else ""
     linked = " bf-card--link" if block.link else ""
@@ -537,7 +538,7 @@ def _render_select(block: Select, idgen: _IdGen) -> str:
 def _render_toggle(block: Toggle, idgen: _IdGen) -> str:
     uid = idgen.next("tog")
     label = _html.escape(block.label or "Details")
-    inner = "\n".join(_render_block(b, idgen) for b in block.blocks)
+    inner = _render_flow(block.blocks, idgen)
     chevron = (
         '<svg class="bf-toggle__icon" width="16" height="16" viewBox="0 0 20 20" '
         'fill="currentColor" aria-hidden="true">'
@@ -588,6 +589,13 @@ def _render_placeholder(block: Block, _: _IdGen) -> str:
 # ── dispatcher ────────────────────────────────────────────────────────────────
 
 
+def _render_flow(blocks: Sequence[Block], idgen: _IdGen) -> str:
+    """Blocks one under another: with snapshots, each heading's section is marked first (#226)."""
+    if idgen.snaps:
+        idgen.sections.update(sections(blocks))
+    return "\n".join(_render_block(b, idgen) for b in blocks)
+
+
 def render_block(block: Block, idgen: _IdGen) -> str:
     """The HTML of *block*, with its link id and copy-embed marks; what containers call for each child."""
     return _render_block(block, idgen)
@@ -595,8 +603,7 @@ def render_block(block: Block, idgen: _IdGen) -> str:
 
 def _render_block(block: Block, idgen: _IdGen) -> str:
     if isinstance(block, Briefing):
-        inner = "\n".join(_render_block(b, idgen) for b in block.blocks)
-        return f'<div class="bf-blocks">{inner}</div>'
+        return f'<div class="bf-blocks">{_render_flow(block.blocks, idgen)}</div>'
 
     renderer = lookup_renderer(block)
     html = renderer(block, idgen) if renderer is not None else _render_placeholder(block, idgen)
@@ -606,7 +613,11 @@ def _render_block(block: Block, idgen: _IdGen) -> str:
     marks = ""
     label = embed_label(block, page=idgen.is_page(block)) if idgen.embeds is not None or idgen.snaps else None
     if label is not None and idgen.snaps:
-        marks += f' data-bf-snap="{_html.escape(label)}"'  # a snapshot button (#215), for export.js
+        section = idgen.sections.get(id(block))
+        if section:  # a heading's camera takes its whole section: it and the next *section* blocks (#226)
+            marks += f' data-bf-snap="the {_html.escape(label)} section" data-bf-section="{section}"'
+        else:
+            marks += f' data-bf-snap="{_html.escape(label)}"'  # a snapshot button (#215), for export.js
     if label is not None and idgen.embeds is not None:
         # A copy-embed button (#124): what copy-embed.js needs to cut this block out as a fragment.
         marks += f' data-bf-embed="{_html.escape(label)}" data-bf-embed-id="{len(idgen.embeds)}"'

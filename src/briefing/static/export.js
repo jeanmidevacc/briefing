@@ -1,7 +1,8 @@
 /* briefing export menu (#49) and snapshots (#215): only inlined with export="png" or "snapshot".
    "png": the header's "Save as PNG" button saves the open page. "snapshot": a camera button on each
    block marked data-bf-snap copies that block as a PNG to the clipboard, or downloads it when the
-   clipboard is refused. Vanilla JS, no deps. */
+   clipboard is refused; on a heading marked data-bf-section, the heading and its section (#226).
+   Vanilla JS, no deps. */
 (function () {
   'use strict';
 
@@ -62,14 +63,46 @@
     return getComputedStyle(root.body || root.ownerDocument.body).backgroundColor;
   }
 
-  // Draw an element as it is on screen into a canvas at 2x, with *margin* CSS px of the colour
-  // behind it on every side, so content never touches the image's edge. A promise of a PNG blob.
-  function drawPng(root, el, margin) {
-    var rect = el.getBoundingClientRect();
-    var width = Math.ceil(rect.width), height = Math.ceil(rect.height), scale = 2;
-    var background = backgroundOf(el, root);
-    var copy = cloneWithStyles(el);
-    copy.style.margin = '0';
+  // A copy of *els* to draw, and its size. One element is copied as is; several (a heading's
+  // section, #226) are each placed in one frame where they are on screen, whatever lays them out.
+  function picture(els) {
+    var rect = els[0].getBoundingClientRect();
+    if (els.length === 1) {
+      var single = cloneWithStyles(els[0]);
+      single.style.margin = '0';
+      return { copy: single, width: Math.ceil(rect.width), height: Math.ceil(rect.height) };
+    }
+    var shown = [], left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+    els.forEach(function (el) {
+      var box = el.getBoundingClientRect();
+      if (!box.width && !box.height) return;  // not displayed
+      shown.push({ el: el, box: box });
+      left = Math.min(left, box.left); top = Math.min(top, box.top);
+      right = Math.max(right, box.right); bottom = Math.max(bottom, box.bottom);
+    });
+    var width = Math.ceil(right - left), height = Math.ceil(bottom - top);
+    var frame = els[0].ownerDocument.createElement('div');
+    frame.setAttribute('style', 'position:relative;margin:0;padding:0;width:' + width + 'px;height:' + height + 'px');
+    shown.forEach(function (item) {
+      var copy = cloneWithStyles(item.el);
+      if (!copy) return;
+      copy.style.margin = '0';
+      // A box of its own places it: its copied styles carry insets that would win over ours.
+      var box = frame.ownerDocument.createElement('div');
+      box.setAttribute('style', 'position:absolute;margin:0;padding:0;left:' + (item.box.left - left) +
+        'px;top:' + (item.box.top - top) + 'px;width:' + item.box.width + 'px;height:' + item.box.height + 'px');
+      box.appendChild(copy);
+      frame.appendChild(box);
+    });
+    return { copy: frame, width: width, height: height };
+  }
+
+  // Draw elements as they are on screen into a canvas at 2x, with *margin* CSS px of the colour
+  // behind them on every side, so content never touches the image's edge. A promise of a PNG blob.
+  function drawPng(root, els, margin) {
+    var drawn = picture(els);
+    var copy = drawn.copy, width = drawn.width, height = drawn.height, scale = 2;
+    var background = backgroundOf(els[0], root);
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '">' +
       '<foreignObject x="0" y="0" width="100%" height="100%">' +
       new XMLSerializer().serializeToString(copy) + '</foreignObject></svg>';
@@ -110,7 +143,7 @@
   var MARGIN = 32, BLOCK_MARGIN = 16;
 
   function savePng(root) {
-    drawPng(root, root.querySelector('.bf-report'), MARGIN).then(function (blob) {
+    drawPng(root, [root.querySelector('.bf-report')], MARGIN).then(function (blob) {
       download(root, blob, fileName(root));
     });
   }
@@ -142,11 +175,21 @@
     return tools;
   }
 
+  // What a camera takes: its block, and for a heading, the data-bf-section blocks after it (#226).
+  // Other elements between them (a chart's runtime script) don't count.
+  function section(block) {
+    var els = [block], size = parseInt(block.getAttribute('data-bf-section'), 10) || 0;
+    for (var next = block.nextElementSibling; next && els.length <= size; next = next.nextElementSibling) {
+      if (next.classList.contains('bf-block')) els.push(next);
+    }
+    return els;
+  }
+
   // Copy the block's image to the clipboard; when that is refused, download it. The clipboard
   // gets a promise of the image, so the write starts while the click still counts as one.
   function snapshot(root, block) {
     var label = block.getAttribute('data-bf-snap');
-    var png = drawPng(root, block, BLOCK_MARGIN);
+    var png = drawPng(root, section(block), BLOCK_MARGIN);
     var name = fileName(root, label);
     var copied;
     try {
