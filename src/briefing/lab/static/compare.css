@@ -35,6 +35,20 @@
   margin-right: 0.35rem;
 }
 .bf-cmp__dataset .bf-cmp__swatch { margin-right: 0; }
+.bf-cmp__controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; font-size: 0.8rem; color: var(--bf-muted); }
+.bf-cmp__controls[hidden] { display: none; }
+.bf-cmp__ctrl { display: inline-flex; align-items: center; gap: 0.35rem; }
+.bf-cmp__sort, .bf-cmp__search { font: inherit; color: var(--bf-text); background: var(--bf-bg); border: 1px solid var(--bf-border); border-radius: 0.375rem; padding: 0.15rem 0.4rem; }
+.bf-cmp__search { width: 11rem; }
+.bf-cmp__group { display: inline-flex; align-items: center; gap: 0.6rem; }
+.bf-cmp__check { display: inline-flex; align-items: center; gap: 0.25rem; cursor: pointer; }
+.bf-cmp__units { gap: 0; }
+.bf-cmp__unit { font: inherit; color: var(--bf-muted); background: var(--bf-bg); border: 1px solid var(--bf-border); padding: 0.1rem 0.5rem; cursor: pointer; }
+.bf-cmp__unit:first-child { border-radius: 0.375rem 0 0 0.375rem; }
+.bf-cmp__unit:last-child { border-radius: 0 0.375rem 0.375rem 0; border-left: 0; }
+.bf-cmp__unit[aria-pressed="true"] { color: var(--bf-bg); background: var(--bf-accent); border-color: var(--bf-accent); }
+.bf-cmp__shown { margin-left: auto; }
+.bf-cmp__row[hidden] { display: none; }
 .bf-cmp__rows { display: flex; flex-direction: column; gap: 0.6rem; }
 .bf-cmp__row {
   background: var(--bf-surface);
@@ -96,4 +110,5 @@
 
 @media print {
   .bf-cmp__row { break-inside: avoid; }
+  .bf-cmp__controls { display: none !important; }  /* the rows print as filtered and drawn */
 }

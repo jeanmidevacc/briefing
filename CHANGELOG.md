@@ -19,7 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is the Jensen–Shannon distance from the first dataset by default; `distance=` takes
   `"hellinger"`, `"total_variation"`, `"psi"` or a function of your own. Rows sort by name,
   missing values, zeros, non-uniformity or distance. Statistics are computed in Python, so
-  the report's size doesn't grow with the data.
+  the report's size doesn't grow with the data. Controls above the rows sort them, search
+  and filter them by type, and redraw the charts as percentages or counts, on a log scale,
+  with each dataset's deciles.
 
 ## [0.8.1] - 2026-11-26
 

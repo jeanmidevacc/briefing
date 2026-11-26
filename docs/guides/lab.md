@@ -47,6 +47,18 @@ Pass the datasets as a dict: its keys name them, and the first one is the refere
 `sort=` puts the columns that need a look first: `"distance"`, `"missing"`, `"zeros"` or
 `"non_uniformity"` (how far a column is from spreading its values evenly).
 
+Above the rows, the reader can:
+
+- **sort** them again, **search** column names and show only numbers, categories or dates;
+- switch the charts between **percentages** of each dataset (the default, so datasets of
+  different sizes compare) and **counts**;
+- put them on a **log scale**: the bars' heights for numbers, dates and categories; the
+  ranks for a cumulative curve, so a long tail spreads out;
+- show each dataset's **deciles** as ticks above a number's chart, its median taller.
+
+The controls need the page's script. Printed, the rows keep their order and filters, and
+the controls are left out.
+
 ```{briefing-example}
 :title: Train and test compared
 :height: 720

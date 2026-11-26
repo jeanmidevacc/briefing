@@ -64,7 +64,7 @@ def test_output_is_still_byte_reproducible_with_lab_blocks(df: pd.DataFrame) -> 
 
 # ── a lab block's own stylesheet (#17): DataCompare's ships only with a DataCompare ──
 
-_COMPARE_CSS_MARKER = "briefing lab: DataCompare (#17)"
+_COMPARE_CSS_MARKER = "briefing lab: DataCompare (#17). Inlined only"
 
 
 def _compare(df: pd.DataFrame) -> bf.lab.DataCompare:
