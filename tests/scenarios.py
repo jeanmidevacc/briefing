@@ -277,7 +277,8 @@ SCENARIOS: dict[str, Build] = {
     )),
     "linked-selection": lambda _: bf.Briefing(
         bf.Page(
-            bf.lab.DataProfile(_compare_frame(0), selects="dive"),
+            # Columns whose dtypes pandas 2 and 3 name alike (DataProfile prints them).
+            bf.lab.DataProfile(_compare_frame(0)[["score", "spend", "plan", "flag"]], selects="dive"),
             bf.lab.DataCompare({"train": _compare_frame(0), "test": _compare_frame(1)}, selects="dive"),
             bf.lab.DataDive(_compare_frame(0), x="score", y="spend", name="dive"),
             title="Linked", name="linked",
