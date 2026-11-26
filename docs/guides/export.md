@@ -121,11 +121,11 @@ traces come out blank, and fonts are whatever the reader's machine has. For exac
 reproducible files, use `save_image` and `save_pdf`. Inside this page's frame, your
 browser may block the download; open the full page to try it.
 
-## One block as an image
+## A block, a row or a section as an image
 
 `bf.Briefing(..., export="snapshot")` puts a camera button on each page, labelled
-group, chart, table, text, number, alert and banner: the same blocks that get the
-`</>` button of `export="embed"` ([Embedding](embed.md)). The button shows when you
+group, row of blocks side by side, chart, table, text, number, alert and banner: the
+same blocks that get the `</>` button of `export="embed"` ([Embedding](embed.md)). The button shows when you
 hover over the block or tab to it. A click draws that block as it is on screen, at
 2× with a small margin, and copies it to the clipboard, ready to paste into a slide,
 a chat message or an email. When the browser refuses the clipboard (an older
@@ -133,15 +133,27 @@ browser, a notebook's frame), the image downloads instead, named after the repor
 and the block (`q1_review_numbers.png`). A message in the corner says which one
 happened.
 
+To take more than one block in one image:
+
+- **A row**: a `Group` that puts blocks side by side (`columns=2` or more, or `min_width=`)
+  has its own camera, just below its bottom-right corner, that takes the whole row.
+- **A section**: on a `Text` that starts with a heading, the camera takes the heading and
+  every block after it, up to the next `Text` that starts with a heading of the same or a
+  higher level. A `## Sales` section includes its `### By region`, and stops at the next
+  `##`. Sections are found in the report, a page, a one-column `Group`, a `Card` and a
+  `Toggle`. Its `</>` button still copies the heading's text alone.
+
 ```{briefing-example}
 :title: A report with snapshot buttons
 
 import briefing as bf
 
 report = bf.Briefing(
-    bf.Text("# Q1 review\n\nHover over a block and click the camera to copy it as an image."),
-    bf.Group(bf.BigNumber("Revenue", "$1.25M"), bf.BigNumber("Orders", "10,050"), columns=2,
-             label="Numbers"),
+    bf.Text("## Q1 review\n\nHover over a block and click the camera to copy it as an image."),
+    bf.Group(bf.BigNumber("Revenue", "$1.25M"), bf.BigNumber("Orders", "10,050"), columns=2),
+    bf.Text("The heading's camera takes this section: the text, the row and this line."),
+    bf.Text("## Next quarter"),
+    bf.Text("Not in the Q1 review image."),
     export="snapshot",  # or ("png", "embed", "snapshot") for every button
 )
 bf.save(report, "snapshot.html", name="Q1 review")

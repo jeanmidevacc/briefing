@@ -69,8 +69,8 @@ parts = [bf.stringify(b, full_html=False, include_assets=False) for b in (chart,
 ## Copy a part of a report, without Python
 
 A report built with `export="embed"` lets its readers do the same from the page: a `</>`
-button on each page, labelled group, chart, table, text, number, alert, banner and lab
-block copies that part as a fragment, ready to paste into another page.
+button on each page, labelled group, row of blocks side by side, chart, table, text,
+number, alert, banner and lab block copies that part as a fragment, ready to paste into another page.
 
 ```python
 report = bf.Briefing(

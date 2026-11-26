@@ -74,10 +74,16 @@ def _snapshot_report(*export: str) -> bf.Briefing:
 def test_snapshot_marks_the_blocks_that_copy_embed_would() -> None:
     snap = parse(bf.stringify(_snapshot_report("snapshot"), name="Q1"))
     embed = parse(bf.stringify(_snapshot_report("embed"), name="Q1"))
-    labels = [attr(el, "data-bf-snap") for el in snap.select("[data-bf-snap]")]
-    assert labels == [attr(el, "data-bf-embed") for el in embed.select("[data-bf-embed]")]
+    assert [str(el) for el in snap.select("[data-bf-snap]")] != []
+    assert [el.get("class") for el in snap.select("[data-bf-snap]")] == [
+        el.get("class") for el in embed.select("[data-bf-embed]")]
+    labels = [attr(el, "data-bf-embed") for el in embed.select("[data-bf-embed]")]
     assert labels == ["the Summary page", "Summary", "Numbers", "Revenue", "this text", "the Detail page",
                       "this table"]
+    # The heading's camera takes its section (#226); its copy-embed button, the heading alone.
+    assert [attr(el, "data-bf-snap") for el in snap.select("[data-bf-snap]")] == [
+        "the Summary page", "the Summary section", "Numbers", "Revenue", "this text", "the Detail page",
+        "this table"]
 
 
 def test_snapshot_alone_ships_the_script_but_no_menu_or_embed_data() -> None:
@@ -99,3 +105,77 @@ def test_reports_without_snapshot_have_no_snapshot_marks() -> None:
         html = bf.stringify(_snapshot_report(*export), name="Q1")
         assert parse(html).select("[data-bf-snap]") == []
         assert (EXPORT_JS_MARKER in html) == ("png" in export)
+
+
+# ── rows and heading sections (#226) ──
+
+
+def _labels(report: bf.Briefing, mark: str = "data-bf-snap") -> list[str]:
+    return [attr(el, mark) for el in parse(bf.stringify(report, name="Q1")).select(f"[{mark}]")]
+
+
+def _sections(report: bf.Briefing) -> dict[str, str]:
+    soup = parse(bf.stringify(report, name="Q1"))
+    return {attr(el, "data-bf-snap"): attr(el, "data-bf-section") for el in soup.select("[data-bf-section]")}
+
+
+def test_a_row_of_blocks_gets_a_button_without_a_label() -> None:
+    one, two = bf.BigNumber("One", 1), bf.BigNumber("Two", 2)
+    for export, mark in (("snapshot", "data-bf-snap"), ("embed", "data-bf-embed")):
+        report = bf.Briefing(
+            bf.Group(one, two, columns=2),
+            bf.Group(one, two, min_width="10rem"),
+            bf.Group(one, two),  # a stack: no button
+            bf.Group(one, columns=2),  # one block: no row
+            export=(export,),
+        )
+        assert _labels(report, mark) == ["this row", "One", "Two", "this row", "One", "Two", "One", "Two", "One"]
+
+
+def test_a_heading_takes_the_blocks_up_to_the_next_heading_of_its_level() -> None:
+    report = bf.Briefing(
+        bf.Text("## Activity"),
+        bf.Group(bf.BigNumber("Runs", 3), bf.BigNumber("Rows", 9), columns=2),
+        bf.Text("### Detail {#detail}\n\nRuns per day."),
+        bf.Text("Last year."),
+        bf.Text("## Next"),
+        bf.Text("More."),
+        bf.Text("# Last"),  # nothing after it: no section
+        export=("snapshot",),
+    )
+    assert _sections(report) == {"the Activity section": "3", "the Detail section": "1", "the Next section": "1"}
+    assert "Last" in _labels(report)
+
+
+def test_only_a_heading_at_the_start_of_a_text_counts() -> None:
+    report = bf.Briefing(
+        bf.Text("Intro\n\n## Not a section"),
+        bf.Text("#hashtag is not a heading"),
+        bf.Text("## Real"),
+        bf.Text("Body\n\n# A heading inside a text doesn't end the section"),
+        bf.Text("tail"),
+        export=("snapshot",),
+    )
+    assert _sections(report) == {"the Real section": "2"}
+
+
+def test_sections_are_found_in_every_one_column_flow_but_not_across_columns() -> None:
+    def flow() -> list[bf.Block]:
+        return [bf.Text("## Head"), bf.Text("body")]
+
+    report = bf.Briefing(
+        bf.Page(bf.Group(*flow()), bf.Card(*flow(), title="Card"), bf.Toggle(*flow(), label="More"), title="A"),
+        bf.Page(bf.Group(*flow(), columns=2), title="B"),  # side by side: no section
+        export=("snapshot",),
+    )
+    soup = parse(bf.stringify(report, name="Q1"))
+    flows = [el.parent.get("class") for el in soup.select("[data-bf-section]")]  # type: ignore[union-attr]
+    assert len(flows) == 3
+    assert {"bf-card__body"} <= {c for classes in flows for c in (classes or [])}
+    assert all(attr(el, "data-bf-section") == "1" for el in soup.select("[data-bf-section]"))
+
+
+def test_sections_are_only_marked_for_snapshots() -> None:
+    report = bf.Briefing(bf.Text("## Head"), bf.Text("body"), export=("embed",))
+    assert parse(bf.stringify(report, name="Q1")).select("[data-bf-section]") == []
+    assert _labels(report, "data-bf-embed") == ["Head", "this text"]

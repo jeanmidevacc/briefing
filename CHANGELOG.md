@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `export="snapshot"` takes more than one block (#226). A row of blocks side by side (a
+  `Group` with `columns=2` or more, or `min_width=`) has its own camera, even without a
+  `label=`. On a text that starts with a heading, the camera takes the whole section: the
+  heading and the blocks after it, up to the next heading of the same or a higher level.
+  The `</>` button of `export="embed"` is on rows too.
+
 ## [0.8.0] - 2026-11-25
 
 ### Added

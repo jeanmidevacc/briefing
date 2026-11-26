@@ -62,6 +62,8 @@ class IdGen:
         self.embeds: list[dict[str, t.Any]] | None = [] if embeds else None
         #: Whether the blocks with a copy-embed label get a snapshot button too (#215).
         self.snaps = snaps
+        #: id(block) -> how many blocks after it its heading section holds, in a one-column flow (#226).
+        self.sections: dict[int, int] = {}
         #: id(block) -> the UTF-8 bytes of its rendered HTML, for each block that isn't a container.
         self.weights: dict[int, int] | None = {} if weigh else None
         self._made: list[str] = []
