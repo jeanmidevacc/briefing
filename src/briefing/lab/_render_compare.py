@@ -6,7 +6,10 @@ The statistics come from ``lab/_compare.py``; this module only writes them out:
 - a row per column: its name, kind and badges, a table with one line per dataset, and an
   SVG chart that overlays the datasets (histograms on shared bins for numbers and dates,
   grouped bars of the top values for categories, or a cumulative curve above 20 values);
-- the sort keys as ``data-*`` attributes on each row, so the page can sort and filter.
+- the sort keys as ``data-*`` attributes on each row, and each chart's numbers in a
+  ``script.bf-cmp__data``, so ``lab/static/compare.js`` can sort, filter and redraw: counts or
+  percentages, a log scale, deciles. Its controls stay hidden without it, and the static
+  charts (percentages, linear) are what prints and what a page without scripts shows.
 
 Dataset *k* is drawn in ``var(--bf-cmp-k)``: report.css gives the first the theme's
 accent and the next ones hues that stay apart from it.
@@ -20,6 +23,7 @@ import typing as t
 
 from briefing.lab._compare import Column, Side
 from briefing.lab._render_profile import _fmt_num
+from briefing.renderers.script_json import script_json
 
 if t.TYPE_CHECKING:
     from briefing.lab._blocks import DataCompare
@@ -272,7 +276,61 @@ def _key(value: float | None) -> str:
     return "" if value is None else f"{value:.6g}"
 
 
-def _row(column: Column, names: list[str], block: DataCompare) -> str:
+def _payload(column: Column) -> dict[str, t.Any]:
+    """What compare.js needs to redraw *column*'s chart."""
+    sides: list[dict[str, t.Any] | None] = []
+    for side in column.sides:
+        if side is None:
+            sides.append(None)
+            continue
+        sides.append({"n": side.values, "counts": side.counts, "deciles": side.deciles,
+                      "curve": [list(point) for point in side.curve] if side.curve else None})
+    payload: dict[str, t.Any] = {"kind": column.kind, "sides": sides}
+    if column.edges:
+        payload["range"] = [column.edges[0], column.edges[-1]]
+    if column.labels:
+        payload["labels"] = column.labels
+        payload["other"] = column.other
+    return payload
+
+
+_SORT_NAMES = {"name": "Name", "missing": "Missing values", "zeros": "Zeros", "non_uniformity": "Non-uniformity",
+               "distance": "Distance"}
+_KIND_PLURALS = {"numeric": "numbers", "categorical": "categories", "datetime": "dates"}
+
+
+def _controls(block: DataCompare) -> str:
+    """The controls compare.js runs; hidden until it does."""
+    options = "".join(
+        f'<option value="{key}"{" selected" if key == block.sort else ""}>{label}</option>'
+        for key, label in _SORT_NAMES.items()
+    )
+    kinds = [k for k in ("numeric", "categorical", "datetime") if any(c.kind == k for c in block.compared)]
+    boxes = "".join(
+        f'<label class="bf-cmp__check"><input type="checkbox" class="bf-cmp__kind-filter" value="{k}" checked> '
+        f"{_KIND_PLURALS[k]}</label>"
+        for k in kinds
+    )
+    deciles = (
+        '<label class="bf-cmp__check"><input type="checkbox" class="bf-cmp__deciles"> deciles</label>'
+        if "numeric" in kinds else ""
+    )
+    return (
+        '<div class="bf-cmp__controls" hidden>'
+        f'<label class="bf-cmp__ctrl">Sort by <select class="bf-cmp__sort">{options}</select></label>'
+        '<input type="search" class="bf-cmp__search" placeholder="Search columns" aria-label="Search columns">'
+        f'<span class="bf-cmp__group" role="group" aria-label="Column types">{boxes}</span>'
+        '<span class="bf-cmp__group bf-cmp__units" role="group" aria-label="Values as">'
+        '<button type="button" class="bf-cmp__unit" data-unit="share" aria-pressed="true">%</button>'
+        '<button type="button" class="bf-cmp__unit" data-unit="count" aria-pressed="false">counts</button></span>'
+        '<label class="bf-cmp__check"><input type="checkbox" class="bf-cmp__log"> log scale</label>'
+        f"{deciles}"
+        '<span class="bf-cmp__shown" aria-live="polite"></span>'
+        "</div>"
+    )
+
+
+def _row(column: Column, names: list[str], block: DataCompare, index: int) -> str:
     chart, axis = _chart(column, names)
     keys = " ".join(
         f'data-{attr}="{_key(column.largest(what))}"'
@@ -283,7 +341,7 @@ def _row(column: Column, names: list[str], block: DataCompare) -> str:
         f'<div class="bf-cmp__chart">{chart}<div class="bf-cmp__ticks">{axis}</div></div>' if chart else ""
     )
     return (
-        f'<section class="bf-cmp__row" data-name="{_e(column.name)}" data-kind="{column.kind}" {keys}>'
+        f'<section class="bf-cmp__row" data-i="{index}" data-name="{_e(column.name)}" data-kind="{column.kind}" {keys}>'
         f'<div class="bf-cmp__head"><span class="bf-cmp__name">{_e(column.name)}</span>'
         f'<span class="bf-cmp__kind">{_KIND_NAMES[column.kind]}</span>{_badges(column, names, block)}</div>'
         f'<div class="bf-cmp__body">{_table(column, names, block)}{chart_html}</div>'
@@ -316,13 +374,17 @@ def render_compare(block: DataCompare) -> str:
     )
     threshold = f", drifted above {block.threshold:g}" if block.threshold is not None else ""
     note = f'<span class="bf-cmp__measure">Distance from {_e(names[0])}: {_e(block.measure_title)}{threshold}</span>'
-    rows = "".join(_row(column, names, block) for column in _sorted(block.compared, block.sort))
+    order = {id(column): i for i, column in enumerate(block.compared)}
+    rows = "".join(_row(column, names, block, order[id(column)]) for column in _sorted(block.compared, block.sort))
+    data = script_json({"names": names, "columns": [_payload(c) for c in block.compared]})
     if not rows:
         rows = '<p class="bf-cmp__empty">No columns to compare.</p>'
     return (
         f'<div class="bf-block bf-compare" data-sort="{block.sort}">'
         f'<div class="bf-cmp__legend">{legend}{note}</div>'
+        f"{_controls(block) if block.compared else ''}"
         f'<div class="bf-cmp__rows">{rows}</div>'
+        f'<script type="application/json" class="bf-cmp__data">{data}</script>'
         "</div>"
     )
 
