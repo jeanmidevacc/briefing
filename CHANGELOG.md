@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-11-26
+
 ### Added
 
 - `export="snapshot"` takes more than one block (#226). A row of blocks side by side (a
@@ -705,7 +707,8 @@ First public release.
   inherits its base's renderer.
 - Ships inline type hints (`py.typed`). Python 3.11+.
 
-[Unreleased]: https://github.com/jeanmidevacc/briefing/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/jeanmidevacc/briefing/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/jeanmidevacc/briefing/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/jeanmidevacc/briefing/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/jeanmidevacc/briefing/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/jeanmidevacc/briefing/compare/v0.6.1...v0.7.0
