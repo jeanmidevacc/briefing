@@ -5,6 +5,9 @@ writes the report as JSON (see {doc}`json`), checks it with `validate`, fixes wh
 reports, and renders it; a person can then open the same report in Python with
 `bf.from_spec`, or the other way round with `bf.to_spec`.
 
+To set up an agent for a whole project, start from {doc}`agent-prompt`: a prompt to copy
+into `AGENTS.md`, `CLAUDE.md` or a system prompt, with the outputs and the freedom to tick.
+
 ## What an agent should read first
 
 briefing is newer than most models' training data. An agent can learn it from the

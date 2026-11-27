@@ -20,6 +20,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "myst_parser",
+    "sphinx_copybutton",  # a copy button on code blocks, for the agent prompt (#234)
     "briefing_example",  # docs/_ext: live report examples
     "llms",  # docs/_ext: llms.txt and llms-full.txt, the reference for agents (#32)
 ]

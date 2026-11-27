@@ -108,6 +108,7 @@ guides/markdown
 guides/notebooks
 guides/json
 guides/agents
+guides/agent-prompt
 ```
 
 ```{toctree}

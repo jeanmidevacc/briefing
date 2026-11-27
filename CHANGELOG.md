@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A prompt for coding agents (#234): `prompts/briefing-agent.md`, shown in the docs with a
+  copy button. Tick the outputs (HTML report, slide deck, email digest, embed) and the
+  freedom (strict, the default: briefing's blocks only; or open: `bf.HTML` and custom CSS
+  where no block fits), fill in the reader, and paste it into `AGENTS.md`, `CLAUDE.md` or a
+  system prompt. It keeps the code that reads data sources in `extract.py`, apart from
+  `report.py`, and gives design rules: the answer first, headings that state a finding.
+
 ## [0.9.0] - 2026-11-26
 
 ### Added
