@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-26
+
 ### Added
 
 - A prompt for coding agents (#234): `prompts/briefing-agent.md`, shown in the docs with a
@@ -744,7 +746,8 @@ First public release.
   inherits its base's renderer.
 - Ships inline type hints (`py.typed`). Python 3.11+.
 
-[Unreleased]: https://github.com/jeanmidevacc/briefing/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/jeanmidevacc/briefing/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/jeanmidevacc/briefing/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/jeanmidevacc/briefing/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/jeanmidevacc/briefing/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/jeanmidevacc/briefing/compare/v0.7.1...v0.8.0
