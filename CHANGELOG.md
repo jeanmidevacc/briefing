@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   where no block fits), fill in the reader, and paste it into `AGENTS.md`, `CLAUDE.md` or a
   system prompt. It keeps the code that reads data sources in `extract.py`, apart from
   `report.py`, and gives design rules: the answer first, headings that state a finding.
+- `bf.lab.RecInspector` (#18): recommendations next to each user's history, one column per
+  model. A summary per model (the share already seen, coverage, popularity against the
+  history, overlap between models), then one user at a time, picked from a searchable list,
+  with items marked **seen** (already in the history) and **shared** (another model
+  recommends it too). Fixed columns: `history` (`user`, `item`, `timestamp`), `recs`
+  (`user`, `item`, `rank`, `model`) and optional `items` (`item`, `title`), with a switch
+  between titles and ids. Models and users come from `recs`: up to 4 and 100.
 
 ## [0.9.0] - 2026-11-26
 

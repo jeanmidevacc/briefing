@@ -27,7 +27,8 @@ _REGISTERS = re.compile(r"window\.briefing\.register\('([\w-]+)'")
 
 def test_every_script_is_checked() -> None:
     assert sorted(SCRIPTS) == [
-        "lab/static/calendar.js", "lab/static/compare.js", "lab/static/lab.js", "lab/static/select.js",
+        "lab/static/calendar.js", "lab/static/compare.js", "lab/static/lab.js", "lab/static/recs.js",
+        "lab/static/select.js",
         "static/copy-embed.js",
         "static/deck.js", "static/export.js", "static/report.js", "static/unpack.js",
     ]

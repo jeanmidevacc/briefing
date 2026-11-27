@@ -286,6 +286,14 @@ Interactive dot explorer — similar to Google's Facets Dive.
 - `thumbnails`: text. Column of pictures, one per row: data URIs (`data:image/png;base64,…`), paths to PNG, JPEG, GIF, WebP or SVG files, or their bytes. In the `"tile"` layout, dots become their pictures when the cells have room; the tooltip and the card show them too. Each distinct picture is embedded once. Web addresses are refused: the report must work offline.
 - `max_rows`: a whole number, default `100000`. Larger frames are sampled down to this many rows, with a warning.
 
+### lab.RecInspector
+
+Recommendations next to what each user did, one column per model.
+
+- `history` (required): a table {"columns": [...], "rows": [[...]]}. What users did: any dataframe briefing accepts, with `user`, `item` and `timestamp` (dates, times or numbers; a missing one sorts last).
+- `recs` (required): a table {"columns": [...], "rows": [[...]]}. What each model recommends: `user`, `item`, `rank` (a number, 1 first) and `model`.
+- `items`: a table {"columns": [...], "rows": [[...]]}. The catalogue, optional: `item` and `title`. Items without a title show their id.
+
 ### lab.CalendarHeatmap
 
 GitHub-style calendar heatmap: one cell per day, weeks as columns.

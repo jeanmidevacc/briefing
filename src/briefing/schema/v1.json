@@ -78,6 +78,9 @@
           "$ref": "#/$defs/lab.DataDive"
         },
         {
+          "$ref": "#/$defs/lab.RecInspector"
+        },
+        {
           "$ref": "#/$defs/lab.CalendarHeatmap"
         },
         {
@@ -2435,6 +2438,88 @@
       "required": [
         "type",
         "df"
+      ],
+      "additionalProperties": false
+    },
+    "lab.RecInspector": {
+      "description": "Recommendations next to what each user did, one column per model.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "lab.RecInspector"
+        },
+        "history": {
+          "description": "What users did: any dataframe briefing accepts, with `user`, `item` and `timestamp` (dates, times or numbers; a missing one sorts last).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/table"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "recs": {
+          "description": "What each model recommends: `user`, `item`, `rank` (a number, 1 first) and `model`.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/table"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "items": {
+          "description": "The catalogue, optional: `item` and `title`. Items without a title show their id.",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/table"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "description": "Stable block id (letters, digits, `_` and `-`), its link in the report (`#page/name`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Tab or dropdown label when the block is inside a `Select`.",
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "history",
+        "recs"
       ],
       "additionalProperties": false
     },

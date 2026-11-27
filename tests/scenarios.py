@@ -66,6 +66,26 @@ FRAME_BLOCKS: dict[str, Callable[[pd.DataFrame], Block]] = {
 }
 
 
+def _recs_frames() -> dict[str, t.Any]:
+    """RecInspector's frames (#18): three models; seen and shared items; a user without history, one
+    without a list from a model; an item without a title, one not in the catalogue; ties in time."""
+    history = pd.DataFrame({
+        "user": ["ana", "ana", "ana", "ben", "ben", "cy", "dee"],
+        "item": ["i1", "i2", "i3", "i2", "i4", "i1", "i9"],  # dee isn't in recs: popularity only
+        "timestamp": pd.to_datetime(["2026-01-03", "2026-01-05 14:30", "2026-01-05 14:30", "2026-02-01",
+                                     "2026-01-20", "2026-03-01", "2026-03-02"], format="ISO8601"),
+    })
+    recs = pd.DataFrame({
+        "user": ["ana"] * 6 + ["ben"] * 4 + ["eve"] * 2,
+        "item": ["i4", "i2", "i5", "i5", "i6", "i4", "i1", "i3", "i1", "i7", "i8", "i1"],
+        "rank": [1, 2, 3, 1, 2, 1, 1, 2, 1, 2, 1, 2],
+        "model": ["base", "base", "base", "new", "new", "third", "base", "base", "new", "new", "base", "base"],
+    })
+    items = pd.DataFrame({"item": ["i1", "i2", "i3", "i4", "i5", "i6", "i7"],
+                          "title": ["Dune", "Alien", None, "Heat", "Up", "Jaws", "Big"]})
+    return {"history": history, "recs": recs, "items": items}
+
+
 def _compare_frame(shift: int) -> pd.DataFrame:
     """A dataset for DataCompare: numbers, zeros, dates, few and many categories, a column only some
     have, one whose type differs; each *shift* drifts it a little more. Dtypes named alike by pandas 2 and 3."""
@@ -275,6 +295,7 @@ SCENARIOS: dict[str, Build] = {
         {"train": _compare_frame(0), "test": _compare_frame(1), "live": _compare_frame(2).drop(columns="score")},
         sort="distance",
     )),
+    "recinspector": lambda _: bf.Briefing(bf.lab.RecInspector(**_recs_frames())),
     "linked-selection": lambda _: bf.Briefing(
         bf.Page(
             # Columns whose dtypes pandas 2 and 3 name alike (DataProfile prints them).
@@ -338,6 +359,10 @@ ESCAPE_SCENARIOS: dict[str, Callable[[], tuple[bf.Briefing, str]]] = {
     "datacompare": lambda: (bf.Briefing(bf.lab.DataCompare(
         {PAYLOAD: _payload_frame(), "b": _payload_frame().iloc[::-1]}, distance=lambda p, q: 0.5, distance_name=PAYLOAD,
         distance_threshold=0.1)), "R"),
+    "recinspector": lambda: (bf.Briefing(bf.lab.RecInspector(
+        history=pd.DataFrame({"user": [PAYLOAD], "item": [PAYLOAD], "timestamp": [PAYLOAD]}),
+        recs=pd.DataFrame({"user": [PAYLOAD] * 2, "item": [PAYLOAD] * 2, "rank": [1, 1], "model": [PAYLOAD, "b"]}),
+        items=pd.DataFrame({"item": [PAYLOAD], "title": [PAYLOAD]}))), "R"),
     "image-caption-alt": lambda: (bf.Briefing(bf.Image(RED_SVG, caption=PAYLOAD, alt=PAYLOAD)), "R"),
     "attachment-label": lambda: (bf.Briefing(bf.Attachment(b"x", filename="x.txt", label=PAYLOAD)), "R"),
     "banner-alt": lambda: (bf.Briefing(tabs(bf.Banner("x", image=RED_SVG, alt=PAYLOAD, label=PAYLOAD),
