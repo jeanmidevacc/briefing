@@ -1,4 +1,4 @@
-# The lab: DataProfile, DataCompare, DataDive, CalendarHeatmap, TimeHeatmap
+# The lab: DataProfile, DataCompare, DataDive, RecInspector, CalendarHeatmap, TimeHeatmap
 
 `briefing.lab` holds richer, more specialised blocks. They plug into the same
 report and follow the theme, and their JavaScript is inlined only in reports that
@@ -255,6 +255,57 @@ bf.save(
 The target must be a `DataDive` named in the sender's page: rendering raises an error that
 lists the DataDives there otherwise, and `bf.validate` reports it as `unknown-target`. A
 selection stays in its report: two embeds on one page don't select rows in each other.
+
+## `RecInspector`: recommendations next to each user's history
+
+`RecInspector` shows what recommender models suggest to each user, next to what that user
+did, one column per model. A summary comes first, one line per model over every user:
+
+| Column | What it says |
+| --- | --- |
+| already seen | The share of recommendations already in the user's history. |
+| items | The distinct items the model recommends, and their share of every item the inspector knows (its coverage). |
+| median popularity | How many interactions the items recommended have in the history, next to the items users interacted with. A model far above it recommends what everyone already gets. |
+| overlap | The mean share of a user's list that each other model recommends too. |
+
+Then one user at a time, picked from a list you can search: their history, most recent
+first, and each model's list by rank. An item is marked **seen** when it is already in the
+user's history, and **shared** when another model recommends it to them too. With `items`,
+items show their title, and a switch shows their ids instead.
+
+The frames have **fixed column names**, so the code that feeds the inspector can't drift
+from it. Other columns are ignored, and a missing one raises an error that names it:
+
+| Frame | Columns |
+| --- | --- |
+| `history` | `user`, `item`, `timestamp`: one row per interaction |
+| `recs` | `user`, `item`, `rank` (1 first), `model`: one row per recommendation |
+| `items` (optional) | `item`, `title` |
+
+The models (up to 4) and the users (up to 100) are the ones `recs` holds, in order. Choose
+them where you extract the data: sample the users, cut each list to its top *k*.
+
+```{briefing-example}
+:title: Two models' recommendations, user by user
+:height: 900
+
+import briefing as bf
+
+rec = bf.datasets.load("recsys", n=50)
+bf.save(
+    bf.lab.RecInspector(
+        history=rec.history.rename(columns={"user_id": "user", "item_id": "item", "watched_at": "timestamp"}),
+        recs=rec.recs.rename(columns={"user_id": "user", "item_id": "item"}),
+        items=rec.catalog.rename(columns={"item_id": "item"}),
+    ),
+    "recs.html",
+    name="Recommendations",
+)
+```
+
+In this dataset neither model recommends what a user already watched, so nothing is marked
+**seen**; the popularity model's median popularity shows how much more it leans on the
+films everyone watches.
 
 ## `CalendarHeatmap`: one cell per day
 

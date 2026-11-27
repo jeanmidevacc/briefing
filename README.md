@@ -135,7 +135,7 @@ Sending stays yours: `message` is a standard `EmailMessage` for SMTP, the Gmail 
 - **Tables to work with:** `DataTable` sorts, searches and pages thousands of rows, formats
   columns, links cells and downloads as CSV.
 - **Lab blocks** for custom, interactive views: `DataProfile`, `DataCompare`, `DataDive`,
-  `CalendarHeatmap`, `TimeHeatmap`.
+  `RecInspector`, `CalendarHeatmap`, `TimeHeatmap`.
 - **Embeds:** `bf.stringify(block, full_html=False)` gives one self-contained `<div>` for a docs
   site, a notebook or a wiki, like Plotly's `to_html(full_html=False)`.
 - **What changed since last time:** `bf.diff("yesterday.json", report)` is a report of the numbers,

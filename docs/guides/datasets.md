@@ -175,7 +175,8 @@ bf.save(
 
 A catalogue of 96 films, what `n` users watched, and what two models recommend them: a
 popularity model and a personal one that follows each user's taste in genres. Neither
-recommends what the user has already watched.
+recommends what the user has already watched. To inspect them with `bf.lab.RecInspector`,
+rename the columns to the ones it expects (see {doc}`lab`).
 
 | Table | Columns |
 | --- | --- |

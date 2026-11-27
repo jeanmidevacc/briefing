@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="generator" content="briefing {version}" />
+  <title>Contract report</title>
+  <style>
+/* golden: static/report.css sha256 2ae7647884cf */
+/* golden: lab/static/recs.css sha256 8775e634295d */
+:root {
+  --bf-bg:         #ffffff;
+  --bf-bg-rgb:     255, 255, 255;
+  --bf-accent:     #4F46E5;
+  --bf-font:       system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Liberation Sans', Arial, sans-serif;
+  --bf-max-width:  75rem;
+  --bf-text-align: left;
+  --bf-text:       #111827;
+  --bf-muted:      #6b7280;
+  --bf-border:     #e5e7eb;
+  --bf-surface:    #f9fafb;
+  --bf-up:         #16a34a;
+  --bf-down:       #dc2626;
+  --bf-radius:     0.5rem;
+}
+
+  </style>
+  
+</head>
+<body>
+  <div class="bf-report">
+    
+    <header class="bf-report__header">
+      <span class="bf-report__title">Contract report</span>
+      <time class="bf-report__date" datetime="2024-01-02T03:04:00+00:00">2024-01-02 03:04 UTC</time>
+    </header>
+    
+    <main class="bf-report__body">
+      <div class="bf-blocks"><div class="bf-block bf-recs" style="--bf-recs-models:3" data-show="titles"><div class="bf-recs__summary"><table><thead><tr><th scope="col">model</th><th scope="col">users</th><th scope="col">recommendations</th><th scope="col">already seen</th><th scope="col">items</th><th scope="col">median popularity</th><th scope="col">overlap</th></tr></thead><tbody><tr><th scope="row"><span class="bf-recs__swatch" data-k="0"></span>base</th><td>3</td><td>7</td><td>14.3%</td><td>6 <small>(66.7%)</small></td><td>1</td><td>new 41.7% · third 33.3%</td></tr><tr><th scope="row"><span class="bf-recs__swatch" data-k="1"></span>new</th><td>2</td><td>4</td><td>0.0%</td><td>4 <small>(44.4%)</small></td><td>0</td><td>base 50.0% · third 0.0%</td></tr><tr><th scope="row"><span class="bf-recs__swatch" data-k="2"></span>third</th><td>1</td><td>1</td><td>0.0%</td><td>1 <small>(11.1%)</small></td><td>1</td><td>base 100.0% · new 0.0%</td></tr></tbody></table><p class="bf-recs__notes"><b>already seen</b>: the share of recommendations already in the user’s history · <b>items</b>: the distinct items recommended, and their share of the 9 known · <b>median popularity</b>: interactions in the history with the items recommended; the items users interacted with: 2 · <b>overlap</b>: the mean share of a user’s list that the other model recommends too</p></div><div class="bf-recs__controls" hidden><input type="search" class="bf-recs__search" placeholder="Search users" aria-label="Search users"><select class="bf-recs__pick" aria-label="User"><option value="0">ana · 3 interactions</option><option value="1">ben · 2 interactions</option><option value="2">eve · 0 interactions</option></select><span class="bf-recs__shown" aria-live="polite"></span><span class="bf-recs__switch" role="group" aria-label="Show items as"><button type="button" class="bf-recs__show" data-show="titles" aria-pressed="true">titles</button><button type="button" class="bf-recs__show" data-show="ids" aria-pressed="false">ids</button></span></div><p class="bf-recs__legend"><span class="bf-recs__mark bf-recs__mark--seen">seen</span> already in the user’s history · <span class="bf-recs__mark bf-recs__mark--shared">shared</span> another model recommends it to them too</p><section class="bf-recs__user" data-user="0" aria-live="polite"><div class="bf-recs__who"><span class="bf-recs__user-id">ana</span><small>3 interactions in the history</small></div><div class="bf-recs__history"><div class="bf-recs__heading">History, most recent first</div><ol class="bf-recs__strip"><li class="bf-recs__item" data-item="i2"><span class="bf-recs__name" title="i2 · Alien · 2 interactions in the history"><span class="bf-recs__title">Alien</span><span class="bf-recs__id">i2</span></span><span class="bf-recs__when">2026-01-05 14:30</span></li><li class="bf-recs__item" data-item="i3"><span class="bf-recs__name" title="i3 · 1 interaction in the history"><span class="bf-recs__id">i3</span></span><span class="bf-recs__when">2026-01-05 14:30</span></li><li class="bf-recs__item" data-item="i1"><span class="bf-recs__name" title="i1 · Dune · 2 interactions in the history"><span class="bf-recs__title">Dune</span><span class="bf-recs__id">i1</span></span><span class="bf-recs__when">2026-01-03</span></li></ol></div><div class="bf-recs__models"><div class="bf-recs__model" data-k="0"><div class="bf-recs__heading">base</div><ol class="bf-recs__list"><li class="bf-recs__item bf-recs__item--shared" data-item="i4"><span class="bf-recs__rank">1</span><span class="bf-recs__name" title="i4 · Heat · 1 interaction in the history"><span class="bf-recs__title">Heat</span><span class="bf-recs__id">i4</span></span><span class="bf-recs__mark bf-recs__mark--shared" title="Also recommended by third">shared</span></li><li class="bf-recs__item bf-recs__item--seen" data-item="i2"><span class="bf-recs__rank">2</span><span class="bf-recs__name" title="i2 · Alien · 2 interactions in the history"><span class="bf-recs__title">Alien</span><span class="bf-recs__id">i2</span></span><span class="bf-recs__mark bf-recs__mark--seen" title="Already in ana’s history">seen</span></li><li class="bf-recs__item bf-recs__item--shared" data-item="i5"><span class="bf-recs__rank">3</span><span class="bf-recs__name" title="i5 · Up · 0 interactions in the history"><span class="bf-recs__title">Up</span><span class="bf-recs__id">i5</span></span><span class="bf-recs__mark bf-recs__mark--shared" title="Also recommended by new">shared</span></li></ol></div><div class="bf-recs__model" data-k="1"><div class="bf-recs__heading">new</div><ol class="bf-recs__list"><li class="bf-recs__item bf-recs__item--shared" data-item="i5"><span class="bf-recs__rank">1</span><span class="bf-recs__name" title="i5 · Up · 0 interactions in the history"><span class="bf-recs__title">Up</span><span class="bf-recs__id">i5</span></span><span class="bf-recs__mark bf-recs__mark--shared" title="Also recommended by base">shared</span></li><li class="bf-recs__item" data-item="i6"><span class="bf-recs__rank">2</span><span class="bf-recs__name" title="i6 · Jaws · 0 interactions in the history"><span class="bf-recs__title">Jaws</span><span class="bf-recs__id">i6</span></span></li></ol></div><div class="bf-recs__model" data-k="2"><div class="bf-recs__heading">third</div><ol class="bf-recs__list"><li class="bf-recs__item bf-recs__item--shared" data-item="i4"><span class="bf-recs__rank">1</span><span class="bf-recs__name" title="i4 · Heat · 1 interaction in the history"><span class="bf-recs__title">Heat</span><span class="bf-recs__id">i4</span></span><span class="bf-recs__mark bf-recs__mark--shared" title="Also recommended by base">shared</span></li></ol></div></div></section><script type="application/json" class="bf-recs__data">{"models":["base","new","third"],"items":[["i2","Alien",2],["i3",null,1],["i1","Dune",2],["i4","Heat",1],["i5","Up",0],["i6","Jaws",0],["i7","Big",0],["i8",null,0]],"users":[{"id":"ana","history":[[0,"2026-01-05 14:30"],[1,"2026-01-05 14:30"],[2,"2026-01-03"]],"lists":[[[3,"1"],[0,"2"],[4,"3"]],[[4,"1"],[5,"2"]],[[3,"1"]]]},{"id":"ben","history":[[0,"2026-02-01"],[3,"2026-01-20"]],"lists":[[[2,"1"],[1,"2"]],[[2,"1"],[6,"2"]],null]},{"id":"eve","history":[],"lists":[[[7,"1"],[2,"2"]],null,null]}]}</script></div></div>
+    </main>
+    <footer class="bf-report__footer">Made with briefing {version}</footer>
+  </div>
+  <script>/* golden: static/report.js sha256 345bab2c067f */
+/* golden: lab/static/recs.js sha256 95f92a2dc8bb */
+briefing.init(document);</script>
+</body>
+</html>

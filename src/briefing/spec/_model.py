@@ -29,7 +29,15 @@ from briefing.blocks.files import Attachment, Image
 from briefing.blocks.layout import Briefing, Card, Group, Page, Select, TabStyle, Toggle
 from briefing.blocks.text import HTML, Alert, BigNumber, Code, Formula, Text
 from briefing.deck._blocks import Deck, Slide
-from briefing.lab._blocks import CalendarHeatmap, DataCompare, DataDive, DataProfile, Legend, TimeHeatmap
+from briefing.lab._blocks import (
+    CalendarHeatmap,
+    DataCompare,
+    DataDive,
+    DataProfile,
+    Legend,
+    RecInspector,
+    TimeHeatmap,
+)
 
 #: The format version this briefing reads and writes (``"briefing": 1``). It changes only
 #: when JSON written for an older version would stop working.
@@ -59,6 +67,7 @@ _TYPES: tuple[tuple[str, type[Block]], ...] = (
     ("lab.DataProfile", DataProfile),
     ("lab.DataCompare", DataCompare),
     ("lab.DataDive", DataDive),
+    ("lab.RecInspector", RecInspector),
     ("lab.CalendarHeatmap", CalendarHeatmap),
     ("lab.TimeHeatmap", TimeHeatmap),
 )

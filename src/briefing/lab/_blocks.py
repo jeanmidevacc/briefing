@@ -232,6 +232,67 @@ class DataCompare(Block):
             _compare.measure_distances(column, measure, self.measure_title)
 
 
+class RecInspector(Block):
+    """Recommendations next to what each user did, one column per model.
+
+    A summary first, one line per model over every user: how many recommendations users had
+    already seen, how many items the model recommends (its coverage), how popular they are
+    next to what users interact with, and how much of its lists each other model shares.
+    Then one user at a time, picked from a list: their history, most recent first, and each
+    model's list by rank. A recommended item is marked **seen** when it is already in the
+    user's history, and **shared** when another model recommends it to them too.
+
+    The frames have fixed column names, so a pipeline that feeds the inspector can't drift
+    from it; other columns are ignored. Rename yours first when they differ:
+
+    - ``history``: ``user``, ``item``, ``timestamp``, one row per interaction;
+    - ``recs``: ``user``, ``item``, ``rank`` (1 first), ``model``, one row per recommendation;
+    - ``items`` (optional): ``item``, ``title``. With it, items show their title, and the
+      reader can switch back to their ids.
+
+    The models and the users are the ones ``recs`` holds, in order: up to 4 models and 100
+    users; sample users where you extract the data. Each list holds every row ``recs`` gives,
+    so cut it to the top *k* there too. Popularity is an item's number of interactions in
+    ``history``, which may hold more users than ``recs``.
+
+    Args:
+        history: What users did: any dataframe briefing accepts, with ``user``, ``item`` and
+            ``timestamp`` (dates, times or numbers; a missing one sorts last).
+        recs: What each model recommends: ``user``, ``item``, ``rank`` (a number, 1 first) and
+            ``model``.
+        items: The catalogue, optional: ``item`` and ``title``. Items without a title show
+            their id.
+        name: Stable block id (letters, digits, ``_`` and ``-``), its link in the report (``#page/name``).
+        label: Tab or dropdown label when the block is inside a ``Select``.
+
+    Example::
+
+        bf.lab.RecInspector(history=interactions, recs=recommendations)
+        bf.lab.RecInspector(history=interactions, recs=recommendations, items=catalog)
+    """
+
+    embed_noun: t.ClassVar[str | None] = "inspector"
+
+    MAX_USERS: t.ClassVar[int] = 100
+    MAX_MODELS: t.ClassVar[int] = 4
+
+    def __init__(
+        self,
+        history: pd.DataFrame | t.Any,
+        recs: pd.DataFrame | t.Any,
+        items: pd.DataFrame | t.Any | None = None,
+        name: BlockId | None = None,
+        label: str | None = None,
+    ) -> None:
+        from briefing.lab import _recs
+
+        super().__init__(name=name, label=label)
+        self.history = to_pandas(history, block="RecInspector")
+        self.recs = to_pandas(recs, block="RecInspector")
+        self.items = None if items is None else to_pandas(items, block="RecInspector")
+        self.inspection = _recs.inspect(self.history, self.recs, self.items)
+
+
 class DataDive(Block):
     """Interactive dot explorer — similar to Google's Facets Dive.
 

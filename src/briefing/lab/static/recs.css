@@ -1,0 +1,118 @@
+/* briefing lab: RecInspector (#18). Inlined only in reports, fragments and decks that hold one,
+   after report.css. */
+/* Model k is drawn in --bf-recs-k: the theme's accent, then hues that stay apart from it. */
+.bf-recs {
+  --bf-recs-0: var(--bf-accent);
+  --bf-recs-1: #ee5e23;
+  --bf-recs-2: #00a16e;
+  --bf-recs-3: #b56ae7;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.bf-recs [data-k="0"] { --bf-recs-color: var(--bf-recs-0); }
+.bf-recs [data-k="1"] { --bf-recs-color: var(--bf-recs-1); }
+.bf-recs [data-k="2"] { --bf-recs-color: var(--bf-recs-2); }
+.bf-recs [data-k="3"] { --bf-recs-color: var(--bf-recs-3); }
+
+/* The summary */
+.bf-recs__summary { overflow-x: auto; }
+.bf-recs__summary table { border-collapse: collapse; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.bf-recs__summary th, .bf-recs__summary td { padding: 0.2rem 0.9rem 0.2rem 0; text-align: right; white-space: nowrap; }
+.bf-recs__summary thead th { color: var(--bf-muted); font-weight: 400; }
+.bf-recs__summary th:first-child { text-align: left; }
+.bf-recs__summary tbody th { font-weight: 600; }
+.bf-recs__summary small { color: var(--bf-muted); }
+.bf-recs__swatch {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 0.15rem;
+  margin-right: 0.4rem;
+  vertical-align: -0.05rem;
+  background: var(--bf-recs-color);
+}
+.bf-recs__notes, .bf-recs__legend { margin: 0.35rem 0 0; font-size: 0.75rem; color: var(--bf-muted); }
+.bf-recs__notes b { font-weight: 600; }
+
+/* The controls */
+.bf-recs__controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; font-size: 0.8rem; color: var(--bf-muted); }
+.bf-recs__controls[hidden] { display: none; }
+.bf-recs__search, .bf-recs__pick { font: inherit; color: var(--bf-text); background: var(--bf-bg); border: 1px solid var(--bf-border); border-radius: 0.375rem; padding: 0.15rem 0.4rem; }
+.bf-recs__search { width: 10rem; }
+.bf-recs__pick { max-width: 100%; }
+.bf-recs__switch { display: inline-flex; margin-left: auto; }
+.bf-recs__show { font: inherit; color: var(--bf-muted); background: var(--bf-bg); border: 1px solid var(--bf-border); padding: 0.1rem 0.5rem; cursor: pointer; }
+.bf-recs__show:first-child { border-radius: 0.375rem 0 0 0.375rem; }
+.bf-recs__show:last-child { border-radius: 0 0.375rem 0.375rem 0; border-left: 0; }
+.bf-recs__show[aria-pressed="true"] { color: var(--bf-bg); background: var(--bf-accent); border-color: var(--bf-accent); }
+
+/* One user */
+.bf-recs__user {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: var(--bf-surface);
+  border: 1px solid var(--bf-border);
+  border-radius: var(--bf-radius);
+  padding: 0.75rem;
+  min-width: 0;
+}
+.bf-recs__who { display: flex; align-items: baseline; gap: 0.6rem; }
+.bf-recs__user-id { font-weight: 700; font-size: 1rem; overflow-wrap: anywhere; }
+.bf-recs__who small { color: var(--bf-muted); font-size: 0.78rem; }
+.bf-recs__heading { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--bf-muted); margin-bottom: 0.3rem; }
+.bf-recs__none { margin: 0; font-size: 0.8rem; color: var(--bf-muted); font-style: italic; }
+.bf-recs__history { min-width: 0; }
+.bf-recs__strip {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0 0 0.3rem;
+  list-style: none;
+  overflow-x: auto;
+}
+.bf-recs__strip .bf-recs__item {
+  flex: 0 0 9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.35rem 0.45rem;
+  background: var(--bf-bg);
+  border: 1px solid var(--bf-border);
+  border-radius: 0.375rem;
+  font-size: 0.78rem;
+}
+.bf-recs__when { font-size: 0.7rem; color: var(--bf-muted); font-variant-numeric: tabular-nums; }
+.bf-recs__models { display: grid; grid-template-columns: repeat(var(--bf-recs-models, 2), minmax(0, 1fr)); gap: 0.75rem; }
+@media (max-width: 640px) { .bf-recs__models { grid-template-columns: minmax(0, 1fr); } }
+.bf-recs__model { min-width: 0; border-top: 3px solid var(--bf-recs-color); padding-top: 0.35rem; }
+.bf-recs__model .bf-recs__heading { color: var(--bf-text); text-transform: none; letter-spacing: 0; font-size: 0.85rem; }
+.bf-recs__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.2rem; }
+.bf-recs__list .bf-recs__item { display: flex; align-items: baseline; gap: 0.4rem; font-size: 0.82rem; padding: 0.15rem 0.3rem; border-radius: 0.25rem; }
+.bf-recs__list .bf-recs__item--seen { background: rgba(164, 77, 0, 0.08); }
+.bf-recs__rank { flex: 0 0 1.6rem; text-align: right; color: var(--bf-muted); font-variant-numeric: tabular-nums; }
+.bf-recs__name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.bf-recs__mark {
+  flex: 0 0 auto;
+  font-size: 0.66rem;
+  font-weight: 600;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+.bf-recs__mark--seen { color: #a44d00; }
+.bf-recs__mark--shared { color: var(--bf-accent); }
+
+/* Titles or ids: an item with a title shows it, and its id when the reader switches to ids. */
+.bf-recs__title + .bf-recs__id { display: none; }
+.bf-recs[data-show="ids"] .bf-recs__title { display: none; }
+.bf-recs[data-show="ids"] .bf-recs__title + .bf-recs__id { display: inline; }
+.bf-recs__id { font-family: ui-monospace, 'Cascadia Code', monospace; font-size: 0.92em; }
+
+@media print {
+  .bf-recs__controls { display: none !important; }  /* the user shown prints */
+  .bf-recs__user { break-inside: avoid; }
+  .bf-recs__strip { flex-wrap: wrap; overflow: visible; }
+}
