@@ -61,7 +61,7 @@ before that line, such as a team name. The line itself can't be turned off.
 
 ```python
 report = bf.Briefing(bf.Text("# Q1 review"), footer="Analytics team")
-# Analytics team · Made with briefing 0.9.0
+# Analytics team · Made with briefing 0.10.0
 ```
 
 ## Size
