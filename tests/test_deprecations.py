@@ -74,6 +74,7 @@ def test_the_day_calendar_still_takes_views_days(df_pipeline_log: t.Any) -> None
 
 @pytest.mark.parametrize("export", ["pdf", ("png", "pdf"), ["pdf", "png", "pdf"]])
 def test_export_pdf_was_removed_in_0_4_and_says_what_to_use(export: t.Any) -> None:
+    assert "pdf" not in bf.Briefing.DEPRECATED_EXPORTS
     with pytest.raises(bf.BriefingError, match=r"export='pdf'\) was removed in 0\.4\.0.*Ctrl\+P.*bf\.save_pdf"):
         bf.Briefing(bf.Text("x"), export=export)
 
@@ -82,13 +83,6 @@ def test_export_png_alone_does_not_warn() -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         bf.Briefing(bf.Text("x"), export="png")
-
-
-def test_export_pdf_is_rejected_from_0_4() -> None:
-    # Fails from 0.4 on until "pdf" leaves Briefing.DEPRECATED_EXPORTS and raises BriefingError.
-    version = tuple(int(part) for part in bf.__version__.split(".")[:2])
-    if version >= (0, 4):
-        assert "pdf" not in bf.Briefing.DEPRECATED_EXPORTS
 
 
 # ── the heatmaps' center= (#175): deprecated in 0.6.0, removed in 0.8.0 (#196) ──────

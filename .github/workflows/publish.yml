@@ -62,6 +62,33 @@ jobs:
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
 
+  smoke:
+    # The release as a user gets it (#198): install it from PyPI in a clean runner, check its
+    # version, and build the project `python -m briefing new` writes. PyPI's index can lag a
+    # minute behind the upload, so the install retries.
+    needs: pypi
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the release from PyPI
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          for attempt in $(seq 1 20); do
+            pip install --no-cache-dir "briefing==$version" && break
+            echo "not on the index yet ($attempt)"; sleep 15
+          done
+          python -c "import briefing, sys; print(briefing.__version__); sys.exit(briefing.__version__ != '$version')"
+      - name: Build a new project
+        working-directory: ${{ runner.temp }}
+        run: |
+          python -m briefing new smoke --title "Smoke test"
+          cd smoke
+          python build_report.py
+          grep -q "Made with briefing ${GITHUB_REF_NAME#v}" reports/index.html
+
   docs:
     # The release's documentation: rebuild `stable` and `latest` on Read the Docs. docs.yml
     # runs on its own (as `gh workflow run docs.yml` does by hand), because the RTD_TOKEN

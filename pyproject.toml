@@ -121,7 +121,7 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=briefing --cov-report=term-missing -v"
+addopts = "--cov=briefing --cov-report=term-missing"
 markers = [
     "browser: opens rendered reports in headless Chromium (pytest -m browser; needs `playwright install chromium`)",
 ]

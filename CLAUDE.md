@@ -151,9 +151,13 @@ class in `lab/_blocks.py`, renderer in `lab/_render_<name>.py`, JavaScript and C
 
 ## Releases and changelog
 
-- The version lives in `src/briefing/_version.py` (`__version__`); the publish workflow
-  fails if the release tag doesn't match it.
-- A GitHub Release runs `publish.yml`: PyPI (Trusted Publishing), then it starts
+- The version lives in `src/briefing/_version.py` (`__version__`) and nowhere else (examples
+  say `<version>`); the publish workflow fails if the release tag doesn't match it.
+- To release: `nox -s prepare -- X.Y.Z` (`tools/prepare_release.py`) sets the version and
+  dates `## [Unreleased]` with its compare link; merge that as "Prepare X.Y.Z", then
+  `gh release create vX.Y.Z --target main`.
+- A GitHub Release runs `publish.yml`: PyPI (Trusted Publishing), then a smoke job installs the
+  release from PyPI and builds a `python -m briefing new` project, and it starts
   `docs.yml` (a separate run, not a reusable-workflow call: the environment secret
   doesn't reach one), which rebuilds `stable` and `latest` on Read the Docs with the
   `RTD_TOKEN` secret of the `pypi` environment.
