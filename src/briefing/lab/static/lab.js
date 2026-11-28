@@ -984,29 +984,12 @@
     bar.appendChild(searchBox); bar.appendChild(add); bar.appendChild(chips); bar.appendChild(modes);
     container.insertBefore(bar, area);
 
-    // ── linked selection (#21): a bar of a DataProfile or a DataCompare selects rows here.
-    // Numbers and dates are found in the bar's bin exactly as Python binned them; a category by its text.
+    // ── linked selection (#21, #238): a lab block's bar or cell selects rows here. Its tests
+    // (one per pick) are compiled by select.js, which ships with every sender.
     function selectionTest(d) {
-      var c = data.cols[d.column], t = d.test;
-      if (!c || !t) return null;
-      if (t.kind === 'values') {
-        if (c.kind !== 'categorical') return null;
-        var want = {}, ok = new Uint8Array(c.levels.length);
-        d.picks.forEach(function (p) { want[p] = true; });
-        for (var k = 0; k < c.levels.length; k++) ok[k] = want.hasOwnProperty(c.levels[k]) ? 1 : 0;
-        return function (i) { var code = c.codes[i]; return code >= 0 && ok[code] === 1; };
-      }
-      if (c.kind === 'categorical') return null;
-      var bins = {}, unit = t.unit || 1, s = t.scale, low = t.min * s, span = t.max * s - t.min * s;
-      d.picks.forEach(function (p) { bins[+p] = true; });
-      return function (i) {
-        var v = c.values[i];
-        if (v === null) return false;
-        v = v * unit;
-        if (v < t.min || v > t.max) return false;
-        if (t.min === t.max) return bins[0] === true;
-        return bins[Math.min(Math.floor((v * s - low) / span * t.bins), t.bins - 1)] === true;
-      };
+      var shared = window.briefingSelection;
+      if (!shared || !d.any) return null;
+      return shared.compile(d.any, function (name) { return data.cols.hasOwnProperty(name) ? data.cols[name] : null; });
     }
 
     function unselect(source, tell) {
@@ -1021,7 +1004,7 @@
     root.addEventListener('bf:select', function (e) {
       var d = e.detail;
       if (!d || !d.targets || d.targets.indexOf(container.id) < 0) return;
-      var old = selections[d.source], test = d.picks.length ? selectionTest(d) : null;
+      var old = selections[d.source], test = d.any && d.any.length ? selectionTest(d) : null;
       if (old && old.chip.parentNode) old.chip.parentNode.removeChild(old.chip);
       delete selections[d.source];
       if (test) {

@@ -570,8 +570,8 @@ def _render_table(block: Table, idgen: _IdGen) -> str:
 
 
 @renderer_for(DataTable)
-def _render_datatable(block: DataTable, _: _IdGen) -> str:
-    return render_datatable(block)
+def _render_datatable(block: DataTable, idgen: _IdGen) -> str:
+    return render_datatable(block, receiver=idgen.receives(block))
 
 
 def _render_placeholder(block: Block, _: _IdGen) -> str:

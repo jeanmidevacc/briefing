@@ -226,6 +226,7 @@
     var sortAsc  = true;
     var filtered = all.slice();
     var searchText = null;  // each row's text in lower case, made on the first search
+    var keep = null;  // a filter set from outside (a lab block's linked selection, #238): i -> bool
 
     // The tbody holds the rows on show, in their (sorted) order, and nothing else.
     function show(list) {
@@ -252,6 +253,7 @@
       var q = search ? search.value.toLowerCase() : '';
       if (q && !searchText) searchText = all.map(function (i) { return rows.text(i).toLowerCase(); });
       filtered = q ? all.filter(function (i) { return searchText[i].indexOf(q) !== -1; }) : all.slice();
+      if (keep) filtered = filtered.filter(keep);
       if (sortCol >= 0) applySortToFiltered();
       page = 0;
       render();
@@ -315,6 +317,10 @@
       if (printNote) { printNote.remove(); printNote = null; }
       render();
     });
+
+    // Lets other code keep only some rows, under the search, sort and paging: keep(i) says
+    // whether row i (in the table's original order) stays; null keeps them all (#238).
+    container.briefingTable = { filter: function (fn) { keep = fn || null; applyFilter(); } };
 
     render();
   }

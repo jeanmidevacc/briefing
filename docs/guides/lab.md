@@ -217,44 +217,54 @@ bf.save(bf.lab.DataDive(points, x="x", y="y", color="cluster", colors=topics, ti
         name="Articles")
 ```
 
-## Linked selection: a bar selects rows in a `DataDive`
+## Linked selection: a bar selects rows in a `DataDive` or a `DataTable`
 
-`selects=` on a `DataProfile` or a `DataCompare` names a `DataDive` in the same page. A
-click on a bar then highlights that bar's rows there:
+`selects=` on a `DataProfile` or a `DataCompare` names a `DataDive` or a `DataTable` in
+the same page, or a list of them. A click on a bar then selects that bar's rows there:
 
 - a number's or a date's bar selects the rows that fall in it, exactly as the chart counted
   them;
 - a category's bar selects its value;
 - **Shift**+click adds another bar of the same column;
-- click the bar again, click × on the chip that names the selection in the DataDive, or
-  press **Esc** to clear it.
+- click the bar again, click × on the chip that names the selection, or press **Esc** to
+  clear it.
 
-The DataDive matches the bar on the column of the same name. A column it doesn't have
-(or holds as another type) isn't clickable, and the chart's tooltip says why. Its
-Highlight and Filter buttons apply to the selection as to its own filters, and two
-senders add two chips. Bars and chips also work from the keyboard (Tab, then Enter).
+The receiver matches the bar on the column of the same name. A column it doesn't have
+(or holds as another type) isn't clickable, and the chart's tooltip says why. Bars and
+chips also work from the keyboard (Tab, then Enter).
+
+- **A `DataDive`** highlights the rows; its Highlight and Filter buttons apply to the
+  selection as to its own filters.
+- **A `DataTable`** keeps only the rows, and shows the selection as a chip in its toolbar.
+  Search, sorting, paging and the CSV button then work within the selection. Such a
+  table carries its values for the selection to test, so the report grows a little.
+
+Two senders add two chips, and a row must match both.
 
 ```{briefing-example}
-:title: A profile that selects rows in a DataDive
-:height: 900
+:title: A profile that selects rows in a DataDive and a table
+:height: 1100
 
 import briefing as bf
 
 sales = bf.datasets.load("sales")
 bf.save(
     bf.Briefing(
-        "Click a bar in the profile: its orders light up in the DataDive below.",
-        bf.lab.DataProfile(sales[["region", "channel", "units", "revenue"]], selects="orders"),
+        "Click a bar in the profile: its orders light up in the DataDive, and the table keeps them.",
+        bf.lab.DataProfile(sales[["region", "channel", "units", "revenue"]], selects=["orders", "rows"]),
         bf.lab.DataDive(sales, x="units", y="revenue", color="region", name="orders"),
+        bf.DataTable(sales[["ordered_at", "region", "channel", "product", "units", "revenue"]],
+                     name="rows", download=True),
     ),
     "linked.html",
     name="Sales",
 )
 ```
 
-The target must be a `DataDive` named in the sender's page: rendering raises an error that
-lists the DataDives there otherwise, and `bf.validate` reports it as `unknown-target`. A
-selection stays in its report: two embeds on one page don't select rows in each other.
+Each target must be a `DataDive` or a `DataTable` named in the sender's page. Otherwise
+rendering raises an error that lists the ones there, and `bf.validate` reports it as
+`unknown-target`. A selection stays in its report: two embeds on one page don't select
+rows in each other.
 
 ## `RecInspector`: recommendations next to each user's history
 

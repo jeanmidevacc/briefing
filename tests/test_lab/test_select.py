@@ -40,12 +40,14 @@ def test_a_missing_target_lists_the_dives_of_its_page() -> None:
         bf.Page(bf.lab.DataProfile(_DF, selects="dive"), bf.lab.DataDive(_DF, name="other"), title="A", name="a"),
         bf.Page(_dive(), title="B", name="b"),  # another page: not reachable
     )
-    with pytest.raises(bf.BriefingError, match="no block named 'dive' in page 'a'. The DataDive blocks there: 'other'"):
+    message = "no block named 'dive' in page 'a'. The DataDive or DataTable blocks there: 'other'"
+    with pytest.raises(bf.BriefingError, match=message):
         bf.stringify(report)
 
 
-def test_a_target_must_be_a_datadive() -> None:
-    with pytest.raises(bf.BriefingError, match="is a Text, not a DataDive. There is no named DataDive there"):
+def test_a_target_must_be_a_datadive_or_a_datatable() -> None:
+    with pytest.raises(bf.BriefingError,
+                       match="is a Text, not a DataDive or DataTable. There is no named DataDive or DataTable there"):
         _html(bf.lab.DataProfile(_DF, selects="t"), bf.Text("x", name="t"))
 
 
@@ -141,3 +143,46 @@ def test_a_deck_resolves_targets_in_the_senders_slide() -> None:
     deck = bf.deck.Deck(bf.deck.Slide(bf.lab.DataProfile(_DF, selects="dive"), _dive(), title="S", name="s"))
     profile = find_one(parse(bf.deck.to_html(deck)), ".bf-profile")
     assert json.loads(attr(profile, "data-bf-selects")) == ["s/dive"]
+
+
+# ── a DataTable as a receiver (#238) ──────────────────────────────────────────
+
+
+def test_a_table_carries_its_values_only_when_it_receives() -> None:
+    soup = parse(_html(bf.lab.DataProfile(_DF, selects="rows"), bf.DataTable(_DF, name="rows")))
+    values = json.loads(find_one(soup, '.bf-datatable script.bf-dt__values').get_text())
+    assert values["columns"]["team"] == {"name": "team", "kind": "categorical", "levels": ["a", "b", "c"],
+                                         "codes": [0, 1, 0, 2]}
+    assert values["columns"]["day"]["values"] == [pd.Timestamp("2026-01-01").value // 1_000_000] * 4
+    alone = parse(_html(bf.lab.DataProfile(_DF, selects="dive"), _dive(), bf.DataTable(_DF, name="rows")))
+    assert alone.select("script.bf-dt__values") == []
+
+
+def test_a_big_tables_values_are_packed() -> None:
+    big = pd.DataFrame({"n": range(1500)})
+    soup = parse(_html(bf.lab.DataProfile(big, selects="rows"), bf.DataTable(big, name="rows")))
+    script = find_one(soup, "script.bf-dt__values")
+    packed = json.loads(script.get_text())  # a packed string (#38), not the columns themselves
+    assert script.has_attr("data-size") and isinstance(packed, str) and '"columns"' not in packed
+
+
+def test_a_column_the_table_lacks_is_not_clickable_and_says_why() -> None:
+    soup = parse(_html(bf.lab.DataProfile(_DF, selects="rows"), bf.DataTable(_DF.drop(columns="team"), name="rows")))
+    chart = find_one(soup, ".bf-profile__chart[data-bf-unselectable]")
+    assert attr(chart, "title") == "The DataTable 'rows' has no column 'team'."
+
+
+def test_a_table_target_validates_and_round_trips() -> None:
+    report = bf.Briefing(bf.lab.DataCompare([_DF, _DF], selects="rows"), bf.DataTable(_DF, name="rows"))
+    assert bf.validate(report) == []
+    spec, data = bf.to_spec(report)
+    assert bf.stringify(bf.from_spec(json.dumps(spec), data)) == bf.stringify(report)
+
+
+def test_a_table_in_another_page_is_not_reachable() -> None:
+    report = bf.Briefing(
+        bf.Page(bf.lab.DataProfile(_DF, selects="rows"), title="A", name="a"),
+        bf.Page(bf.DataTable(_DF, name="rows"), title="B", name="b"),
+    )
+    with pytest.raises(bf.BriefingError, match="no block named 'rows' in page 'a'"):
+        bf.stringify(report)
