@@ -34,6 +34,7 @@ from briefing._error import BriefingError
 from briefing.renderers.inline import inline_markdown, inline_plain
 from briefing.renderers.pack import pack
 from briefing.renderers.registry import IdGen
+from briefing.renderers.script_json import script_json
 
 if t.TYPE_CHECKING:
     from briefing.blocks.asset import DataTable, Table
@@ -154,8 +155,13 @@ def render_table(block: Table, idgen: IdGen | None = None) -> str:
 # ── interactive DataTable ─────────────────────────────────────────────────────
 
 
-def render_datatable(block: DataTable) -> str:
-    """Render a :class:`~briefing.DataTable` block to an interactive HTML table."""
+def render_datatable(block: DataTable, receiver: bool = False) -> str:
+    """Render a :class:`~briefing.DataTable` block to an interactive HTML table.
+
+    A *receiver* (a lab block's ``selects=`` names it, #238) also carries its columns as the
+    page tests them (``renderers/columns.py``), in ``script.bf-dt__values``, so a selection
+    keeps the rows it holds.
+    """
     df = block.df
     show_index = _use_index(df)
 
@@ -223,8 +229,23 @@ def render_datatable(block: DataTable) -> str:
         f"</div>"
         f"{caption_html}"
         f"{data_html}"
+        f"{_values_html(df, big) if receiver else ''}"
         f"</div>"
     )
+
+
+def _values_html(df: t.Any, big: bool) -> str:
+    """The table's columns for a linked selection to test (#238), by name; the index isn't one.
+
+    A big table's are packed as its rows are (#38), and unpack.js, which ships with it, opens them.
+    """
+    from briefing.renderers.columns import encode
+
+    columns = {str(name): encode(str(name), df[name]) for name in df.columns}
+    if big:
+        packed, size = pack(json.dumps({"columns": columns}, ensure_ascii=False, separators=(",", ":")))
+        return f'<script type="application/json" class="bf-dt__values" data-size="{size}">"{packed}"</script>'
+    return f'<script type="application/json" class="bf-dt__values">{script_json({"columns": columns})}</script>'
 
 
 def _csv_button(block: DataTable) -> str:

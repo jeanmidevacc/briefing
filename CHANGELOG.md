@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Linked selection reaches a `DataTable` (#238): `selects=` on a `DataProfile` or a
+  `DataCompare` names a `DataDive` or a `DataTable`. A table keeps only the selected rows,
+  shows the selection as a chip, and its search, sort, paging and CSV button work within
+  it. A table that receives a selection carries its values for it, packed when it is big.
+
 ## [0.10.0] - 2026-11-26
 
 ### Added

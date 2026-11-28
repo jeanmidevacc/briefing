@@ -1,5 +1,6 @@
-/* briefing lab: linked selection (#21). Inlined only with a DataProfile or DataCompare that
-   sets selects=: the invisible targets over its bars, and the selection's chip in the DataDive. */
+/* briefing lab: linked selection (#21, #238). Inlined only with a lab block that sets selects=:
+   the invisible targets over its bars or cells, and the selection's chip in the DataDive or
+   the DataTable that receives it. */
 .bf-sel__hit { fill: transparent; cursor: pointer; outline: none; }
 .bf-sel__hit:hover, .bf-sel__hit:focus-visible { fill: var(--bf-accent); fill-opacity: 0.1; }
 .bf-sel__hit[aria-pressed="true"] {
@@ -12,4 +13,27 @@
 [data-bf-unselectable] { cursor: help; }
 .bf-dd__chip--select { border-color: var(--bf-accent); }
 .bf-dd__chip--select .bf-dd__chip-from { color: var(--bf-muted); font-weight: 400; }
+.bf-sel__chips { display: inline-flex; flex-wrap: wrap; gap: 0.35rem; }
+.bf-sel__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--bf-muted);
+  border: 1px solid var(--bf-accent);
+  border-radius: 999px;
+  padding: 0.05rem 0.25rem 0.05rem 0.6rem;
+}
+.bf-sel__chip-name { color: var(--bf-text); font-weight: 600; }
+.bf-sel__chip-remove {
+  font: inherit;
+  line-height: 1;
+  color: var(--bf-muted);
+  background: none;
+  border: 0;
+  padding: 0.1rem 0.3rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.bf-sel__chip-remove:hover, .bf-sel__chip-remove:focus-visible { color: var(--bf-text); background: var(--bf-border); }
 @media print { .bf-sel__hit:not([aria-pressed="true"]) { fill: none; } }

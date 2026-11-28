@@ -1,6 +1,6 @@
-"""Linked selection (#21): a bar of a DataProfile or a DataCompare selects rows in a DataDive.
+"""Linked selection (#21, #238): a lab block's bar or cell selects rows in a DataDive or a DataTable.
 
-``selects="dive"`` names a DataDive in the sender's page. At render time:
+``selects="dive"`` names a DataDive or a DataTable in the sender's page. At render time:
 
 - :func:`sender_attrs` puts the target's link id (resolved like a link, #24, and checked
   once every name is claimed, see :meth:`IdGen.target`) and a made-up id for the sender
@@ -10,11 +10,22 @@
   the values: same minimum, maximum, scale and number of bins) or on values (the text the
   DataDive shows);
 - :func:`hits` draws an invisible target over each bar, which ``lab/static/select.js``
-  makes clickable. A column the DataDive doesn't have (or holds as another kind) gets none,
+  makes clickable. A column the receiver doesn't have (or holds as another kind) gets none,
   and its chart says why.
 
-The DataDive (``lab.js``) listens for ``bf:select`` on the report's root and adds the
-selection as a filter chip; nothing crosses into another report on the same page.
+A selection travels as a ``bf:select`` event on the report's root, with one test per bar or
+cell picked; a row matches when any of them holds. Each test stands alone, so a receiver
+needs nothing from the sender but the columns it names (``renderers/columns.py``):
+
+- ``{"kind": "bin", "column", "min", "max", "scale", "bins", "unit", "bin"}``: the value falls
+  in that bin, found exactly as Python binned it;
+- ``{"kind": "value", "column", "value"}``: a category, by its text on the page;
+- ``{"kind": "range", "column", "min", "max", "closed"}``: ``min <= v < max``, or
+  ``min <= v <= max`` when ``closed`` is ``"both"`` (dates in epoch milliseconds);
+- ``{"kind": "all", "tests": [...]}``: every test holds (a cell of two columns).
+
+The DataDive (``lab.js``) and the DataTable (``select.js``) add the selection as a chip;
+nothing crosses into another report on the same page.
 """
 from __future__ import annotations
 
@@ -36,34 +47,42 @@ def check_selects(selects: object, block: str) -> tuple[str, ...]:
         return ()
     names = [selects] if isinstance(selects, str) else selects
     if not isinstance(names, Sequence) or isinstance(names, str) or not names:
-        raise BriefingError(f"{block} 'selects' is the name of a DataDive, or a list of names; not {selects!r}.")
+        raise BriefingError(
+            f"{block} 'selects' is the name of a DataDive or a DataTable, or a list of names; not {selects!r}."
+        )
     for name in names:
         if not isinstance(name, str) or not _NAME_RE.match(name):
             raise BriefingError(
-                f"{block} 'selects' names a DataDive by its name= (letters, digits, '_' and '-'), not {name!r}."
+                f"{block} 'selects' names a DataDive or a DataTable by its name= (letters, digits, '_' and '-'), "
+                f"not {name!r}."
             )
     return tuple(dict.fromkeys(names))
 
 
 class Targets:
-    """The DataDives a sender selects rows in, and the kind of each of their columns where known."""
+    """The DataDives and DataTables a sender selects rows in, and the kind of each of their columns."""
 
     def __init__(self, sender: Block, names: tuple[str, ...], idgen: IdGen) -> None:
+        from briefing.blocks.asset import DataTable
         from briefing.lab._blocks import DataDive
-        from briefing.lab._render_datadive import _col_kind
+        from briefing.renderers.columns import col_kind
 
-        self.links = [idgen.target(sender, name, DataDive) for name in names]
+        self.links = [idgen.target(sender, name, (DataDive, DataTable)) for name in names]
         self.source = idgen.next("sel")
         self.known = True
         self.kinds: dict[str, str] = {}
+        nouns: list[str] = []
         for link in self.links:
-            dive = idgen.named(link)
-            if not isinstance(dive, DataDive):
+            receiver = idgen.named(link)
+            if not isinstance(receiver, DataDive | DataTable):
                 self.known = False  # drawn alone (validate): checked when the report renders
                 continue
-            for column in dive.df.columns:
-                if str(column) != dive.thumbnails:
-                    self.kinds.setdefault(str(column), _col_kind(dive.df[column]))
+            nouns.append(type(receiver).__name__)
+            skip = receiver.thumbnails if isinstance(receiver, DataDive) else None
+            for column in receiver.df.columns:
+                if str(column) != skip:
+                    self.kinds.setdefault(str(column), col_kind(receiver.df[column]))
+        self.noun = " or ".join(dict.fromkeys(nouns)) or "DataDive"
         self.names = names
 
     def why_not(self, column: str, kind: str) -> str | None:
@@ -73,10 +92,10 @@ class Targets:
         have = self.kinds.get(column)
         if have == kind:
             return None
-        dives = " or ".join(repr(n) for n in self.names)
+        receivers = " or ".join(repr(n) for n in self.names)
         if have is None:
-            return f"The DataDive {dives} has no column {column!r}."
-        return f"In the DataDive {dives}, {column!r} holds {_KINDS[have]}, not {_KINDS[kind]}."
+            return f"The {self.noun} {receivers} has no column {column!r}."
+        return f"In the {self.noun} {receivers}, {column!r} holds {_KINDS[have]}, not {_KINDS[kind]}."
 
 
 _KINDS = {"numeric": "numbers", "datetime": "dates", "categorical": "categories"}

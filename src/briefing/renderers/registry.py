@@ -72,7 +72,10 @@ class IdGen:
         self._page_blocks: set[int] = set()  # id() of the blocks that are pages
         self._owners: dict[str, str] = {}  # link id -> what claimed it, for error messages
         self._named: dict[str, Block] = {}  # link id -> the named block that has it
-        self._targets: list[tuple[Block, str, str, type]] = []  # (sender, name, link id, kind) to check (#21)
+        self._targets: list[tuple[Block, str, str, type | tuple[type, ...]]] = []  # to check (#21)
+        #: The link ids a sender's ``selects=`` names, known before rendering: a DataTable among
+        #: them carries its values for the selection to test (#238).
+        self.receivers: set[str] = set()
 
     @property
     def prefix(self) -> str:
@@ -118,7 +121,21 @@ class IdGen:
             self._links[id(block)] = link = self.claim(block, block.name, what)
             self._named[link] = block
 
-    def target(self, sender: Block, name: str, kind: type) -> str:
+    def expect(self, sender: Block) -> None:
+        """Note the link ids *sender*'s ``selects=`` names, before any block renders (#238)."""
+        selects = getattr(sender, "selects", None)
+        names = [selects] if isinstance(selects, str) else list(selects or [])
+        page = self._pages.get(id(sender))
+        for name in names:
+            if isinstance(name, str):
+                self.receivers.add(f"{self._link_prefix}{page}/{name}" if page else f"{self._link_prefix}{name}")
+
+    def receives(self, block: Block) -> bool:
+        """Whether a sender's ``selects=`` names *block* (see :meth:`expect`)."""
+        link = self._links.get(id(block))
+        return link is not None and link in self.receivers
+
+    def target(self, sender: Block, name: str, kind: type | tuple[type, ...]) -> str:
         """The link id of the block named *name* in *sender*'s page, which must be a *kind* (#21).
 
         It's checked once every name is claimed, by :meth:`check_links`; until then,
@@ -158,20 +175,21 @@ class IdGen:
             block = self._named.get(link)
             if isinstance(block, kind):
                 continue
+            noun = " or ".join(k.__name__ for k in (kind if isinstance(kind, tuple) else (kind,)))
             page = self._pages.get(id(sender))
             where = f"in page {page!r}" if page else "in this report"
             others = sorted(str(b.name) for b in self._named.values()
                             if isinstance(b, kind) and self._pages.get(id(b)) == page)
             if others:
-                there = f"The {kind.__name__} blocks there: {', '.join(map(repr, others))}."
+                there = f"The {noun} blocks there: {', '.join(map(repr, others))}."
             elif block is None:
-                there = f"Give the {kind.__name__} name={name!r}."
+                there = f"Give the {noun} name={name!r}."
             else:
-                there = f"There is no named {kind.__name__} there."
+                there = f"There is no named {noun} there."
             if block is None:
                 problem = f"there is no block named {name!r} {where}"
             else:
-                problem = f"the block named {name!r} {where} is a {type(block).__name__}, not a {kind.__name__}"
+                problem = f"the block named {name!r} {where} is a {type(block).__name__}, not a {noun}"
             found.append((sender, f"{type(sender).__name__} selects={name!r}, but {problem}. {there}"))
         return found
 

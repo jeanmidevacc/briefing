@@ -20,10 +20,11 @@ from __future__ import annotations
 
 import html as _html
 import json
-import math
 import typing as t
 
 from briefing import color as _color
+from briefing.renderers.columns import MAX_TEXT as COLUMN_TEXT
+from briefing.renderers.columns import col_kind, encode, text
 from briefing.renderers.pack import pack
 from briefing.renderers.script_json import script_json
 from briefing.scale import Scale
@@ -34,23 +35,8 @@ if t.TYPE_CHECKING:
 #: Colours sampled along a numeric Scale for the page: enough that neighbours look the same.
 RAMP = 64
 
-#: Text values longer than this are cut, with an ellipsis, to keep the file light.
-MAX_TEXT = 200
-
-
-# ── column classification ─────────────────────────────────────────────────────
-
-
-def _col_kind(series: t.Any) -> str:
-    import pandas as pd
-
-    if pd.api.types.is_bool_dtype(series):
-        return "categorical"
-    if pd.api.types.is_numeric_dtype(series):
-        return "numeric"
-    if pd.api.types.is_datetime64_any_dtype(series):
-        return "datetime"
-    return "categorical"
+# The encoding a receiver of a linked selection shares (#238): renderers/columns.py.
+_col_kind, _text, _encode, MAX_TEXT = col_kind, text, encode, COLUMN_TEXT
 
 
 # ── default axis selection ────────────────────────────────────────────────────
@@ -76,30 +62,6 @@ def _pick_defaults(
 
 
 # ── data serialisation ────────────────────────────────────────────────────────
-
-
-def _text(value: t.Any) -> str:
-    text = str(value)
-    return text if len(text) <= MAX_TEXT else text[: MAX_TEXT - 1] + "…"
-
-
-def _encode(name: str, series: t.Any) -> dict[str, t.Any]:
-    """One column for the page: ``{"name", "kind", "values"}``, or levels and codes for categories."""
-    import pandas as pd
-
-    kind = _col_kind(series)
-    if kind == "numeric":  # JSON has no NaN or infinity: both are missing, as before (#16)
-        values = [None if pd.isna(v) or math.isinf(v) else (int(v) if float(v).is_integer() and abs(v) < 2**53
-                  else float(v)) for v in series.tolist()]
-        return {"name": name, "kind": kind, "values": values}
-    if kind == "datetime":
-        stamps = series.dt.tz_convert("UTC").dt.tz_localize(None) if series.dt.tz is not None else series
-        ms = stamps.astype("datetime64[ms]").astype("int64").tolist()
-        return {"name": name, "kind": kind, "values": [None if missing else v for v, missing in
-                                                        zip(ms, series.isna().tolist(), strict=True)]}
-    codes, levels = pd.factorize(series, use_na_sentinel=True)
-    return {"name": name, "kind": "categorical", "levels": [_text(v) for v in levels.tolist()],
-            "codes": codes.tolist()}
 
 
 def _serialise(df: t.Any, pictures: tuple[list[str], list[int]] | None = None, skip: str | None = None) -> str:

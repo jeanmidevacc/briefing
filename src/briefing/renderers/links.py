@@ -58,6 +58,7 @@ def _walk(block: Block, page: str | None, idgen: IdGen) -> None:
 def _claim(block: Block, page: str | None, idgen: IdGen, what: str | None = None) -> None:
     idgen.place(block, page)
     idgen.name(block, what or f"a {type(block).__name__} block")
+    idgen.expect(block)  # a lab sender's selects= (#238)
 
 
 def _children(block: Block) -> list[Block]:

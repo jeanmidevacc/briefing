@@ -68,7 +68,10 @@ report with an `IdGen` that records name clashes (`spec/_validate.py`); it never
 `briefing.lab` (`DataProfile`, `DataDive`, `DataCompare`…) plugs in the same way: `lab/__init__.py`
 calls `register_renderer(..., js_asset=..., css_asset=...)`, so `lab.js` (or `compare.js`,
 `compare.css`) is inlined only when its block is present, in reports, fragments, copy-embed
-copies and decks alike (`block_scripts`, `block_styles`). New lab blocks follow that pattern:
+copies and decks alike (`block_scripts`, `block_styles`). Linked selection (`selects=`,
+`lab/_select.py`, `lab/static/select.js`) sends one self-contained test per pick; a `DataTable`
+a sender names carries its columns (`renderers/columns.py`) and receives through the one generic
+hook `report.js` gives it, `container.briefingTable.filter(fn)`. New lab blocks follow that pattern:
 class in `lab/_blocks.py`, renderer in `lab/_render_<name>.py`, JavaScript and CSS in
 `lab/static/`, not in report.css, which every report carries.
 
