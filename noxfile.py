@@ -46,6 +46,12 @@ def docs(session: nox.Session) -> None:
     session.run("sphinx-build", "-W", "--keep-going", "-b", "html", "docs", "docs/_build/html")
 
 
+@nox.session(venv_backend="none")
+def prepare(session: nox.Session) -> None:
+    """Prepare a release: nox -s prepare -- X.Y.Z sets the version and dates the CHANGELOG (#198)."""
+    session.run("python", "tools/prepare_release.py", *session.posargs)
+
+
 @nox.session(name="docs-assets", python="3.11")
 def docs_assets(session: nox.Session) -> None:
     """Regenerate the committed export samples in docs/_static/export/ (needs a browser)."""
